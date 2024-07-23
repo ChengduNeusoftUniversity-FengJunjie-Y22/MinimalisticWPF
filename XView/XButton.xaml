@@ -22,6 +22,7 @@
                                 Background="#1e1e1e"
                                 BorderBrush="White"
                                 BorderThickness="1"
+                                AnimationFill="Violet"
                                 CornerRadius="5"/>
     </UserControl.DataContext>
 
@@ -39,14 +40,24 @@
                    FontSize="{Binding ElementName=Total,Path=ActualHeight,Converter={StaticResource HeightToFontSize}}"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Center"
-                   Grid.ZIndex="3"/>
+                   Grid.ZIndex="1"/>
         <Border x:Name="FixedBorder"
                 BorderBrush="{Binding BorderBrush,Mode=TwoWay}"
                 BorderThickness="{Binding BorderThickness,Mode=TwoWay}"
                 CornerRadius="{Binding CornerRadius,Mode=TwoWay}"
                 ClipToBounds="True"
-                Background="{Binding Background,Mode=TwoWay}">
-
-        </Border>
+                Background="{Binding Background,Mode=TwoWay}"/>
+        <Button x:Name="ActualButton"
+                Height="{Binding ElementName=Total,Path=Height}"
+                Width="{Binding ElementName=Total,Path=Width}"
+                Opacity="0"
+                Grid.ZIndex="2"/>
+        <Border x:Name="FillAnimation"
+                BorderBrush="Transparent"
+                BorderThickness="0"
+                CornerRadius="{Binding CornerRadius,Mode=TwoWay}"
+                Background="{Binding AnimationFill}"
+                Opacity="0.3"
+                Width="0"/>
     </Grid>
 </UserControl>

@@ -1,5 +1,4 @@
-﻿using MinimalisticWPF.XCommand;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -20,6 +19,8 @@ namespace MinimalisticWPF
         {
             _buttonModel = new XButtonModel();
         }
+
+        #region 属性
 
         public SolidColorBrush FixedTransparent
         {
@@ -146,5 +147,7 @@ namespace MinimalisticWPF
                 }
             }
         }
+
+        #endregion
     }
 }

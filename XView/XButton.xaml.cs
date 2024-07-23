@@ -22,6 +22,28 @@ namespace MinimalisticWPF
             InitializeComponent();
         }
 
+        #region 属性
+
+        /// <summary>
+        /// XButton 的 ViewModel层
+        /// </summary>
+        public XButtonViewModel XButtonViewModel
+        {
+            get => ViewModel;
+        }
+
+        /// <summary>
+        /// 点击事件
+        /// </summary>
+        public event RoutedEventHandler Click
+        {
+            add => ActualButton.Click += value;
+            remove => ActualButton.Click -= value;
+        }
+
+        #endregion
+
+
         #region 依赖属性
 
         public string Text

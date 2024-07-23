@@ -25,7 +25,7 @@
     <!--View-->
     <Grid Height="{Binding ElementName=Total,Path=Height}"
           Width="{Binding ElementName=Total,Path=Width}"
-          PreviewMouseLeftButtonDown="WindowToDragMove">
+          MouseLeftButtonDown="WindowToDragMove">
         <TextBlock Text="{Binding Title}" 
                    FontSize="{Binding ElementName=Total,Path=ActualHeight,Converter={StaticResource HeightToFontSize}}" 
                    Foreground="{Binding TitleColor}"
