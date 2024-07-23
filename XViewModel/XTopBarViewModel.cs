@@ -10,20 +10,13 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
-    public class XTopBarViewModel : INotifyPropertyChanged
+    public class XTopBarViewModel : XViewModelBase
     {
         private XTopBarModel _topBarModel;
 
         public XTopBarViewModel()
         {
             _topBarModel = new XTopBarModel();
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public string Title

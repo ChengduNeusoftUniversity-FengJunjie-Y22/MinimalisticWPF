@@ -6,15 +6,21 @@
              xmlns:local="clr-namespace:MinimalisticWPF"
              mc:Ignorable="d" 
              Height="50" 
-             Width="200" 
-             x:Name="Total">
+             Width="200"
+             x:Name="Total"
+             Background="{Binding FixedTransparent,Mode=TwoWay}"
+             Foreground="{Binding FixedTransparent,Mode=TwoWay}"
+             BorderBrush="{Binding FixedTransparent,Mode=TwoWay}">
     <!--ViewModel-->
     <UserControl.DataContext>
         <local:XButtonViewModel x:Name="ViewModel"
                                 Text="XButton"
                                 TextColor="White"
                                 TextHoverColor="Cyan"
-                                Background="Transparent"/>
+                                Background="#1e1e1e"
+                                BorderBrush="White"
+                                BorderThickness="1"
+                                CornerRadius="5"/>
     </UserControl.DataContext>
 
     <!--Converter-->
@@ -25,11 +31,20 @@
     <!--View-->
     <Grid Height="{Binding ElementName=Total,Path=Height}"
           Width="{Binding ElementName=Total,Path=Width}">
-        <TextBlock Text="{Binding Text}"
+        <TextBlock x:Name="ActualText"
+                   Text="{Binding Text}"
                    Foreground="{Binding TextColor}"
                    FontSize="{Binding ElementName=Total,Path=ActualHeight,Converter={StaticResource HeightToFontSize}}"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Center"
-                   />
+                   Grid.ZIndex="3"/>
+        <Border x:Name="FixedBorder"
+                BorderBrush="{Binding BorderBrush,Mode=TwoWay}"
+                BorderThickness="{Binding BorderThickness,Mode=TwoWay}"
+                CornerRadius="{Binding CornerRadius,Mode=TwoWay}"
+                ClipToBounds="True"
+                Background="{Binding Background,Mode=TwoWay}">
+
+        </Border>
     </Grid>
 </UserControl>

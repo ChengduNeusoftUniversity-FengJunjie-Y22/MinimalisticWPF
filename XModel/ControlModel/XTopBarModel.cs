@@ -11,12 +11,12 @@ namespace MinimalisticWPF
     {
         public XTopBarModel() { }
 
-        public string Title { get; internal set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
 
-        public SolidColorBrush TitleColor { get; internal set; } = Brushes.Transparent;
+        public SolidColorBrush TitleColor { get; set; } = Brushes.Transparent;
 
-        public SolidColorBrush ControlColor { get; internal set; } = Brushes.Transparent;
+        public SolidColorBrush ControlColor { get; set; } = Brushes.Transparent;
 
-        public SolidColorBrush ControlHoverColor { get; internal set; } = Brushes.Transparent;
+        public SolidColorBrush ControlHoverColor { get; set; } = Brushes.Transparent;
     }
 }

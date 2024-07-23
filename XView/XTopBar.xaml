@@ -31,19 +31,24 @@
                    Foreground="{Binding TitleColor}"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Left" Margin="10,0,0,0"/>
-        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+        <StackPanel HorizontalAlignment="Right" 
+                    Orientation="Horizontal"
+                    Height="{Binding ElementName=Total,Path=Height}">
             <local:XButton Height="{Binding ElementName=Total,Path=Height}"
                            Width="{Binding ElementName=Total,Path=Height}"
                            PreviewMouseLeftButtonDown="WindowToMini"
-                           Text="-"/>
+                           Text="-"
+                           FixedBorderThickness="0"/>
             <local:XButton Height="{Binding ElementName=Total,Path=Height}"
                            Width="{Binding ElementName=Total,Path=Height}"
                            PreviewMouseLeftButtonDown="WindowToScale"
-                           Text="❒"/>
+                           Text="❒"
+                           FixedBorderThickness="0"/>
             <local:XButton Height="{Binding ElementName=Total,Path=Height}"
                            Width="{Binding ElementName=Total,Path=Height}"
                            PreviewMouseLeftButtonDown="WindowToClose"
-                           Text="×"/>
+                           Text="×"
+                           FixedBorderThickness="0"/>
         </StackPanel>
     </Grid>
 </UserControl>
