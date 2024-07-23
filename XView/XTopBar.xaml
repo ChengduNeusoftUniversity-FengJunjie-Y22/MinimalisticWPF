@@ -7,8 +7,7 @@
              mc:Ignorable="d" 
              Height="30" 
              Width="800"
-             x:Name="Total"
-             PreviewMouseLeftButtonDown="WindowToDragMove">
+             x:Name="Total">
     <!--Converter-->
     <UserControl.Resources>
         <local:XDoubleConverter Rate="0.571" x:Key="HeightToFontSize"/>
@@ -25,7 +24,8 @@
 
     <!--View-->
     <Grid Height="{Binding ElementName=Total,Path=Height}"
-          Width="{Binding ElementName=Total,Path=Width}">
+          Width="{Binding ElementName=Total,Path=Width}"
+          PreviewMouseLeftButtonDown="WindowToDragMove">
         <TextBlock Text="{Binding Title}" 
                    FontSize="{Binding ElementName=Total,Path=ActualHeight,Converter={StaticResource HeightToFontSize}}" 
                    Foreground="{Binding TitleColor}"

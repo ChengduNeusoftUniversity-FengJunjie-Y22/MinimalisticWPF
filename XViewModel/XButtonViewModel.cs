@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MinimalisticWPF.XCommand;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -13,7 +14,12 @@ namespace MinimalisticWPF
     {
         private XButtonModel _buttonModel;
 
-        public XButtonViewModel() { _buttonModel = new XButtonModel(); }
+        private SolidColorBrush TempColor { get; set; } = Brushes.Transparent;
+
+        public XButtonViewModel()
+        {
+            _buttonModel = new XButtonModel();
+        }
 
         public SolidColorBrush FixedTransparent
         {

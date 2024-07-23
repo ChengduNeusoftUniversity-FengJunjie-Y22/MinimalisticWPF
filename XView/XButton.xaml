@@ -10,7 +10,9 @@
              x:Name="Total"
              Background="{Binding FixedTransparent,Mode=TwoWay}"
              Foreground="{Binding FixedTransparent,Mode=TwoWay}"
-             BorderBrush="{Binding FixedTransparent,Mode=TwoWay}">
+             BorderBrush="{Binding FixedTransparent,Mode=TwoWay}"
+             >
+
     <!--ViewModel-->
     <UserControl.DataContext>
         <local:XButtonViewModel x:Name="ViewModel"
