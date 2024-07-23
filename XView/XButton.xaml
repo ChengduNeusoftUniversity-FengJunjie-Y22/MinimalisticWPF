@@ -23,6 +23,7 @@
                                 BorderBrush="White"
                                 BorderThickness="1"
                                 AnimationFill="Violet"
+                                HoverFill="White"
                                 CornerRadius="5"/>
     </UserControl.DataContext>
 
@@ -52,11 +53,18 @@
                 Width="{Binding ElementName=Total,Path=Width}"
                 Opacity="0"
                 Grid.ZIndex="2"/>
+        <Border x:Name="HoverBlock"
+                BorderBrush="Transparent"
+                BorderThickness="0"
+                CornerRadius="{Binding CornerRadius,Mode=TwoWay}"
+                Background="{Binding HoverFill,Mode=TwoWay}"
+                Opacity="0"
+                />
         <Border x:Name="FillAnimation"
                 BorderBrush="Transparent"
                 BorderThickness="0"
                 CornerRadius="{Binding CornerRadius,Mode=TwoWay}"
-                Background="{Binding AnimationFill}"
+                Background="{Binding AnimationFill,Mode=TwoWay}"
                 Opacity="0.3"
                 Width="0"/>
     </Grid>

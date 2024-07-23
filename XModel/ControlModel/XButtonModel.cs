@@ -28,6 +28,8 @@ namespace MinimalisticWPF
 
         public SolidColorBrush AnimationFill { get; set; } = Brushes.Transparent;
 
+        public SolidColorBrush HoverFill { get; set; } = Brushes.Transparent;
+
         public Thickness BorderThickness { get; set; } = new Thickness(1);
 
         public CornerRadius CornerRadius { get; set; } = new CornerRadius(5);

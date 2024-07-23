@@ -148,6 +148,19 @@ namespace MinimalisticWPF
             }
         }
 
+        public SolidColorBrush HoverFill
+        {
+            get => _buttonModel.HoverFill;
+            set
+            {
+                if (value != _buttonModel.HoverFill)
+                {
+                    _buttonModel.HoverFill = value;
+                    OnPropertyChanged(nameof(HoverFill));
+                }
+            }
+        }
+
         #endregion
     }
 }
