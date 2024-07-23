@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace MinimalisticWPF.XView
+namespace MinimalisticWPF
 {
     /// <summary>
     /// XLineChart.xaml 的交互逻辑

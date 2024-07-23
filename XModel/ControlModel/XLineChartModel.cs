@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MinimalisticWPF.XModel.ControlModel
+namespace MinimalisticWPF
 {
     internal class XLineChartModel
     {
