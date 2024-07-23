@@ -1,0 +1,49 @@
+﻿<UserControl x:Class="MinimalisticWPF.XTopBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MinimalisticWPF"
+             mc:Ignorable="d" 
+             Height="30" 
+             Width="800"
+             x:Name="Total"
+             PreviewMouseLeftButtonDown="WindowToDragMove">
+    <!--Converter-->
+    <UserControl.Resources>
+        <local:XDoubleConverter Rate="0.571" x:Key="HeightToFontSize"/>
+    </UserControl.Resources>
+
+    <!--ViewModel-->
+    <UserControl.DataContext>
+        <local:XTopBarViewModel x:Name="ViewModel"
+                                Title="XTopBar"
+                                TitleColor="White"
+                                ControlColor="White"
+                                ControlHoverColor="Red"/>
+    </UserControl.DataContext>
+
+    <!--View-->
+    <Grid Height="{Binding ElementName=Total,Path=Height}"
+          Width="{Binding ElementName=Total,Path=Width}">
+        <TextBlock Text="{Binding Title}" 
+                   FontSize="{Binding ElementName=Total,Path=ActualHeight,Converter={StaticResource HeightToFontSize}}" 
+                   Foreground="{Binding TitleColor}"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left" Margin="10,0,0,0"/>
+        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <local:XButton Height="{Binding ElementName=Total,Path=Height}"
+                           Width="{Binding ElementName=Total,Path=Height}"
+                           PreviewMouseLeftButtonDown="WindowToMini"
+                           Text="-"/>
+            <local:XButton Height="{Binding ElementName=Total,Path=Height}"
+                           Width="{Binding ElementName=Total,Path=Height}"
+                           PreviewMouseLeftButtonDown="WindowToScale"
+                           Text="❒"/>
+            <local:XButton Height="{Binding ElementName=Total,Path=Height}"
+                           Width="{Binding ElementName=Total,Path=Height}"
+                           PreviewMouseLeftButtonDown="WindowToClose"
+                           Text="×"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
