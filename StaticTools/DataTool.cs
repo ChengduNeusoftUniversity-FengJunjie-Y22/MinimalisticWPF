@@ -1,4 +1,7 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Media;
 
 namespace MinimalisticWPF
@@ -82,6 +85,74 @@ namespace MinimalisticWPF
             double result = Math.Truncate(value * multiplier) / multiplier;
 
             return result;
+        }
+
+        /// <summary>
+        /// 对字符串采用AES加密
+        /// </summary>
+        /// <param name="plaintext">原始字符串</param>
+        /// <param name="key">密钥</param>
+        /// <returns>string 加密字符串</returns>
+        public static string AES(string plaintext, string key)
+        {
+            byte[] encryptedBytes;
+            byte[] IV;
+
+            using (Aes aesAlg = Aes.Create())
+            {
+                aesAlg.Key = Encoding.UTF8.GetBytes(key);
+                aesAlg.GenerateIV();
+                IV = aesAlg.IV;
+
+                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+                using (MemoryStream msEncrypt = new MemoryStream())
+                {
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                        {
+                            swEncrypt.Write(plaintext);
+                        }
+                        encryptedBytes = msEncrypt.ToArray();
+                    }
+                }
+            }
+
+            return Convert.ToBase64String(IV) + "|" + Convert.ToBase64String(encryptedBytes);
+        }
+
+        /// <summary>
+        /// 对AES加密字符串解密
+        /// </summary>
+        /// <param name="ciphertext">加密字符串</param>
+        /// <param name="key">密钥</param>
+        /// <returns>string 解密字符串</returns>
+        public static string AESParse(string ciphertext, string key)
+        {
+            string[] parts = ciphertext.Split('|');
+            byte[] IV = Convert.FromBase64String(parts[0]);
+            byte[] cipherBytes = Convert.FromBase64String(parts[1]);
+            string plaintext = string.Empty;
+
+            using (Aes aesAlg = Aes.Create())
+            {
+                aesAlg.Key = Encoding.UTF8.GetBytes(key);
+                aesAlg.IV = IV;
+
+                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+                using (MemoryStream msDecrypt = new MemoryStream(cipherBytes))
+                {
+                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                        {
+                            plaintext = srDecrypt.ReadToEnd();
+                        }
+                    }
+                }
+            }
+
+            return plaintext;
         }
 
         /// <summary>

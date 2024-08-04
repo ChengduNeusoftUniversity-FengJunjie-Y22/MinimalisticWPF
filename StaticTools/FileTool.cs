@@ -20,10 +20,10 @@ namespace MinimalisticWPF
         /// 【序列化】，要求必须实现ISerializableObject接口
         /// </summary>
         /// <returns>元组，Item1表示是否成功序列化，Item2表示文本消息</returns>
-        public static (bool, string?) SerializeObject<T>(T target) where T : class, ISerializableObject
+        public static string? SerializeObject<T>(T target) where T : class, ISerializableObject
         {
-            bool resultA = false;
-            string? resultB = null;
+            string? result = null;
+
             SerializeModes mode = target.SerializeMode;
             try
             {
@@ -34,36 +34,29 @@ namespace MinimalisticWPF
                         using (StringWriter writer = new StringWriter())
                         {
                             xmlSerializer.Serialize(writer, target);
-                            resultB = writer.ToString();
+                            result = writer.ToString();
                         }
-                        resultA = true;
                         break;
 
                     case SerializeModes.Json:
                         string jsonString = JsonSerializer.Serialize(target, typeof(T));
-                        resultB = jsonString;
-                        resultA = true;
+                        result = jsonString;
                         break;
                 }
 
             }
-            catch (Exception ex)
-            {
-                resultA = false;
-                resultB = ex.Message;
-            }
+            catch { }
 
-            return (resultA, resultB);
+            return result;
         }
 
         /// <summary>
         /// 【反序列化】，要求必须实现ISerializableObject接口
         /// </summary>
         /// <returns>元组，Item1表示是否成功反序列化，Item2表示返回的实际对象</returns>
-        public static (bool, T?) DeSerializeObject<T>(string serializedData, SerializeModes mode) where T : class, ISerializableObject
+        public static T? DeSerializeObject<T>(string serializedData, SerializeModes mode) where T : class, ISerializableObject
         {
-            bool resultA = false;
-            T? resultB = null;
+            T? result = null;
 
             try
             {
@@ -73,77 +66,67 @@ namespace MinimalisticWPF
                         XmlSerializer xmlSerializer = new XmlSerializer(typeof(T));
                         using (StringReader reader = new StringReader(serializedData))
                         {
-                            resultB = (T)xmlSerializer.Deserialize(reader);
+                            result = (T)xmlSerializer.Deserialize(reader);
                         }
-                        resultA = true;
                         break;
 
                     case SerializeModes.Json:
-                        resultB = JsonSerializer.Deserialize<T>(serializedData);
-                        resultA = true;
+                        result = JsonSerializer.Deserialize<T>(serializedData);
                         break;
                 }
             }
-            catch (Exception ex)
-            {
-                resultA = false;
-                resultB = null;
-                MessageBox.Show(ex.Message);
-            }
+            catch { }
 
-            return (resultA, resultB);
+            return result;
         }
 
         /// <summary>
         /// 以【文件】形式存储序列化对象，具体位置取决于你为对象设置的绝对路径
         /// </summary>
         /// <returns>元组，Item1表示是否存储成功，Item2表示信息</returns>
-        public static (bool, string?) SaveObjectAsFile<T>(T target) where T : class, ISerializableObject
+        public static string? SaveObjectAsFile<T>(T target) where T : class, ISerializableObject
         {
             if (IsAbsolutePathValid(target.AbsolutePath))
             {
                 var data = SerializeObject(target);
-                if (data.Item1)
+                if (data != null)
                 {
                     try
                     {
-                        File.WriteAllText(target.AbsolutePath, data.Item2);
+                        File.WriteAllText(target.AbsolutePath, data);
+                        return target.AbsolutePath;
                     }
-                    catch { return (false, "⚠ 存储过程出现意外"); }
-                    return (true, target.AbsolutePath);
+                    catch { }
                 }
-                return (false, "⚠ 未能正确反序列化对象");
             }
-            else
-            {
-                return (false, $"⚠ 你在尝试使用一个无效的绝对路径【{target.AbsolutePath}】");
-            }
+
+            return null;
         }
 
         /// <summary>
         /// 以【绝对路径】读取存储的序列化文件
         /// </summary>
         /// <returns>元组，Item1表示是否读取成功，Item2表示实际对象</returns>
-        public static (bool, T?) ReadObjectFromFile<T>(string filePath, SerializeModes mode) where T : class, ISerializableObject
+        public static T? ReadObjectFromFile<T>(string filePath, SerializeModes mode) where T : class, ISerializableObject
         {
-            bool resultA = false;
-            T? resultB = null;
-            if (!IsAbsolutePathValid(filePath)) { return (resultA, resultB); }
-            try
+            T? result = null;
+
+            if (IsAbsolutePathValid(filePath))
             {
-                string data = File.ReadAllText(filePath);
-                var temp = DeSerializeObject<T>(data, mode);
-                if (temp.Item1)
+                try
                 {
-                    resultA = true;
-                    resultB = temp.Item2;
+                    string data = File.ReadAllText(filePath);
+                    var temp = DeSerializeObject<T>(data, mode);
+                    if (temp != null)
+                    {
+                        result = temp;
+                    }
+                    return result;
                 }
+                catch { }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-            return (resultA, resultB);
+
+            return result;
         }
 
         /// <summary>
