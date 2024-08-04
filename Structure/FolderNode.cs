@@ -34,15 +34,5 @@ namespace MinimalisticWPF
                 return result;
             }
         }
-
-        private List<string> Names = new List<string>();
-        private void UpwardSearch()
-        {
-            if (Father != null)
-            {
-                Names.Add(Father.Name);
-                Father.UpwardSearch();
-            }
-        }
     }
 }

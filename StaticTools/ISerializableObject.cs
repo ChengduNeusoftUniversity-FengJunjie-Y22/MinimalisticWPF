@@ -13,6 +13,6 @@
         /// <summary>
         /// 绝对路径
         /// </summary>
-        string AbsolutePath { get; }
+        string FileName { get; }
     }
 }

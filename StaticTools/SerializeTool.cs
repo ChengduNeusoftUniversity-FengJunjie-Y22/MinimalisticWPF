@@ -12,9 +12,9 @@ public enum SerializeModes
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 【文件工具】提供系列静态的方法，用于快速完成IO操作
+    /// 【文件工具】提供系列静态的方法，用于快速完成文件读写
     /// </summary>
-    public static class FileTool
+    public static class SerializeTool
     {
         /// <summary>
         /// 【序列化】，要求必须实现ISerializableObject接口
@@ -81,26 +81,48 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 以【文件】形式存储序列化对象，具体位置取决于你为对象设置的绝对路径
+        /// 将对象存放在指定的路径（ 已知绝对路径时 ）
         /// </summary>
-        /// <returns>元组，Item1表示是否存储成功，Item2表示信息</returns>
-        public static string? SaveObjectAsFile<T>(T target) where T : class, ISerializableObject
+        public static bool SaveObjectAsFile<T>(T target, string AbsolutePath) where T : class, ISerializableObject
         {
-            if (IsAbsolutePathValid(target.AbsolutePath))
+            if (IsAbsolutePathValid(AbsolutePath))
             {
                 var data = SerializeObject(target);
                 if (data != null)
                 {
                     try
                     {
-                        File.WriteAllText(target.AbsolutePath, data);
-                        return target.AbsolutePath;
+                        File.WriteAllText(AbsolutePath, data);
+                        return true;
                     }
                     catch { }
                 }
             }
 
-            return null;
+            return false;
+        }
+
+        /// <summary>
+        /// 将对象存放在指定的路径（ 需要动态获取绝对路径时 ）
+        /// </summary>
+        public static bool SaveObjectAsFile<T>(T target, FolderNode folder) where T : class, ISerializableObject
+        {
+            string path = GetPath(target, folder);
+            if (IsAbsolutePathValid(path))
+            {
+                var data = SerializeObject(target);
+                if (data != null)
+                {
+                    try
+                    {
+                        File.WriteAllText(path, data);
+                        return true;
+                    }
+                    catch { }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -148,14 +170,14 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 依据【文件名】【序列化类型】【程序位置】，动态生成文件的绝对路径
+        /// 生成路径
         /// </summary>
         /// <returns>string</returns>
-        public static string GenerateFilePath(string? floderName, string fileName, SerializeModes mode)
+        public static string GetPath(ISerializableObject target, FolderNode folder)
         {
-            string SuffixName = mode == SerializeModes.Xml ? ".xml" : ".json";
-            string FloderName = floderName == null ? AppDomain.CurrentDomain.BaseDirectory : floderName;
-            return Path.Combine(FloderName, fileName + SuffixName);
+            string SuffixName = target.SerializeMode == SerializeModes.Xml ? ".xml" : ".json";
+            string FloderName = folder.Path;
+            return Path.Combine(FloderName, target.FileName + SuffixName);
         }
     }
 }
