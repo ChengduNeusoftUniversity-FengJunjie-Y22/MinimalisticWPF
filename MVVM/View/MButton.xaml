@@ -31,8 +31,6 @@
                 BorderThickness="1"
                 BorderBrush="{Binding FixedTransparent}"
                 ClipToBounds="True"
-                PreviewMouseLeftButtonDown="BackgroundBorder_PreviewMouseLeftButtonDown"
-                PreviewMouseLeftButtonUp="BackgroundBorder_PreviewMouseLeftButtonUp"
                 MouseEnter="BackgroundBorder_MouseEnter"
                 MouseLeave="BackgroundBorder_MouseLeave"
                 Grid.ZIndex="0"/>

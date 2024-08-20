@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Animation;
 
 namespace MinimalisticWPF
@@ -20,14 +21,10 @@ namespace MinimalisticWPF
 
         private StateMachine<MButtonViewModel> Machine { get; set; }
 
-        private void BackgroundBorder_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        public event MouseButtonEventHandler? Click
         {
-
-        }
-
-        private void BackgroundBorder_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-
+            add { BackgroundBorder.PreviewMouseLeftButtonDown += value; }
+            remove { BackgroundBorder.PreviewMouseLeftButtonDown -= value; }
         }
 
         private void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
