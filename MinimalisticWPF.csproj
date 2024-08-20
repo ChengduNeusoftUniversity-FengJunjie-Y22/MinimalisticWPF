@@ -17,11 +17,10 @@
     <IncludeSymbols>False</IncludeSymbols>
     <Description>A library designed to improve the efficiency of WPF development</Description>
     <RepositoryType>git</RepositoryType>
-    <Version>1.0.5</Version>
+    <Version>1.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.122" />
     <PackageReference Include="NetCore5.0.Microsoft.Expression.Drawing" Version="1.0.0" />
   </ItemGroup>
 

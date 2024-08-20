@@ -1,0 +1,47 @@
+﻿<UserControl x:Class="MinimalisticWPF.MButton"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MinimalisticWPF"
+             mc:Ignorable="d" 
+             x:Name="Total"
+             Height="{Binding Height,Mode=TwoWay}"
+             Width="{Binding Width,Mode=TwoWay}"
+             Background="{Binding FixedTransparent,Mode=TwoWay}">
+
+    <UserControl.DataContext>
+        <local:MButtonViewModel x:Name="ViewModel"
+                                ActualBackground="#1e1e1e"/>
+    </UserControl.DataContext>
+
+    <Grid Background="{Binding FixedTransparent,Mode=TwoWay}"
+          Width="{Binding ElementName=Total,Path=Width}"
+          Height="{Binding ElementName=Total,Path=Height}">
+        <Border x:Name="FixedBorder"
+                Background="{Binding FixedTransparent}"
+                CornerRadius="{Binding CornerRadius}"
+                BorderThickness="{Binding FixedBorderThickness}"
+                BorderBrush="{Binding FixedBorderBrush}"
+                ClipToBounds="True"/>
+        <Border x:Name="BackgroundBorder"
+                Opacity="{Binding ActualBackgroundOpacity}"
+                Background="{Binding ActualBackground}"
+                CornerRadius="{Binding CornerRadius}"
+                BorderThickness="1"
+                BorderBrush="{Binding FixedTransparent}"
+                ClipToBounds="True"
+                PreviewMouseLeftButtonDown="BackgroundBorder_PreviewMouseLeftButtonDown"
+                PreviewMouseLeftButtonUp="BackgroundBorder_PreviewMouseLeftButtonUp"
+                MouseEnter="BackgroundBorder_MouseEnter"
+                MouseLeave="BackgroundBorder_MouseLeave"
+                Grid.ZIndex="0"/>
+        <TextBlock x:Name="ActualText"
+                   Text="{Binding Text}"
+                   Foreground="{Binding Foreground}"
+                   FontSize="{Binding FontSize}"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Center"
+                   IsHitTestVisible="False"/>
+    </Grid>
+</UserControl>

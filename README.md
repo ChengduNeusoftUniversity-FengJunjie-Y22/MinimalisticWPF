@@ -1,11 +1,14 @@
 ﻿# MinimalisticWPF
-### A toolkit designed to quickly build WPF projects. 
-### Some functionality that may need to be reused a lot is encapsulated.
-### Provides a few minimalistic user controls, and you can adjust their appearance and behavior to some extent by setting properties.
-### ☆ You can view the documentation by selecting the following path （ Currently only Chinese documents are available ）
+## 核心功能
+- StateMachine 状态机
+- M-UserControls 简易风格用户控件
+## 支持框架
+- [.NET6.0-windows] 
+- [.NET8.0-windows]
+## 获取
 - [github][1]
-- [gitee][2]
+- [nuget][2]
 
 [1]: https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF
-[2]: https://gitee.com/CNU-FJj-Y22/MinimalisticWPF
+[2]: https://www.nuget.org/packages/MinimalisticWPF/
 
