@@ -14,14 +14,16 @@ using System.Collections;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 状态机,基于对ViewModel属性的平滑变动,加载过渡效果
+    /// 状态机
     /// </summary>
-    /// <typeparam name="T">ViewModel的具体类型</typeparam>
+    /// <typeparam name="T">被状态机控制的对象的实际类型</typeparam>
     public class StateMachine<T> where T : class
     {
-        public StateMachine(T viewModel, params State[] states)
+        /// <param name="target">被状态机控制的实例对象</param>
+        /// <param name="states">所有该对象可能具备的状态</param>
+        public StateMachine(T target, params State[] states)
         {
-            ViewModel = viewModel;
+            Target = target;
             Type type = typeof(T);
             Properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
             foreach (var state in states)
@@ -32,14 +34,14 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 控件ViewModel层的所有 [ public double ] 属性
+        /// 反射 T 获取的全部Public属性
         /// </summary>
         public PropertyInfo[] Properties { get; internal set; }
 
         /// <summary>
-        /// 控件的ViewModel层
+        /// T 接管的实例对象
         /// </summary>
-        public T ViewModel { get; internal set; }
+        public T Target { get; internal set; }
 
         /// <summary>
         /// 初始化时添加的状态信息集合
@@ -85,9 +87,39 @@ namespace MinimalisticWPF
         /// </summary>
         public double FrameDuration { get => 1000.0 / FrameRate; }
 
+        /// <summary>
+        /// 全局受保护的属性
+        /// </summary>
+        public List<string> GlobalProtectedProperty { get; internal set; } = new List<string>();
+
         private bool IsInterrupted { get; set; } = false;
 
         private Tuple<string, double, bool>? TempTransfer { get; set; }
+
+        /// <summary>
+        /// 保护属性不受状态机影响
+        /// </summary>
+        /// <param name="propertyNames">若干属性名</param>
+        public void Protect(params string[] propertyNames)
+        {
+            foreach (var propertyName in propertyNames)
+            {
+                var result = GlobalProtectedProperty.FirstOrDefault(x => x == propertyName);
+                if (result == null) { GlobalProtectedProperty.Add(propertyName); }
+            }
+        }
+
+        /// <summary>
+        /// 解除属性的保护态
+        /// </summary>
+        /// <param name="propertyNames">若干属性名</param>
+        public void Unprotect(params string[] propertyNames)
+        {
+            foreach (var propertyName in propertyNames)
+            {
+                GlobalProtectedProperty.Remove(propertyName);
+            }
+        }
 
         /// <summary>
         /// 转移至目标状态
@@ -98,8 +130,9 @@ namespace MinimalisticWPF
         /// <param name="isLast">是否视为最后一个转移操作</param>
         /// <param name="waitTime">延时启动</param>
         /// <param name="isUnique">是否在队列中保持唯一</param>
+        /// <param name="protectNames">局部保护属性不受状态机影响</param>
         /// <exception cref="ArgumentException"></exception>
-        public void Transfer(string stateName, double transitionTime, bool isQueue = true, bool isLast = false, bool isUnique = false, double waitTime = 0.008)
+        public void Transfer(string stateName, double transitionTime, bool isQueue = true, bool isLast = false, bool isUnique = false, double waitTime = 0.008, ICollection<string>? protectNames = default)
         {
             if (isLast) { Transfers.Clear(); }
 
@@ -108,7 +141,7 @@ namespace MinimalisticWPF
                 IsInterrupted = true;
                 TempTransfer = Tuple.Create(stateName, transitionTime, true);
                 FrameCount = 0;
-                DoubleAnimation(stateName, transitionTime, waitTime);
+                DoubleAnimation(stateName, transitionTime, waitTime, protectNames);
                 return;
             }
 
@@ -125,28 +158,32 @@ namespace MinimalisticWPF
                 }
                 return;
             }
-            DoubleAnimation(stateName, transitionTime, waitTime);
+            DoubleAnimation(stateName, transitionTime, waitTime, protectNames);
         }
 
-        private async void DoubleAnimation(string stateName, double transitionTime, double waitTime)
+        private async void DoubleAnimation(string stateName, double transitionTime, double waitTime, ICollection<string>? protectNames)
         {
             IsTransferRunning = true;
+
             await Task.Delay((int)(waitTime * 1000));
+            //意义:例如在MouseLeave事件中,鼠标若移动过快,可能无法正确执行过渡效果,因此需要设置一个前置延迟
 
             var targetState = States.FirstOrDefault(x => x.StateName == stateName);
             if (targetState == null)
             {
                 throw new ArgumentException($"Failed to find state named [ {stateName} ] from controller");
-                //异常:不存在指定的State
+                //异常:无法根据名称找到指定的State
             }
 
             List<Tuple<PropertyInfo, double>> targets = new List<Tuple<PropertyInfo, double>>();
             //预加载:[ 需要平滑过渡的属性 ]+[ 新值相对于旧值的变化量 ]
             for (int i = 0; i < Properties.Length; i++)
             {
-                if (Properties[i].PropertyType == typeof(double))
+                if (Properties[i].PropertyType == typeof(double)
+                    && protectNames?.FirstOrDefault(x => x == Properties[i].Name) == null
+                    && GlobalProtectedProperty.FirstOrDefault(x => x == Properties[i].Name) == null)
                 {
-                    double now = (double)Properties[i].GetValue(ViewModel);
+                    double now = (double)Properties[i].GetValue(Target);
                     double target = targetState[Properties[i].Name];
                     if (now != target)
                     {
@@ -155,12 +192,14 @@ namespace MinimalisticWPF
                 }
             }
 
+            var deltaTime = (int)FrameDuration;
+            //每一帧持续的时间
+
             int frameCount = (int)(transitionTime / (FrameDuration / 1000));
             //单个属性的渐变流程所需要的总帧数
 
             List<List<Tuple<PropertyInfo, double>>> allFrames = new List<List<Tuple<PropertyInfo, double>>>();
-            //所有帧(未排序)
-
+            //预加载:[ 所有待执行的属性变化帧 ]
             for (int i = 0; i < targets.Count; i++)
             {
                 allFrames.Add(new List<Tuple<PropertyInfo, double>>());
@@ -168,7 +207,7 @@ namespace MinimalisticWPF
                 double delta = targets[i].Item2 / frameCount;
                 //每帧变化的量
 
-                double currentValue = (double)targets[i].Item1.GetValue(ViewModel);
+                double currentValue = (double)targets[i].Item1.GetValue(Target);
                 //当前值
 
                 for (int j = 0; j < frameCount; j++)
@@ -178,36 +217,23 @@ namespace MinimalisticWPF
                     FrameCount++;
                 }
             }
+            if (allFrames.Count == 0) { return; }
 
-            if (allFrames.Count == 0)
-            {
-                return;
-            }
-
-            var deltaTime = (int)FrameDuration;
-
+            //执行计算出的每一帧变化
             for (int i = 0; i < allFrames[0].Count; i++)
             {
                 for (int j = 0; j < allFrames.Count; j++)
                 {
                     var result = allFrames[j][i];
-                    ApplyPropertyChanging(result.Item1, result.Item2);
+                    result.Item1.SetValue(Target, result.Item2);
                 }
                 await Task.Delay(deltaTime);
-                //MessageBox.Show("延时  " + deltaTime.ToString());
                 if (IsInterrupted) { break; }
             }
 
             IsInterrupted = false;
             IsTransferRunning = false;
             if (FrameCount != 0) { FrameCount = 0; }
-        }
-
-        //[疑问]这些步骤如果直接放在Transfer应用帧for循环中,则连续两次Transfer时,只有第一次Transfer能成功加载过渡效果
-        private void ApplyPropertyChanging(PropertyInfo target, double newValue)
-        {
-            target.SetValue(ViewModel, newValue);
-            FrameCount--;
         }
     }
 }

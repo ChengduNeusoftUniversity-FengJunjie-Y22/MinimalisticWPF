@@ -9,10 +9,18 @@ using System.Threading.Tasks;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 使得一个控件支持根据添加的条件,自动应用状态机的状态切换功能
+    /// 可设置条件组以自动转移状态的
     /// </summary>
-    public interface IConditionalTransfer
+    public interface IConditionalTransfer<T> where T : class
     {
+        /// <summary>
+        /// 状态机
+        /// </summary>
+        StateMachine<T>? Machine { get; set; }
 
+        /// <summary>
+        /// 通知状态机切换状态
+        /// </summary>
+        void SendMessage();
     }
 }

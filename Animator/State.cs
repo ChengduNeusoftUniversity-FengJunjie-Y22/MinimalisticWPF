@@ -11,23 +11,21 @@ using System.Windows;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 表示ViewModel的一个状态
+    /// 表示Target的一个状态
     /// </summary>
     public class State
     {
-        public State() { }
-
-        public State(string stateName, object viewModel)
+        public State(string stateName, object Target)
         {
             StateName = stateName;
 
-            Type type = viewModel.GetType();
+            Type type = Target.GetType();
             PropertyInfo[] Properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
             foreach (PropertyInfo propertyInfo in Properties)
             {
                 if (propertyInfo.PropertyType == typeof(double))
                 {
-                    DoubleValues.Add(propertyInfo.Name, (double)propertyInfo.GetValue(viewModel));
+                    DoubleValues.Add(propertyInfo.Name, (double)propertyInfo.GetValue(Target));
                 }
             }
         }

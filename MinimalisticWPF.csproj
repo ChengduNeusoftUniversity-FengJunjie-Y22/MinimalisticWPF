@@ -1,34 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-	<NoWarn>1591</NoWarn>
-	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-	<TargetFrameworks>net6.0-windows;net8.0-windows</TargetFrameworks>
-    <Nullable>enable</Nullable>
-    <UseWPF>true</UseWPF>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>MinimalisticWPF</Title>
-    <Copyright></Copyright>
-    <PackageProjectUrl>https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF</PackageProjectUrl>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF</RepositoryUrl>
-    <NeutralLanguage>zh-CN</NeutralLanguage>
-    <IncludeSymbols>False</IncludeSymbols>
-    <Description>A library designed to improve the efficiency of WPF development</Description>
-    <RepositoryType>git</RepositoryType>
-    <Version>1.2.0</Version>
-  </PropertyGroup>
+	<PropertyGroup>
+		<NoWarn>1591</NoWarn>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<TargetFrameworks>net6.0-windows;net8.0-windows</TargetFrameworks>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Title>MinimalisticWPF</Title>
+		<Copyright></Copyright>
+		<PackageProjectUrl>https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF</RepositoryUrl>
+		<NeutralLanguage>zh-CN</NeutralLanguage>
+		<IncludeSymbols>False</IncludeSymbols>
+		<Description>A library designed to improve the efficiency of WPF development</Description>
+		<RepositoryType>git</RepositoryType>
+		<Version>1.2.0</Version>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="NetCore5.0.Microsoft.Expression.Drawing" Version="1.0.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="NetCore5.0.Microsoft.Expression.Drawing" Version="1.0.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Include="README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
 </Project>

@@ -10,7 +10,7 @@ using System.Xml.Linq;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// ViewModel状态信息的合集
+    /// 状态合集
     /// </summary>
     public class StateCollection : ICollection<State>
     {
