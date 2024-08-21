@@ -31,6 +31,7 @@
                 BorderThickness="1"
                 BorderBrush="{Binding FixedTransparent}"
                 ClipToBounds="True"
+                Focusable="True"
                 MouseEnter="BackgroundBorder_MouseEnter"
                 MouseLeave="BackgroundBorder_MouseLeave"
                 Grid.ZIndex="0"/>

@@ -1,11 +1,11 @@
 ﻿# MinimalisticWPF
-## 核心功能
-- StateMachine 状态机
-- M-UserControls 简易风格用户控件
-## 支持框架
+## Target
+- Like Unity3D , use a state machine to control the appearance of a widget , especially in MVVM design mode
+- Implement minimalistic user controls to quickly build small personal projects and these user controls use state machines to load animations
+## Framework
 - [.NET6.0-windows] 
 - [.NET8.0-windows]
-## 获取
+## Get
 - [github][1]
 - [nuget][2]
 

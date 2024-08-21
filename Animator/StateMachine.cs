@@ -9,6 +9,7 @@ using System.Windows;
 using System.ComponentModel;
 using System.Data;
 using System.Windows.Threading;
+using System.Collections;
 
 namespace MinimalisticWPF
 {
@@ -16,12 +17,12 @@ namespace MinimalisticWPF
     /// 状态机,基于对ViewModel属性的平滑变动,加载过渡效果
     /// </summary>
     /// <typeparam name="T">ViewModel的具体类型</typeparam>
-    public class StateMachine<T> where T : StateViewModelBase
+    public class StateMachine<T> where T : class
     {
         public StateMachine(T viewModel, params State[] states)
         {
             ViewModel = viewModel;
-            Type type = ViewModel.GetType();
+            Type type = typeof(T);
             Properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
             foreach (var state in states)
             {
@@ -66,8 +67,7 @@ namespace MinimalisticWPF
             {
                 _framecount = value >= 0 ? value : 0;
                 IsTransferRunning = value > 0 ? true : false;
-                ProtectedState = value > 0 ? ProtectedState : string.Empty;
-                if (_framecount == 0 && Transfers.Count > 0)
+                if (_framecount == 0 && Transfers.Count > 0 && !IsInterrupted)
                 {
                     var temp = Transfers.Dequeue();
                     Transfer(temp.Item1, temp.Item2);
@@ -85,33 +85,60 @@ namespace MinimalisticWPF
         /// </summary>
         public double FrameDuration { get => 1000.0 / FrameRate; }
 
-        public string ProtectedState { get; set; } = string.Empty;
+        private bool IsInterrupted { get; set; } = false;
+
+        private Tuple<string, double, bool>? TempTransfer { get; set; }
 
         /// <summary>
-        /// 转移至下一个状态
+        /// 转移至目标状态
         /// </summary>
-        /// <param name="stateName">状态的名称</param>
-        /// <param name="transitionTime">过渡持续时间</param>
+        /// <param name="stateName">状态名称</param>
+        /// <param name="transitionTime">过渡时间</param>
+        /// <param name="isQueue">是否排队</param>
+        /// <param name="isLast">是否视为最后一个转移操作</param>
+        /// <param name="waitTime">延时启动</param>
+        /// <param name="isUnique">是否在队列中保持唯一</param>
         /// <exception cref="ArgumentException"></exception>
-        public async void Transfer(string stateName, double transitionTime)
+        public void Transfer(string stateName, double transitionTime, bool isQueue = true, bool isLast = false, bool isUnique = false, double waitTime = 0.008)
         {
-            if (IsTransferRunning)
+            if (isLast) { Transfers.Clear(); }
+
+            if (!isQueue && IsTransferRunning)
             {
-                if (stateName != ProtectedState) { Transfers.Enqueue(Tuple.Create(stateName, transitionTime)); }
+                IsInterrupted = true;
+                TempTransfer = Tuple.Create(stateName, transitionTime, true);
+                FrameCount = 0;
+                DoubleAnimation(stateName, transitionTime, waitTime);
                 return;
             }
-            //连续调用Transfer时,需要排队执行
+
+            if (IsTransferRunning)
+            {
+                if (!isUnique)
+                {
+                    Transfers.Enqueue(Tuple.Create(stateName, transitionTime));
+                }
+                else
+                {
+                    var target = Transfers.FirstOrDefault(x => x.Item1 == stateName);
+                    if (target == null) { Transfers.Enqueue(Tuple.Create(stateName, transitionTime)); }
+                }
+                return;
+            }
+            DoubleAnimation(stateName, transitionTime, waitTime);
+        }
+
+        private async void DoubleAnimation(string stateName, double transitionTime, double waitTime)
+        {
+            IsTransferRunning = true;
+            await Task.Delay((int)(waitTime * 1000));
 
             var targetState = States.FirstOrDefault(x => x.StateName == stateName);
-            //寻找到指定名称的State
-
             if (targetState == null)
             {
                 throw new ArgumentException($"Failed to find state named [ {stateName} ] from controller");
                 //异常:不存在指定的State
             }
-
-            ProtectedState = targetState.StateName;
 
             List<Tuple<PropertyInfo, double>> targets = new List<Tuple<PropertyInfo, double>>();
             //预加载:[ 需要平滑过渡的属性 ]+[ 新值相对于旧值的变化量 ]
@@ -167,14 +194,19 @@ namespace MinimalisticWPF
                     ApplyPropertyChanging(result.Item1, result.Item2);
                 }
                 await Task.Delay(deltaTime);
+                //MessageBox.Show("延时  " + deltaTime.ToString());
+                if (IsInterrupted) { break; }
             }
+
+            IsInterrupted = false;
+            IsTransferRunning = false;
+            if (FrameCount != 0) { FrameCount = 0; }
         }
 
+        //[疑问]这些步骤如果直接放在Transfer应用帧for循环中,则连续两次Transfer时,只有第一次Transfer能成功加载过渡效果
         private void ApplyPropertyChanging(PropertyInfo target, double newValue)
         {
             target.SetValue(ViewModel, newValue);
-            //设置属性的新值
-
             FrameCount--;
         }
     }
