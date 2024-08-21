@@ -11,7 +11,7 @@ namespace MinimalisticWPF
     /// <summary>
     /// 可设置条件组以自动转移状态的
     /// </summary>
-    public interface IConditionalTransfer<T> where T : class
+    public interface IConditionalTransfer<T> where T : INotifyPropertyChanged
     {
         /// <summary>
         /// 状态机

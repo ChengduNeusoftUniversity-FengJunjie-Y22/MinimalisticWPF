@@ -11,7 +11,7 @@ namespace MinimalisticWPF
     /// <summary>
     /// 可用StateMachine更改当前State的ViewModel,且支持状态机的条件切换功能
     /// </summary>
-    public abstract class StateViewModelBase<T> : INotifyPropertyChanged, IConditionalTransfer<T> where T : class
+    public abstract class StateViewModelBase<T> : INotifyPropertyChanged, IConditionalTransfer<T> where T : INotifyPropertyChanged
     {
         public StateMachine<T>? Machine { get; set; }
 
