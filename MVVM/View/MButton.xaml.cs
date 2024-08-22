@@ -7,7 +7,7 @@ namespace MinimalisticWPF
 {
     public partial class MButton : UserControl
     {
-        private StateMachine<MButtonViewModel> Machine { get; set; }
+        private StateMachine Machine { get; set; }
 
         static MButtonViewModel MO = new MButtonViewModel()
         {
@@ -21,7 +21,7 @@ namespace MinimalisticWPF
             State Source = new State("default", ViewModel);
             State MouseOver = new State("mouseover", MO);
 
-            Machine = new StateMachine<MButtonViewModel>(ViewModel, Source, MouseOver);
+            Machine = new StateMachine(ViewModel, Source, MouseOver);
             ViewModel.Machine = Machine;
         }
 
@@ -31,14 +31,14 @@ namespace MinimalisticWPF
             remove { BackgroundBorder.PreviewMouseLeftButtonDown -= value; }
         }
 
-        private void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        public void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            Machine.Transfer("mouseover", 0.35, isQueue: false, isLast: true);
+            Machine.Transfer("mouseover", 0.35);
         }
 
-        private void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        public void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            Machine.Transfer("default", 0.15, isQueue: false, isLast: true);
+            Machine.Transfer("default", 0.15);
         }
     }
 }

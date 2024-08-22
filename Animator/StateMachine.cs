@@ -11,6 +11,8 @@ using System.Data;
 using System.Windows.Threading;
 using System.Collections;
 using System.Windows.Controls;
+using System.Security.Cryptography.X509Certificates;
+using System.Windows.Automation;
 
 namespace MinimalisticWPF
 {
@@ -18,42 +20,78 @@ namespace MinimalisticWPF
     /// 状态机
     /// </summary>
     /// <typeparam name="T">被状态机控制的对象的实际类型</typeparam>
-    public class StateMachine<T> where T : INotifyPropertyChanged
+    public class StateMachine
     {
-        /// <param name="viewModel">被状态机控制的实例对象</param>
+        /// <param name="viewModel">受状态机控制的实例对象</param>
         /// <param name="states">所有该对象可能具备的状态</param>
         /// <exception cref="ArgumentException"></exception>
-        public StateMachine(T viewModel, params State[] states)
+        internal StateMachine(object viewModel, params State[] states)
         {
-            ViewModel = viewModel;
-            Type type = typeof(T);
-            Properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            Target = viewModel;
+            TargetType = viewModel.GetType();
+
+            Properties = TargetType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                   .Where(x => x.CanWrite && x.CanRead)
+                                   .ToArray();//筛选可用属性
+
+            DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double))
+                                         .ToArray();//筛选Double属性
+
+            DependencyProperties = TargetType.GetProperties(BindingFlags.Public | BindingFlags.Static)
+                                             .Where(x => x.PropertyType == typeof(DependencyProperty))
+                                             .ToArray();//筛选DependencyProperty
+
             foreach (var state in states)
             {
                 var temp = States.FirstOrDefault(x => x.StateName == state.StateName);
-                if (temp == null) { States.Add(state); }
-            }
+                if (temp == null) States.Add(state);
+                else throw new ArgumentException($"A state named [ {state.StateName} ] already exists in the collection.Modify the collection to ensure that the state name is unique");
+            }//存储不重名的State
+
+            var DCProperty = Properties.FirstOrDefault(x => x.Name == "DataContext");
+            IConditions = DCProperty == null ? viewModel as IConditionalTransfer : DCProperty.GetValue(Target) as IConditionalTransfer;
+            //则获取其中的Conditional模块
         }
 
         /// <summary>
-        /// 反射 T 获取的全部Public属性
+        /// Public属性
         /// </summary>
         public PropertyInfo[] Properties { get; internal set; }
 
         /// <summary>
-        /// T 接管的实例对象
+        /// Double属性
         /// </summary>
-        public T ViewModel { get; internal set; }
+        public PropertyInfo[] DoubleProperties { get; internal set; }
 
         /// <summary>
-        /// 初始化时添加的状态信息集合
+        /// Dependency属性
+        /// </summary>
+        public PropertyInfo[] DependencyProperties { get; internal set; }
+
+        /// <summary>
+        /// 受状态机控制的对象
+        /// </summary>
+        public object Target { get; internal set; }
+
+        /// <summary>
+        /// 对象的实际类型
+        /// </summary>
+        public Type TargetType { get; internal set; }
+
+        /// <summary>
+        /// 条件组
+        /// </summary>
+        public IConditionalTransfer? IConditions { get; internal set; }
+
+        /// <summary>
+        /// 状态集合
         /// </summary>
         public StateCollection States { get; set; } = new StateCollection();
 
         /// <summary>
         /// 排队处理连续申请的Transfer操作
         /// </summary>
-        public Queue<Tuple<string, double>> Transfers { get; internal set; } = new Queue<Tuple<string, double>>();
+        internal Queue<Tuple<string, double>> Transfers { get; set; } = new Queue<Tuple<string, double>>();
 
         /// <summary>
         /// 是否处于过渡过程中
@@ -84,6 +122,9 @@ namespace MinimalisticWPF
         /// </summary>
         internal int FrameRate { get; set; } = 500;
 
+        /// <summary>
+        /// 默认的过渡帧率
+        /// </summary>
         public int DefaultFrameRate { get; set; } = 500;
 
         /// <summary>
@@ -99,6 +140,8 @@ namespace MinimalisticWPF
         private bool IsInterrupted { get; set; } = false;
 
         private Tuple<string, double, bool>? TempTransfer { get; set; }
+
+        private bool IsConditionLocked { get; set; } = false;
 
         /// <summary>
         /// 保护属性不受状态机影响
@@ -137,7 +180,7 @@ namespace MinimalisticWPF
         /// <param name="isUnique">是否在队列中保持唯一</param>
         /// <param name="protectNames">局部保护属性不受状态机影响</param>
         /// <exception cref="ArgumentException"></exception>
-        public void Transfer(string stateName, double transitionTime, bool isQueue = true, bool isLast = false, bool isUnique = false, int? frameRate = null, double waitTime = 0.008, ICollection<string>? protectNames = default)
+        public void Transfer(string stateName, double transitionTime, bool isQueue = false, bool isLast = true, bool isUnique = false, int? frameRate = default, double waitTime = 0.008, ICollection<string>? protectNames = default)
         {
             if (isLast) { Transfers.Clear(); }
 
@@ -166,6 +209,91 @@ namespace MinimalisticWPF
             DoubleAnimation(stateName, transitionTime, waitTime, frameRate, protectNames);
         }
 
+        /// <summary>
+        /// 驱动状态机检查条件模块,并自行判断是否切换状态
+        /// </summary>
+        public void LoadingConditions(string propertyName)
+        {
+            if (IConditions != null && !IsConditionLocked)
+            {
+                IsConditionLocked = true;
+
+                StateVector[] targetConditions = IConditions.Conditions.Where(x => x.Conditions.Contains(propertyName)).ToArray();
+
+
+            }
+        }
+
+        /// <summary>
+        /// 创建状态机
+        /// </summary>
+        /// <param name="targetObj">需要应用状态机的实例</param>
+        public static StateMachine Creat(object targetObj)
+        {
+            StateMachine result = new StateMachine(targetObj);
+            return result;
+        }
+
+        /// <summary>
+        /// 设置状态集
+        /// </summary>
+        public StateMachine SetStates(params State[] states)
+        {
+            States.Clear();
+            foreach (var state in states)
+            {
+                var temp = States.FirstOrDefault(x => x.StateName == state.StateName);
+                if (temp == null) States.Add(state);
+                else throw new ArgumentException($"A state named [ {state.StateName} ] already exists in the collection.Modify the collection to ensure that the state name is unique");
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// 添加若干条件
+        /// </summary>
+        public StateMachine AddConditions(params StateVector[] conditionGroups)
+        {
+            if (IConditions != null)
+            {
+                foreach (var condition in conditionGroups)
+                {
+                    if (IConditions.Conditions.FirstOrDefault(x => x.Name == condition.Name) == null)
+                    {
+                        IConditions.Conditions.Add(condition);
+                    }
+                }
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// 移除若干指定名称的条件
+        /// </summary>
+        public StateMachine RemoveConditions(params string[] conditionGroupNames)
+        {
+            if (IConditions != null)
+            {
+                foreach (var condition in conditionGroupNames)
+                {
+                    IConditions.Conditions.RemoveAll(x => x.Name == condition);
+                }
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// 清空条件
+        /// </summary>
+        public StateMachine ClearConditions(params string[] conditionGroupNames)
+        {
+            if (IConditions != null)
+            {
+                IConditions.Conditions.Clear();
+            }
+            return this;
+        }
+
         private async void DoubleAnimation(string stateName, double transitionTime, double waitTime, int? frameRate, ICollection<string>? protectNames)
         {
             IsTransferRunning = true;
@@ -178,22 +306,20 @@ namespace MinimalisticWPF
             if (viewModelState == null)
             {
                 throw new ArgumentException($"Failed to find state named [ {stateName} ] from controller");
-                //异常:无法根据名称找到指定的State
             }
 
             List<Tuple<PropertyInfo, double>> viewModels = new List<Tuple<PropertyInfo, double>>();
             //预加载:[ 需要平滑过渡的属性 ]+[ 新值相对于旧值的变化量 ]
-            for (int i = 0; i < Properties.Length; i++)
+            for (int i = 0; i < DoubleProperties.Length; i++)
             {
-                if (Properties[i].PropertyType == typeof(double)
-                    && protectNames?.FirstOrDefault(x => x == Properties[i].Name) == null
-                    && GlobalProtectedProperty.FirstOrDefault(x => x == Properties[i].Name) == null)
+                if (protectNames?.FirstOrDefault(x => x == DoubleProperties[i].Name) == null &&
+                    GlobalProtectedProperty.FirstOrDefault(x => x == DoubleProperties[i].Name) == null)
                 {
-                    double now = (double)Properties[i].GetValue(ViewModel);
-                    double viewModel = viewModelState[Properties[i].Name];
+                    double now = (double)DoubleProperties[i].GetValue(Target);
+                    double viewModel = viewModelState[DoubleProperties[i].Name];
                     if (now != viewModel)
                     {
-                        viewModels.Add(Tuple.Create(Properties[i], viewModel - now));
+                        viewModels.Add(Tuple.Create(DoubleProperties[i], viewModel - now));
                     }
                 }
             }
@@ -213,7 +339,7 @@ namespace MinimalisticWPF
                 double delta = viewModels[i].Item2 / frameCount;
                 //每帧变化的量
 
-                double currentValue = (double)viewModels[i].Item1.GetValue(ViewModel);
+                double currentValue = (double)viewModels[i].Item1.GetValue(Target);
                 //当前值
 
                 for (int j = 0; j < frameCount; j++)
@@ -231,7 +357,7 @@ namespace MinimalisticWPF
                 for (int j = 0; j < allFrames.Count; j++)
                 {
                     var result = allFrames[j][i];
-                    result.Item1.SetValue(ViewModel, result.Item2);
+                    result.Item1.SetValue(Target, result.Item2);
                 }
                 await Task.Delay(deltaTime);
                 if (IsInterrupted) { break; }
@@ -239,6 +365,7 @@ namespace MinimalisticWPF
 
             IsInterrupted = false;
             IsTransferRunning = false;
+            IsConditionLocked = false;
             if (FrameCount != 0) { FrameCount = 0; }
         }
     }

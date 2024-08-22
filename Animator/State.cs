@@ -15,27 +15,29 @@ namespace MinimalisticWPF
     /// </summary>
     public class State
     {
-        public State(string stateName, object Target)
+        internal State(string stateName, object Target)
         {
             StateName = stateName;
 
-            Type type = Target.GetType();
-            PropertyInfo[] Properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            ObjType = Target.GetType();
+            PropertyInfo[] Properties = ObjType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                            .Where(x => x.CanWrite && x.CanRead && x.PropertyType == typeof(double))
+                                            .ToArray();
+
             foreach (PropertyInfo propertyInfo in Properties)
             {
-                if (propertyInfo.PropertyType == typeof(double))
-                {
-                    DoubleValues.Add(propertyInfo.Name, (double)propertyInfo.GetValue(Target));
-                }
+                DoubleValues.Add(propertyInfo.Name, (double)propertyInfo.GetValue(Target));
             }
         }
 
         /// <summary>
         /// 状态的名称
         /// </summary>
-        public string StateName { get; set; } = string.Empty;
+        public string StateName { get; internal set; } = string.Empty;
 
-        internal Dictionary<string, double> DoubleValues { get; set; } = new Dictionary<string, double>();
+        public Type ObjType { get; internal set; }
+
+        public Dictionary<string, double> DoubleValues { get; set; } = new Dictionary<string, double>();
 
         /// <summary>
         /// 获取该状态下,指定属性的具体值
@@ -54,6 +56,38 @@ namespace MinimalisticWPF
 
                 return DoubleValues[propertyName];
             }
+        }
+
+        /// <summary>
+        /// 记录一个实例对象为State
+        /// </summary>
+        public static State Creat(object Target)
+        {
+            State result = new State(string.Empty, Target);
+            return result;
+        }
+
+        /// <summary>
+        /// 为该State起个名字
+        /// </summary>
+        public State SetName(string stateName)
+        {
+            StateName = stateName;
+            return this;
+        }
+
+        /// <summary>
+        /// 依据属性名和double值,修改该状态对应的信息
+        /// </summary>
+        /// <param name="propertyName">属性名</param>
+        /// <param name="newValue">新的状态值</param>
+        public State SetValue(string propertyName, double newValue)
+        {
+            if (DoubleValues.TryGetValue(propertyName, out _))
+            {
+                DoubleValues[propertyName] = newValue;
+            }
+            return this;
         }
     }
 }

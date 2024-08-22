@@ -9,7 +9,7 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
-    public class MButtonViewModel : StateViewModelBase<MButtonViewModel>
+    public class MButtonViewModel : StateViewModelBase
     {
         public MButtonViewModel() { }
         public MButtonViewModel(MButtonModel model) { Model = model; }
