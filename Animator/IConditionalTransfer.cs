@@ -35,7 +35,7 @@ namespace MinimalisticWPF
                 if (kvp.Condition(Machine.Target))
                 {
                     Machine.Transfer(kvp.StateName,
-                        kvp.TransferParams.TransitionTime,
+                        kvp.TransferParams.Duration,
                         kvp.TransferParams.IsQueue,
                         kvp.TransferParams.IsLast,
                         kvp.TransferParams.IsUnique,

@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Dynamic;
+using System.Linq.Expressions;
 
 namespace MinimalisticWPF
 {
@@ -50,7 +51,7 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 记录一个实例对象为State
+        /// 开始记录指定对象的状态
         /// </summary>
         public static TempState<T> FromObject<T>(T Target) where T : class
         {
@@ -66,5 +67,53 @@ namespace MinimalisticWPF
         internal T Value { get; set; }
 
         internal string Name { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 记录该状态的名称
+        /// </summary>
+        public TempState<T> SetName(string stateName)
+        {
+            Name = stateName;
+            return this;
+        }
+
+        /// <summary>
+        /// 记录该状态下的属性值
+        /// </summary>
+        public TempState<T> SetProperty(
+        Expression<Func<T, double>> propertyLambda,
+        double newValue)
+        {
+            var compiledLambda = propertyLambda.Compile();
+            var obj = Value;
+
+            if (obj == null)
+            {
+                return this;
+            }
+
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(double))
+                {
+                    return this;
+                }
+
+                property.SetValue(obj, newValue);
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// 记录完毕
+        /// </summary>
+        public State ToState()
+        {
+            State result = new State(Value);
+            result.StateName = Name;
+            return result;
+        }
     }
 }
