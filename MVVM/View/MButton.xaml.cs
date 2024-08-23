@@ -9,17 +9,19 @@ namespace MinimalisticWPF
     {
         private StateMachine Machine { get; set; }
 
-        static MButtonViewModel MO = new MButtonViewModel()
-        {
-            ActualBackgroundOpacity = 0.4
-        };
+        static State MouseOver = State.FromObject(new MButtonViewModel())
+            .SetName("mouseover")
+            .SetProperty(x => x.ActualBackgroundOpacity, 0.4)
+            .ToState();
 
         public MButton()
         {
             InitializeComponent();
 
-            State Source = new State("default", ViewModel);
-            State MouseOver = new State("mouseover", MO);
+            State Source = State.FromObject(ViewModel)
+                .SetName("defualt")
+                .ToState();
+
 
             Machine = new StateMachine(ViewModel, Source, MouseOver);
             ViewModel.Machine = Machine;
@@ -38,7 +40,7 @@ namespace MinimalisticWPF
 
         public void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            Machine.Transfer("default", 0.15);
+            Machine.Transfer("defualt", 0.15);
         }
     }
 }

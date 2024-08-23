@@ -1,8 +1,16 @@
 ﻿# MinimalisticWPF
 ## Target
-- Like Unity3D , use a state machine to control the appearance of a widget , especially in MVVM design mode
-- Implement minimalistic user controls to quickly build small personal projects and these user controls use state machines to load animations
-- Some extensions to native c# types, especially for ease of use [string] in file-related scenarios and crawler-related scenarios
+- StateMachine
+    - Use State to keep track of the UI state of a control
+    - Switches to the specified state by name
+    - [ MVVM ] Like Unity3D , Automatic state switching is achieved by adding conditions to the state machine
+- Minimalistic UserControls
+    - Uniform dark theme
+    - Use StateMachine
+- Some extensions to c# native type
+    - string	
+	- FrameworkElement
+	- Control
 ## Framework
 - [.NET6.0-windows] 
 - [.NET8.0-windows]
@@ -12,4 +20,12 @@
 
 [1]: https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF
 [2]: https://www.nuget.org/packages/MinimalisticWPF/
+
+## StateMachine
+
+
+## UserControl
+
+
+## Extension
 

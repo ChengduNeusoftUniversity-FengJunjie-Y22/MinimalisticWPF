@@ -26,9 +26,25 @@ namespace MinimalisticWPF
         /// <summary>
         /// 通知状态机切换状态
         /// </summary>
-        void SendMessage(string propertyName)
+        void OnConditionsChecked()
         {
-            Machine?.LoadingConditions(propertyName);
+            if (Machine == null) return;
+            foreach (var kvp in Conditions)
+            {
+                if (kvp.Condition == null) continue;
+                if (kvp.Condition(Machine.Target))
+                {
+                    Machine.Transfer(kvp.StateName,
+                        kvp.TransferParams.TransitionTime,
+                        kvp.TransferParams.IsQueue,
+                        kvp.TransferParams.IsLast,
+                        kvp.TransferParams.IsUnique,
+                        kvp.TransferParams.FrameRate,
+                        kvp.TransferParams.WaitTime,
+                        kvp.TransferParams.ProtectNames);
+                    return;
+                }
+            }
         }
     }
 }

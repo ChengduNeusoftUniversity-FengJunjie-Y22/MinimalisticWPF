@@ -22,10 +22,10 @@ namespace MinimalisticWPF
         IConditionalTransfer? Local = default;
         public StateMachine? Machine { get; set; }
         public List<StateVector> Conditions { get; set; } = new List<StateVector>();
-        public void OnConditionChecked(string propertyName)
+        public void OnConditionChecked()
         {
             if (Local == null) Local = this;
-            Local.SendMessage(propertyName);
+            Local.OnConditionsChecked();
         }
     }
 }

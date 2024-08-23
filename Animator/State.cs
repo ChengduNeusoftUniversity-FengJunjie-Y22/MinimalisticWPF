@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media.Animation;
-using System.Windows;
+﻿using System.Reflection;
+using System.Dynamic;
 
 namespace MinimalisticWPF
 {
@@ -15,10 +8,8 @@ namespace MinimalisticWPF
     /// </summary>
     public class State
     {
-        internal State(string stateName, object Target)
+        internal State(object Target)
         {
-            StateName = stateName;
-
             ObjType = Target.GetType();
             PropertyInfo[] Properties = ObjType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                                             .Where(x => x.CanWrite && x.CanRead && x.PropertyType == typeof(double))
@@ -61,33 +52,19 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录一个实例对象为State
         /// </summary>
-        public static State Creat(object Target)
+        public static TempState<T> FromObject<T>(T Target) where T : class
         {
-            State result = new State(string.Empty, Target);
+            TempState<T> result = new TempState<T>(Target);
             return result;
         }
+    }
 
-        /// <summary>
-        /// 为该State起个名字
-        /// </summary>
-        public State SetName(string stateName)
-        {
-            StateName = stateName;
-            return this;
-        }
+    public class TempState<T>
+    {
+        internal TempState(T target) { Value = target; }
 
-        /// <summary>
-        /// 依据属性名和double值,修改该状态对应的信息
-        /// </summary>
-        /// <param name="propertyName">属性名</param>
-        /// <param name="newValue">新的状态值</param>
-        public State SetValue(string propertyName, double newValue)
-        {
-            if (DoubleValues.TryGetValue(propertyName, out _))
-            {
-                DoubleValues[propertyName] = newValue;
-            }
-            return this;
-        }
+        internal T Value { get; set; }
+
+        internal string Name { get; set; } = string.Empty;
     }
 }

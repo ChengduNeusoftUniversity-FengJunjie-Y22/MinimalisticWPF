@@ -210,25 +210,10 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 驱动状态机检查条件模块,并自行判断是否切换状态
-        /// </summary>
-        public void LoadingConditions(string propertyName)
-        {
-            if (IConditions != null && !IsConditionLocked)
-            {
-                IsConditionLocked = true;
-
-                StateVector[] targetConditions = IConditions.Conditions.Where(x => x.Conditions.Contains(propertyName)).ToArray();
-
-
-            }
-        }
-
-        /// <summary>
         /// 创建状态机
         /// </summary>
         /// <param name="targetObj">需要应用状态机的实例</param>
-        public static StateMachine Creat(object targetObj)
+        public static StateMachine Create(object targetObj)
         {
             StateMachine result = new StateMachine(targetObj);
             return result;
