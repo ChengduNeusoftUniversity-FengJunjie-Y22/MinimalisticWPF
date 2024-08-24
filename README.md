@@ -1,18 +1,18 @@
 ﻿# MinimalisticWPF
 ## Target
 - [StateMachine System](#StateMachine)
-    - Use a [State](##State) object to keep track of the control's property values at the current time
-    - Use a [StateVector](##StateVector) object to describe the conditions under which the StateMachine transitions to which state
-    - Use a [StateMachine](##StateMachine) object and give it State objects and StateVector objects to implement linear animations
+    - Use a [State](#State) object to keep track of the control's property values at the current time
+    - Use a [StateVector](#StateVector) object to describe the conditions under which the StateMachine transitions to which state
+    - Use a [StateMachine](#StateMachine) object and give it State objects and StateVector objects to implement linear animations
 - [Minimalistic UserControls](#MinimalisticUserControls)
     - Uniform dark theme
     - All animations based on StateMachine
 - [Extension Method](#ExtensionMethod)
-    - [string](##string)
+    - [string](#string)
       - Value conversion
       - Fuzzy matching
       - Crawler analysis
-	- [FrameworkElement](##FrameworkElement)
+	- [FrameworkElement](#FrameworkElement)
       - Linear animation based on StateMachine
       - Storyboard-based animations
 ## Framework
@@ -82,7 +82,7 @@ Using the State and StateVector objects, you can create a StateMachine instance 
         }
 ```
 ## Tips
-The [FrameworkElement](##FrameworkElement) has a more elegant way to quickly start the linear transitions StateMachine provides, and in fact, it's even better for non-MVVM design patterns, but note that StateMachine's linear transitions don't depend on storyboards at all. Therefore, when you mix the two, you need to avoid conflicts
+The [FrameworkElement](#FrameworkElement) has a more elegant way to quickly start the linear transitions StateMachine provides, and in fact, it's even better for non-MVVM design patterns, but note that StateMachine's linear transitions don't depend on storyboards at all. Therefore, when you mix the two, you need to avoid conflicts
 
 
 # MinimalisticUserControls
@@ -90,8 +90,115 @@ The [FrameworkElement](##FrameworkElement) has a more elegant way to quickly sta
 
 # ExtensionMethod
 ## string
+- Value conversion
+```csharp
+   string valueA = "-123.7";
+   string valueB = "TrUE";
+   string valueC = "#1e1e1e";
+   //Three values to be converted
+   
+   var result1 = valueA.ToInt();
+   var result2 = valueA.ToDouble();
+   var result3 = valueA.ToFloat();
+   //Converting to numbers
+
+   var result4 = valueB.ToBool();
+   //Convert to bool
+
+   var result5 = valueC.ToColor();
+   //Convert to Color
+```
+- Fuzzy matching
+```csharp
+   string template = "abcdefg";
+   //Assume that all other strings are similar to this string
+
+   string sourceA = "abc";
+   List<string> sourceB = new List<string>()
+   {
+       "abcdegf",
+       "cbdgafe"
+   };
+   //These are assumed to be the sources to be matched
+
+   var similarity1 = sourceA.LevenshteinDistance(template)
+   //Calculate the shortest edit distance [int]
+
+   var similarity2 = sourceA.JaroWinklerDistance(template)
+   //Computing a similarity between 0 and 1 [double]
+
+   var result3 = template.BestMatch(sourceB, 3);
+   //Integer [3], meaning the shortest edit distance is less than [3]
+   //Returns the index of sourceB with the smallest edit distance and less than [3] [int]
+
+   var result4 = template.BestMatch(sourceB, 0.5);
+   //Passing double precision [0.5] means that the approximation is higher than [0.5]]
+   //Returns the index from sourceB with the highest approximation greater than [50%] [int]
+```
+- Folder generation operations
+```csharp
+   string folderNameA = "FF1";
+   string folderNameB = "FF2";
+   string folderNameC = "FF3";
+   //The name of the folder
+
+   var result1 = folderNameA.CreatFolder();
+   //From the.exe location, create a folder named "FF1"
+
+   var result2 = folderNameC.CreatFolder(folderNameA,folderNameB);
+   //From the.exe location, create a nested folder "FF1/FF2/FF3"
+```
+- Xml and Json writes
+```csharp
+   string folderName = "Data";
+   //Assume that the file ends up in a folder named folderName
+
+   string fileName1 = "firstPersondata";
+   string fileName2 = "secondPersondata";
+   //Assume the fileName is called filename
+
+   var target = new Person();
+   //Let's assume that target is an object that needs to be stored as a file
+
+   var result1 = fileName1.CreatXmlFile(folderName.CreatFolder(), target);
+   var result2 = fileName2.CreatJsonFile(folderName.CreatFolder(), target);
+   //Objects are stored as.xml or.json files by providing [folder path + object] to the CreatFile() method
+```
+- Xml and Json deserialization
+```csharp
+   string folderName = "Data";
+   //Assume that the file ends up in a folder named folderName
+
+   string fileName1 = "firstPersondata";
+   string fileName2 = "secondPersondata";
+   //Assume the fileName is called filename
+
+   string AbsPathA = Path.Combine(folderName.CreatFolder(), $"{fileName1}.xml");
+   string AbsPathB = Path.Combine(folderName.CreatFolder(), $"{fileName2}.json");
+   var dataA = File.ReadAllText(AbsPathA);
+   var dataB = File.ReadAllText(AbsPathB);
+   //Assume that the serialized data dataA and dataB have been read
+
+   var result1 = dataA.XmlParse<Person>();
+   var result2 = dataB.JsonParse<Person>();
+   //xml and json, respectively, to deserialize into a Person instance
+```
+- Regular operation
+```csharp
+   string sourceA = "[1]wkhdkjhk[a][F3]https:awijdioj.mp3fwafw";
+   string sourceB = "awdhttps://aiowdjoajfo.comawd&*(&d)*dhttps://tn.comdawd";
+   //Let's say we scrape two pieces of html
+   
+   var resultA = sourceA.CaptureBetween("https:", ".mp3");
+   //Captures the string contained in the middle of the feature character
+   //Output[ awijdioj ]
+
+   var resultB = sourceB.CaptureLike("https://", "com");
+   //Captures strings that conform to an ordered set of features
+   //Output[ https://aiowdjoajfo.com ] [ https://tn.com ]
+```
 ## FrameworkElement
-Use the extension method to quickly start the StateMachine linear transition animation
+The same Grid widget called GD, now let's add a linear transition animation to it. When the mouse enters the Grid, the Grid expands and changes color, and when the mouse leaves, it returns to its initial state
 ```cshapr
         private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
