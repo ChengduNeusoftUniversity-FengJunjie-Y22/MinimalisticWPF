@@ -172,7 +172,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 排队等待执行的解释器
         /// </summary>
-        internal Queue<AnimationInterpreter> Interpreters { get; set; } = new Queue<AnimationInterpreter>();
+        internal Queue<Tuple<string, Action<TransferParams>?>> Interpreters { get; set; } = new Queue<Tuple<string, Action<TransferParams>?>>();
 
         /// <summary>
         /// 转移至目标状态
@@ -182,6 +182,33 @@ namespace MinimalisticWPF
         /// <exception cref="ArgumentException"></exception>
         public void Transfer(string stateName, Action<TransferParams>? actionSet)
         {
+            TransferParams temp = new TransferParams();
+            actionSet?.Invoke(temp);
+            if (Interpreter == null)
+            {
+                var task = Task.Run(() => InterpreterScheduler(stateName, actionSet));
+            }
+            else
+            {
+                var targetInterpreter = Interpreters.Where(x => x.Item1 == stateName).ToArray();
+                if (targetInterpreter.Length != 0 && temp.IsUnique)
+                {
+                    return;
+                }
+
+                if (!temp.IsQueue)
+                {
+                    Interpreter?.Interrupt();
+                    var task = Task.Run(() => InterpreterScheduler(stateName, actionSet));
+                }
+                else
+                {
+                    Interpreters.Enqueue(Tuple.Create(stateName, actionSet));
+                }
+            }
+        }
+        private async void InterpreterScheduler(string stateName, Action<TransferParams>? actionSet)
+        {          
             var targetState = States.FirstOrDefault(x => x.StateName == stateName);
             if (targetState == null) throw new ArgumentException($"The State Named [ {stateName} ] Cannot Be Found");
 
@@ -189,29 +216,18 @@ namespace MinimalisticWPF
             actionSet?.Invoke(transferParams);
             TransferParams = transferParams;
 
+            await Task.Delay((int)(TransferParams.WaitTime*1000));
+
             AnimationInterpreter animationInterpreter = new AnimationInterpreter(this);
             animationInterpreter.IsLast = TransferParams.IsLast;
             animationInterpreter.DeltaTime = (int)DeltaTime;
-            animationInterpreter.Frams = ComputingFrames(targetState, TransferParams);
 
-            var targetInterpreter = Interpreters.Where(x => x.StateName == stateName).ToArray();
-            if (targetInterpreter.Length != 0 && TransferParams.IsUnique)
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                foreach (var target in targetInterpreter)
-                {
-                    target.IsStop = true;
-                }
-            }
+                animationInterpreter.Frams = ComputingFrames(targetState, TransferParams);
+            });
 
-            if (Interpreter == null)
-            {
-                Interpreter = animationInterpreter;
-                animationInterpreter.Interpret();
-            }
-            else
-            {
-                Interpreters.Enqueue(animationInterpreter);
-            }
+            animationInterpreter.Interpret();
         }
         /// <summary>
         /// 计算属性的每个帧状态
@@ -357,22 +373,26 @@ namespace MinimalisticWPF
             {
                 if (IsStop || IsRunning) { WhileEnded(); return; }
                 IsRunning = true;
+                Machine.Interpreter = this;
 
                 for (int i = 0; i < Machine.FrameCount; i++)
                 //按帧遍历
                 {
-                    if (IsStop)
-                    {
-                        WhileEnded();
-                        return;
-                    }
                     for (int j = 0; j < Frams.Count; j++)
                     //按不同类属性遍历
                     {
                         for (int k = 0; k < Frams[j].Count; k++)
                         //按同类属性不同名遍历
                         {
-                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                            if (IsStop)
+                            {
+                                WhileEnded();
+                                return;
+                            }
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                            });
                             await Task.Delay(DeltaTime);
                         }
                     }
@@ -395,9 +415,10 @@ namespace MinimalisticWPF
                 {
                     Machine.Interpreters.Clear();
                 }
-                else
+                if (Machine.Interpreters.Count > 0)
                 {
-                    Machine.Interpreters.Dequeue()?.Interpret();
+                    var newAni = Machine.Interpreters.Dequeue();
+                    Machine.InterpreterScheduler(newAni.Item1, newAni.Item2);
                 }
             }
         }

@@ -15,7 +15,7 @@ namespace MinimalisticWPF
             .ToState();
         static State MouseIn = State.FromObject(new MButtonViewModel())
             .SetName("mouseInside")
-            .SetProperty(x => x.ActualBackgroundOpacity, 0.4)
+            .SetProperty(x => x.ActualBackgroundOpacity, 0.1)
             .ToState();
 
         static StateVector mECondition = StateVector.FromType<MButtonViewModel>()
@@ -47,7 +47,7 @@ namespace MinimalisticWPF
 
         public void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            Machine.Transfer("defualt", (x) => x.Duration = 0.2);
+            Machine.Transfer("defualt", (x) => x.Duration = 0.1);
         }
     }
 }

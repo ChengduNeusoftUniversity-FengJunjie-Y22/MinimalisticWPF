@@ -64,11 +64,24 @@ namespace MinimalisticWPF
 
     public class TempStoryBoard<T> where T : FrameworkElement, new()
     {
+        public static List<Tuple<StateMachine, object>> MachinePool = new List<Tuple<StateMachine, object>>();
+
         internal TempStoryBoard(T target)
         {
             Target = target;
-            State start = State.FromObject(Target).SetName("defualt").ToState();
-            Machine = StateMachine.Create(target).SetStates(start);
+
+            var temp = MachinePool.FirstOrDefault(x => x.Item2 == target);
+            if (temp != null)
+            {
+                temp.Item1.States.Clear();
+                temp.Item1.Interpreters.Clear();
+                temp.Item1.Interpreter?.Interrupt();
+                Machine = temp.Item1;
+                return;
+            }
+
+            Machine = StateMachine.Create(target).SetStates();
+            MachinePool.Add(Tuple.Create(Machine, (object)Target));
         }
 
         internal T Target { get; set; }
