@@ -13,6 +13,9 @@ namespace MinimalisticWPF
 {
     public static class ExtensionToFrameworkElement
     {
+        /// <summary>
+        /// 按比率应用为父级元素的尺寸
+        /// </summary>
         public static T ToParentSize<T>(this T element, double rate = 1) where T : FrameworkElement
         {
             var Parent = element.Parent as FrameworkElement;
@@ -22,22 +25,35 @@ namespace MinimalisticWPF
             return element;
         }
 
-        public static T ToParentHeight<T>(this T element) where T : FrameworkElement
+        /// <summary>
+        /// 按比率应用为父级元素的高度
+        /// </summary>
+        public static T ToParentHeight<T>(this T element, double rate = 1) where T : FrameworkElement
         {
             var Parent = element.Parent as FrameworkElement;
             if (Parent == null) return element;
-            element.Height = Parent.Height;
+            element.Height = Parent.Height * rate;
             return element;
         }
 
-        public static T ToParentWidth<T>(this T element) where T : FrameworkElement
+        /// <summary>
+        /// 按比率应用为父级元素的宽度
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="element"></param>
+        /// <param name="rate"></param>
+        /// <returns></returns>
+        public static T ToParentWidth<T>(this T element, double rate = 1) where T : FrameworkElement
         {
             var Parent = element.Parent as FrameworkElement;
             if (Parent == null) return element;
-            element.Width = Parent.Width;
+            element.Width = Parent.Width * rate;
             return element;
         }
 
+        /// <summary>
+        /// 开始创建基于StateMachine的过渡效果
+        /// </summary>
         public static TempStoryBoard<T> MachineTransfer<T>(this T element) where T : FrameworkElement, new()
         {
             TempStoryBoard<T> tempStoryBoard = new TempStoryBoard<T>(element);

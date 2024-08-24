@@ -20,10 +20,9 @@ namespace MinimalisticWPF
         /// <summary>
         /// 开始记录指向指定状态的触发条件
         /// </summary>
-        public static TempStateVector FromState(State state)
+        public static TempStateVector<T> FromType<T>() where T : class
         {
-            TempStateVector result = new TempStateVector();
-            result.Value.State = state;
+            TempStateVector<T> result = new TempStateVector<T>();
             return result;
         }
     }
@@ -51,7 +50,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 过渡帧率(默认:500)
         /// </summary>
-        public int FrameRate { get; set; } = 500;
+        public int FrameRate { get; set; } = 244;
 
         /// <summary>
         /// 是否排队执行(默认:不排队)
@@ -79,25 +78,36 @@ namespace MinimalisticWPF
         public ICollection<string>? ProtectNames { get; set; } = default;
     }
 
-    public class TempStateVector
+    public class TempStateVector<T> where T : class
     {
         internal TempStateVector() { }
+
+        internal T? Target { get; set; } = null;
 
         internal StateVector Value { get; set; } = new StateVector();
 
         /// <summary>
         /// 记录该条件的名称
         /// </summary>
-        public TempStateVector SetName(string stateVectorName)
+        public TempStateVector<T> SetName(string stateVectorName)
         {
             Value.Name = stateVectorName;
             return this;
         }
 
         /// <summary>
+        /// 设置该Vector指向的State
+        /// </summary>
+        public TempStateVector<T> SetTarget(State state)
+        {
+            Value.State = state;
+            return this;
+        }
+
+        /// <summary>
         /// 记录具体的条件
         /// </summary>
-        public TempStateVector SetConditions<T>(Expression<Func<T, bool>> condition) where T : class
+        public TempStateVector<T> SetCondition(Expression<Func<T, bool>> condition)
         {
             var compiledCondition = condition.Compile();
 
@@ -118,7 +128,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录过渡效果相关的参数
         /// </summary>
-        public TempStateVector SetTransferParams(double transitionTime = 0, bool isQueue = false, bool isLast = true, bool isUnique = false, int? frameRate = default, double waitTime = 0.008, ICollection<string>? protectNames = default)
+        public TempStateVector<T> SetTransferParams(double transitionTime = 0, bool isQueue = false, bool isLast = true, bool isUnique = false, int? frameRate = default, double waitTime = 0.008, ICollection<string>? protectNames = default)
         {
             TransferParams tempdata = new TransferParams(transitionTime, isQueue, isLast, isUnique, frameRate, waitTime, protectNames);
             Value.TransferParams = tempdata;

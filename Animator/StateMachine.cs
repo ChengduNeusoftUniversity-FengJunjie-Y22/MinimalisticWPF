@@ -13,6 +13,8 @@ using System.Collections;
 using System.Windows.Controls;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows.Automation;
+using System.Windows.Media;
+using static System.TimeZoneInfo;
 
 namespace MinimalisticWPF
 {
@@ -22,24 +24,30 @@ namespace MinimalisticWPF
     /// <typeparam name="T">被状态机控制的对象的实际类型</typeparam>
     public class StateMachine
     {
+        private int _framecount = 0;
+        private int _defaultFrameRate = 244;
+        private bool _isInterrupted = false;
+        private Tuple<string, double, bool>? _tempTransfer = null;
+
+
         /// <param name="viewModel">受状态机控制的实例对象</param>
         /// <param name="states">所有该对象可能具备的状态</param>
         /// <exception cref="ArgumentException"></exception>
         internal StateMachine(object viewModel, params State[] states)
         {
             Target = viewModel;
-            TargetType = viewModel.GetType();
+            Type type = viewModel.GetType();
 
-            Properties = TargetType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                                   .Where(x => x.CanWrite && x.CanRead)
-                                   .ToArray();//筛选可用属性
+            Properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(x => x.CanWrite && x.CanRead)
+                .ToArray();//所有可用属性
 
             DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double))
-                                         .ToArray();//筛选Double属性
-
-            DependencyProperties = TargetType.GetProperties(BindingFlags.Public | BindingFlags.Static)
-                                             .Where(x => x.PropertyType == typeof(DependencyProperty))
-                                             .ToArray();//筛选DependencyProperty
+                .ToArray();//筛选Double属性
+            BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
+                .ToArray();//筛选Brush属性
+            PointProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
+                .ToArray();//筛选Point属性
 
             foreach (var state in states)
             {
@@ -50,55 +58,53 @@ namespace MinimalisticWPF
 
             var DCProperty = Properties.FirstOrDefault(x => x.Name == "DataContext");
             IConditions = DCProperty == null ? viewModel as IConditionalTransfer : DCProperty.GetValue(Target) as IConditionalTransfer;
-            //则获取其中的Conditional模块
+            if (IConditions != null) { IConditions.Machine = this; }
+            //尝试与Conditional模块建立连接
         }
+
 
         /// <summary>
         /// Public属性
         /// </summary>
         public PropertyInfo[] Properties { get; internal set; }
-
         /// <summary>
         /// Double属性
         /// </summary>
         public PropertyInfo[] DoubleProperties { get; internal set; }
-
         /// <summary>
-        /// Dependency属性
+        /// Brush属性
         /// </summary>
-        public PropertyInfo[] DependencyProperties { get; internal set; }
+        public PropertyInfo[] BrushProperties { get; internal set; }
+        /// <summary>
+        /// Point属性
+        /// </summary>
+        public PropertyInfo[] PointProperties { get; internal set; }
+
 
         /// <summary>
         /// 受状态机控制的对象
         /// </summary>
         public object Target { get; internal set; }
-
         /// <summary>
-        /// 对象的实际类型
-        /// </summary>
-        public Type TargetType { get; internal set; }
-
-        /// <summary>
-        /// 条件组
+        /// 与状态机相连的Conditional模块
         /// </summary>
         public IConditionalTransfer? IConditions { get; internal set; }
 
+
         /// <summary>
-        /// 状态集合
+        /// 此状态机可导向的所有非条件驱动状态
         /// </summary>
         public StateCollection States { get; set; } = new StateCollection();
 
-        /// <summary>
-        /// 排队处理连续申请的Transfer操作
-        /// </summary>
-        internal Queue<Tuple<string, double>> Transfers { get; set; } = new Queue<Tuple<string, double>>();
 
         /// <summary>
         /// 是否处于过渡过程中
         /// </summary>
         public bool IsTransferRunning { get; internal set; } = false;
-
-        private int _framecount = 0;
+        /// <summary>
+        /// 排队处理连续申请的Transfer操作
+        /// </summary>
+        internal Queue<Tuple<string, double>> Transfers { get; set; } = new Queue<Tuple<string, double>>();
         /// <summary>
         /// 当前正在执行的任务数量
         /// </summary>
@@ -109,7 +115,7 @@ namespace MinimalisticWPF
             {
                 _framecount = value >= 0 ? value : 0;
                 IsTransferRunning = value > 0 ? true : false;
-                if (_framecount == 0 && Transfers.Count > 0 && !IsInterrupted)
+                if (_framecount == 0 && Transfers.Count > 0 && !_isInterrupted)
                 {
                     var temp = Transfers.Dequeue();
                     Transfer(temp.Item1, temp.Item2);
@@ -117,38 +123,73 @@ namespace MinimalisticWPF
             }
         }
 
+
         /// <summary>
         /// 过渡帧率
         /// </summary>
-        internal int FrameRate { get; set; } = 500;
-
-        /// <summary>
-        /// 默认的过渡帧率
-        /// </summary>
-        public int DefaultFrameRate { get; set; } = 500;
-
+        internal int FrameRate { get; set; } = 244;
         /// <summary>
         /// 一帧持续的时长
         /// </summary>
         public double FrameDuration { get => 1000.0 / FrameRate; }
-
         /// <summary>
         /// 全局受保护的属性
         /// </summary>
         public List<string> GlobalProtectedProperty { get; internal set; } = new List<string>();
 
-        private bool IsInterrupted { get; set; } = false;
 
-        private Tuple<string, double, bool>? TempTransfer { get; set; }
+        /// <summary>
+        /// 创建状态机
+        /// </summary>
+        /// <param name="targetObj">需要应用状态机的实例</param>
+        public static StateMachine Create(object targetObj)
+        {
+            StateMachine result = new StateMachine(targetObj);
+            return result;
+        }
+        /// <summary>
+        /// 设置非条件驱动状态集合
+        /// </summary>
+        public StateMachine SetStates(params State[] states)
+        {
+            if (states.Length == 0) States.Clear();
 
-        private bool IsConditionLocked { get; set; } = false;
+            foreach (var state in states)
+            {
+                var temp = States.FirstOrDefault(x => x.StateName == state.StateName);
+                if (temp == null) States.Add(state);
+                else throw new ArgumentException($"A state named [ {state.StateName} ] already exists in the collection.Modify the collection to ensure that the state name is unique");
+            }
 
+            return this;
+        }
+        /// <summary>
+        /// 设置条件驱动状态集合
+        /// </summary>
+        public StateMachine SetConditions(params StateVector[] conditionGroups)
+        {
+            if (IConditions != null)
+            {
+                if (conditionGroups.Length == 0) IConditions.Conditions.Clear();
+
+                foreach (var condition in conditionGroups)
+                {
+                    if (IConditions.Conditions.FirstOrDefault(x => x.Name == condition.Name) == null)
+                    {
+                        IConditions.Conditions.Add(condition);
+                    }
+                }
+            }
+            return this;
+        }
         /// <summary>
         /// 保护属性不受状态机影响
         /// </summary>
         /// <param name="propertyNames">若干属性名</param>
-        public void Protect(params string[] propertyNames)
+        public void SetProtects(params string[] propertyNames)
         {
+            if (propertyNames.Length == 0) GlobalProtectedProperty.Clear();
+
             foreach (var propertyName in propertyNames)
             {
                 var result = GlobalProtectedProperty.FirstOrDefault(x => x == propertyName);
@@ -156,17 +197,6 @@ namespace MinimalisticWPF
             }
         }
 
-        /// <summary>
-        /// 解除属性的保护态
-        /// </summary>
-        /// <param name="propertyNames">若干属性名</param>
-        public void Unprotect(params string[] propertyNames)
-        {
-            foreach (var propertyName in propertyNames)
-            {
-                GlobalProtectedProperty.Remove(propertyName);
-            }
-        }
 
         /// <summary>
         /// 转移至目标状态
@@ -186,10 +216,10 @@ namespace MinimalisticWPF
 
             if (!isQueue && IsTransferRunning)
             {
-                IsInterrupted = true;
-                TempTransfer = Tuple.Create(stateName, transitionTime, true);
+                _isInterrupted = true;
+                _tempTransfer = Tuple.Create(stateName, transitionTime, true);
                 FrameCount = 0;
-                DoubleAnimation(stateName, transitionTime, waitTime, frameRate, protectNames);
+                LoadAnimation(stateName, transitionTime, waitTime, frameRate, protectNames);
                 return;
             }
 
@@ -206,83 +236,12 @@ namespace MinimalisticWPF
                 }
                 return;
             }
-            DoubleAnimation(stateName, transitionTime, waitTime, frameRate, protectNames);
+            LoadAnimation(stateName, transitionTime, waitTime, frameRate, protectNames);
         }
-
-        /// <summary>
-        /// 创建状态机
-        /// </summary>
-        /// <param name="targetObj">需要应用状态机的实例</param>
-        public static StateMachine Create(object targetObj)
-        {
-            StateMachine result = new StateMachine(targetObj);
-            return result;
-        }
-
-        /// <summary>
-        /// 设置状态集
-        /// </summary>
-        public StateMachine SetStates(params State[] states)
-        {
-            States.Clear();
-            foreach (var state in states)
-            {
-                var temp = States.FirstOrDefault(x => x.StateName == state.StateName);
-                if (temp == null) States.Add(state);
-                else throw new ArgumentException($"A state named [ {state.StateName} ] already exists in the collection.Modify the collection to ensure that the state name is unique");
-            }
-            return this;
-        }
-
-        /// <summary>
-        /// 添加若干条件
-        /// </summary>
-        public StateMachine AddConditions(params StateVector[] conditionGroups)
-        {
-            if (IConditions != null)
-            {
-                foreach (var condition in conditionGroups)
-                {
-                    if (IConditions.Conditions.FirstOrDefault(x => x.Name == condition.Name) == null)
-                    {
-                        IConditions.Conditions.Add(condition);
-                    }
-                }
-            }
-            return this;
-        }
-
-        /// <summary>
-        /// 移除若干指定名称的条件
-        /// </summary>
-        public StateMachine RemoveConditions(params string[] conditionGroupNames)
-        {
-            if (IConditions != null)
-            {
-                foreach (var condition in conditionGroupNames)
-                {
-                    IConditions.Conditions.RemoveAll(x => x.Name == condition);
-                }
-            }
-            return this;
-        }
-
-        /// <summary>
-        /// 清空条件
-        /// </summary>
-        public StateMachine ClearConditions(params string[] conditionGroupNames)
-        {
-            if (IConditions != null)
-            {
-                IConditions.Conditions.Clear();
-            }
-            return this;
-        }
-
-        private async void DoubleAnimation(string stateName, double transitionTime, double waitTime, int? frameRate, ICollection<string>? protectNames)
+        private async void LoadAnimation(string stateName, double transitionTime, double waitTime, int? frameRate, ICollection<string>? protectNames)
         {
             IsTransferRunning = true;
-            FrameRate = frameRate == null ? DefaultFrameRate : (int)frameRate;
+            FrameRate = frameRate == null ? _defaultFrameRate : (int)frameRate;
 
             await Task.Delay((int)(waitTime * 1000));
             //意义:例如在MouseLeave事件中,鼠标若移动过快,可能无法正确执行过渡效果,因此需要设置一个前置延迟
@@ -345,13 +304,84 @@ namespace MinimalisticWPF
                     result.Item1.SetValue(Target, result.Item2);
                 }
                 await Task.Delay(deltaTime);
-                if (IsInterrupted) { break; }
+                if (_isInterrupted) { break; }
             }
 
-            IsInterrupted = false;
+            _isInterrupted = false;
             IsTransferRunning = false;
-            IsConditionLocked = false;
             if (FrameCount != 0) { FrameCount = 0; }
+        }
+        internal List<List<Tuple<PropertyInfo, object?>>> ComputingFrames()
+        {
+            List<List<Tuple<PropertyInfo, object?>>> result = new List<List<Tuple<PropertyInfo, object?>>>();
+
+            result.Add(DoubleComputing());
+            result.Add(BrushComputing());
+            result.Add(PointComputing());
+
+            return result;
+        }
+        internal List<Tuple<PropertyInfo, object?>> DoubleComputing()
+        {
+            List<Tuple<PropertyInfo, object?>> result = new List<Tuple<PropertyInfo, object?>>();
+
+
+
+            return result;
+        }
+        internal List<Tuple<PropertyInfo, object?>> BrushComputing()
+        {
+            List<Tuple<PropertyInfo, object?>> result = new List<Tuple<PropertyInfo, object?>>();
+
+
+
+            return result;
+        }
+        internal List<Tuple<PropertyInfo, object?>> PointComputing()
+        {
+            List<Tuple<PropertyInfo, object?>> result = new List<Tuple<PropertyInfo, object?>>();
+
+
+
+            return result;
+        }
+
+
+        /// <summary>
+        /// 动画解释器
+        /// </summary>
+        internal class AnimationInterpreter
+        {
+            internal AnimationInterpreter() { }
+
+            internal object? Target { get; set; }
+            internal int DeltaTime { get; set; }
+            internal List<List<Tuple<PropertyInfo, object?>>> Frams { get; set; } = new List<List<Tuple<PropertyInfo, object?>>>();
+            internal bool IsRunning { get; set; } = false;
+            internal bool IsStop { get; set; } = false;
+
+            internal async void Interpreter()
+            {
+                if (IsStop || IsRunning) { return; }
+                IsRunning = true;
+
+                for (int i = 0; i < Frams[0].Count; i++)
+                {
+                    if (IsStop) { return; }
+                    for (int j = 0; j < Frams.Count; j++)
+                    {
+
+                        var result = Frams[j][i];
+                        result.Item1.SetValue(Target, result.Item2);
+                    }
+                    await Task.Delay(DeltaTime);
+                }
+            }
+
+            internal void Interrupt()
+            {
+                IsStop = true;
+            }
         }
     }
 }

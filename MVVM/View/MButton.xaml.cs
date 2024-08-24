@@ -9,22 +9,28 @@ namespace MinimalisticWPF
     {
         private StateMachine Machine { get; set; }
 
-        static State MouseOver = State.FromObject(new MButtonViewModel())
-            .SetName("mouseover")
+        static State Start = State.FromObject(new MButtonViewModel())
+            .SetName("defualt")
+            .ToState();
+        static State MouseIn = State.FromObject(new MButtonViewModel())
+            .SetName("mouseInside")
             .SetProperty(x => x.ActualBackgroundOpacity, 0.4)
             .ToState();
+
+        static StateVector mECondition = StateVector.FromType<MButtonViewModel>()
+            .SetName("ToMInside")
+            .SetTarget(MouseIn)
+            .SetCondition(x => x.Text.Length > 10)
+            .SetTransferParams()
+            .ToStateVector();
 
         public MButton()
         {
             InitializeComponent();
 
-            State Source = State.FromObject(ViewModel)
-                .SetName("defualt")
-                .ToState();
-
-
-            Machine = new StateMachine(ViewModel, Source, MouseOver);
-            ViewModel.Machine = Machine;
+            Machine = StateMachine.Create(ViewModel)
+                .SetStates(Start, MouseIn)
+                .SetConditions(mECondition);
         }
 
         public event MouseButtonEventHandler? Click
