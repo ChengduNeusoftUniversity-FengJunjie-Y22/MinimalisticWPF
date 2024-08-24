@@ -4,6 +4,10 @@
     - Use a [State](#State) object to keep track of the control's property values at the current time
     - Use a [StateVector](#StateVector) object to describe the conditions under which the StateMachine transitions to which state
     - Use a [StateMachine](#StateMachine) object and give it State objects and StateVector objects to implement linear animations
+    - Properties that currently support linear transitions
+      - double
+      - Brush
+      - …… under development >>
 - [Minimalistic UserControls](#MinimalisticUserControls)
     - Uniform dark theme
     - All animations based on StateMachine
@@ -38,7 +42,8 @@ Suppose the current state of the Grid control is A, when the mouse enters the co
             .ToState();
 ```
 ## StateVector
-If you are using the MVVM design pattern and want the control to automatically switch to a specific State when a certain condition is met, you need to create a StateVector object to record this relationship, as shown in the following code
+- If you are using the MVVM design pattern and want the control to automatically switch to a specific State when a certain condition is met, you need to create a StateVector object to record this relationship, as shown in the following code.
+- Of course, here we're using Grid for the sake of demonstration, but you should actually fill in the specific ViewModel type
 ```csharp
         static StateVector DefaultCondition = StateVector.FromType<Grid>()
             .SetTarget(MInsideState)
@@ -81,12 +86,14 @@ Using the State and StateVector objects, you can create a StateMachine instance 
                 });
         }
 ```
-## Tips
+## Example Under MVVM
+…… under development >> The automatic switching function provided by StateVector has not passed the phase test
+## Example Under FrameworkElement 
 The [FrameworkElement](#FrameworkElement) has a more elegant way to quickly start the linear transitions StateMachine provides, and in fact, it's even better for non-MVVM design patterns, but note that StateMachine's linear transitions don't depend on storyboards at all. Therefore, when you mix the two, you need to avoid conflicts
 
 
 # MinimalisticUserControls
-## …… Under development
+…… under development >> The authors are working on using StateMachine entirely for linear animations in MVVM design pattern
 
 # ExtensionMethod
 ## string
@@ -105,8 +112,8 @@ The [FrameworkElement](#FrameworkElement) has a more elegant way to quickly star
    var result4 = valueB.ToBool();
    //Convert to bool
 
-   var result5 = valueC.ToColor();
-   //Convert to Color
+   var result5 = valueC.ToBrush();
+   //Convert to Brush
 ```
 - Fuzzy matching
 ```csharp
