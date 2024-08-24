@@ -16,9 +16,12 @@
 		<RepositoryUrl>https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF</RepositoryUrl>
 		<NeutralLanguage>zh-CN</NeutralLanguage>
 		<IncludeSymbols>False</IncludeSymbols>
-		<Description>A library designed to improve the efficiency of WPF development</Description>
+		<Description>1. Borrowed from the concept of a state machine system in game development, allowing you to record the properties of an object at different times and automatically generate a linear animation from the current state to the recorded time
+2. The extension method is customized for string type and FrameworkElement type, and the animation support for FrameworkElement comes from the state machine system
+3. Dark theme, minimalist user controls, all implemented with MVVM+StateMachine, great for making small personal projects quickly
+&gt;&gt;&gt;This is still an experimental stage, non-linear animations, more supported properties, richer use cases are all expected in the near future...……</Description>
 		<RepositoryType>git</RepositoryType>
-		<Version>1.2.0</Version>
+		<Version>1.2.1</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
