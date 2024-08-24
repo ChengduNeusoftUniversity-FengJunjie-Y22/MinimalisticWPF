@@ -97,8 +97,8 @@ namespace MinimalisticWPF
         /// 记录该状态下的属性值
         /// </summary>
         public TempState<T> SetProperty(
-        Expression<Func<T, double>> propertyLambda,
-        double newValue)
+            Expression<Func<T, double>> propertyLambda,
+            double newValue)
         {
             var compiledLambda = propertyLambda.Compile();
             var obj = Value;
@@ -112,6 +112,58 @@ namespace MinimalisticWPF
             {
                 var property = propertyExpr.Member as PropertyInfo;
                 if (property == null || !property.CanWrite || property.PropertyType != typeof(double))
+                {
+                    return this;
+                }
+
+                property.SetValue(obj, newValue);
+            }
+
+            return this;
+        }
+
+        public TempState<T> SetProperty(
+            Expression<Func<T, Brush>> propertyLambda,
+            Brush newValue)
+        {
+            var compiledLambda = propertyLambda.Compile();
+            var obj = Value;
+
+            if (obj == null)
+            {
+                return this;
+            }
+
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(Brush))
+                {
+                    return this;
+                }
+
+                property.SetValue(obj, newValue);
+            }
+
+            return this;
+        }
+
+        public TempState<T> SetProperty(
+            Expression<Func<T, Point>> propertyLambda,
+            Point newValue)
+        {
+            var compiledLambda = propertyLambda.Compile();
+            var obj = Value;
+
+            if (obj == null)
+            {
+                return this;
+            }
+
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(Point))
                 {
                     return this;
                 }

@@ -210,16 +210,7 @@ namespace MinimalisticWPF
             }
             else
             {
-                if (TransferParams.IsQueue)
-                {
-                    Interpreters.Enqueue(animationInterpreter);
-                }
-                else
-                {
-                    Interpreter.Interrupt();
-                    Interpreter = animationInterpreter;
-                    animationInterpreter.Interpret();
-                }
+                Interpreters.Enqueue(animationInterpreter);
             }
         }
         /// <summary>
@@ -370,6 +361,11 @@ namespace MinimalisticWPF
                 for (int i = 0; i < Machine.FrameCount; i++)
                 //按帧遍历
                 {
+                    if (IsStop)
+                    {
+                        WhileEnded();
+                        return;
+                    }
                     for (int j = 0; j < Frams.Count; j++)
                     //按不同类属性遍历
                     {
@@ -379,11 +375,6 @@ namespace MinimalisticWPF
                             Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
                             await Task.Delay(DeltaTime);
                         }
-                    }
-                    if (IsStop)
-                    {
-                        WhileEnded();
-                        return;
                     }
                 }
 
@@ -399,9 +390,10 @@ namespace MinimalisticWPF
             {
                 IsRunning = false;
                 IsStop = false;
+                Machine.Interpreter = null;
                 if (IsLast)
                 {
-                    //Machine.Interpreters.Clear();
+                    Machine.Interpreters.Clear();
                 }
                 else
                 {

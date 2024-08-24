@@ -32,7 +32,7 @@ namespace MinimalisticWPF
 
         public Brush FixedBorderBrush { get; set; } = Brushes.White;
 
-        public Brush ActualBackground { get; set; } = Brushes.Transparent;
+        public Brush ActualBackground { get; set; } = "#1e1e1e".ToBrush();
 
         public double ActualBackgroundOpacity { get; set; } = 1;
 

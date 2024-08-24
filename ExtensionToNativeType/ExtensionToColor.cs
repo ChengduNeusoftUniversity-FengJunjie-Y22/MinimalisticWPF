@@ -2,7 +2,7 @@
 
 namespace MinimalisticWPF
 {
-    public static class ExtensionToColor
+    public static class ExtensionToBrush
     {
         public static Color Lerp(this Color startColor, Color endColor, double t)
         {

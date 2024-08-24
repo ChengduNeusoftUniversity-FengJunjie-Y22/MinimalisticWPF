@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+﻿using System.Windows.Media;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -142,10 +142,10 @@ namespace MinimalisticWPF
         /// <summary>
         /// 转为颜色
         /// </summary>
-        public static Color? ToColor(this string source)
+        public static Brush ToBrush(this string source)
         {
-            if (!source.StartsWith("#") || source.Length != 7) { return null; }
-            return (Color)new ColorConverter().ConvertFromString(source);
+            if (!source.StartsWith("#") || source.Length != 7) { return Brushes.Transparent; }
+            return new SolidColorBrush((Color)ColorConverter.ConvertFromString(source));
         }
 
         /// <summary>

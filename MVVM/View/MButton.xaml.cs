@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Animation;
+using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
@@ -11,6 +11,7 @@ namespace MinimalisticWPF
 
         static State Start = State.FromObject(new MButtonViewModel())
             .SetName("defualt")
+            .SetProperty(x=>x.ActualBackgroundOpacity,1)
             .ToState();
         static State MouseIn = State.FromObject(new MButtonViewModel())
             .SetName("mouseInside")
