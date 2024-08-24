@@ -1,18 +1,18 @@
 ﻿# MinimalisticWPF
 ## Target
-- [StateMachine System]
-    - Use a [State] object to keep track of the control's property values at the current time
-    - Use a [StateVector] object to describe the conditions under which the StateMachine transitions to which state
-    - Use a [StateMachine] object and give it State objects and StateVector objects to implement linear animations
-- [Minimalistic UserControls]
+- [StateMachine System](#StateMachine)
+    - Use a [State](##State) object to keep track of the control's property values at the current time
+    - Use a [StateVector](##StateVector) object to describe the conditions under which the StateMachine transitions to which state
+    - Use a [StateMachine](##StateMachine) object and give it State objects and StateVector objects to implement linear animations
+- [Minimalistic UserControls](#MinimalisticUserControls)
     - Uniform dark theme
     - All animations based on StateMachine
-- [Extension Method]
-    - [string]
+- [Extension Method](#ExtensionMethod)
+    - [string](##string)
       - Value conversion
       - Fuzzy matching
       - Crawler analysis
-	- [FrameworkElement]
+	- [FrameworkElement](##FrameworkElement)
       - Linear animation based on StateMachine
       - Storyboard-based animations
 ## Framework
@@ -25,7 +25,6 @@
 [1]: https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF
 [2]: https://www.nuget.org/packages/MinimalisticWPF/
 
-[3]:
 # StateMachine System
 ## State
 Suppose the current state of the Grid control is A, when the mouse enters the control, I want its length, width, height and background color to have a linear gradient effect, and the final result of the gradient is recorded as state B, then the state at the time of B can be recorded as this code
@@ -83,13 +82,43 @@ Using the State and StateVector objects, you can create a StateMachine instance 
         }
 ```
 ## Tips
-The [FrameworkElement] has a more elegant way to quickly start the linear transitions StateMachine provides, and in fact, it's even better for non-MVVM design patterns, but note that StateMachine's linear transitions don't depend on storyboards at all. Therefore, when you mix the two, you need to avoid conflicts
+The [FrameworkElement](##FrameworkElement) has a more elegant way to quickly start the linear transitions StateMachine provides, and in fact, it's even better for non-MVVM design patterns, but note that StateMachine's linear transitions don't depend on storyboards at all. Therefore, when you mix the two, you need to avoid conflicts
 
 
-# Minimalistic UserControls
+# MinimalisticUserControls
 ## …… Under development
 
-# Extension Method
+# ExtensionMethod
 ## string
 ## FrameworkElement
+Use the extension method to quickly start the StateMachine linear transition animation
+```cshapr
+        private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GD.MachineTransfer()
+                .Add(x => x.Width, 700)
+                .Add(x => x.Height, 300)
+                .Add(x => x.Opacity, 0.2)
+                .Add(x => x.Background, Brushes.Lime)
+                .Set((x) =>
+                {
+                    x.Duration = 0.1;
+                })
+                .Start();
+        }
+
+        private void GD_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GD.MachineTransfer()
+                .Add(x => x.Width, 70)
+                .Add(x => x.Height, 30)
+                .Add(x => x.Opacity, 1)
+                .Add(x => x.Background, Brushes.Tomato)
+                .Set((x) =>
+                {
+                    x.Duration = 0.1;
+                })
+                .Start();
+        }
+```
 
