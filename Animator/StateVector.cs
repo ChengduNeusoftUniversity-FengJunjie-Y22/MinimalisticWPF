@@ -43,14 +43,14 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 持续时长(单位:S)
+        /// 持续时长(单位: s )
         /// </summary>
         public double Duration { get; set; } = 0;
 
         /// <summary>
-        /// 过渡帧率(默认:500)
+        /// 过渡帧率(默认: 244 )
         /// </summary>
-        public int FrameRate { get; set; } = 244;
+        public int FrameRate { get; set; } = 400;
 
         /// <summary>
         /// 是否排队执行(默认:不排队)

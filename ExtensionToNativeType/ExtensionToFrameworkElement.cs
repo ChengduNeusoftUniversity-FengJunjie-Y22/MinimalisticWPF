@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 
 namespace MinimalisticWPF
@@ -74,7 +75,7 @@ namespace MinimalisticWPF
 
         internal StateMachine Machine { get; set; }
 
-        List<Tuple<PropertyInfo, double>> States = new List<Tuple<PropertyInfo, double>>();
+        List<Tuple<PropertyInfo, object?>> States = new List<Tuple<PropertyInfo, object?>>();
 
         TransferParams TransferParams { get; set; } = new TransferParams();
 
@@ -87,7 +88,33 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                States.Add(Tuple.Create(property, newValue));
+                States.Add(Tuple.Create(property, (object?)newValue));
+            }
+            return this;
+        }
+        public TempStoryBoard<T> Add(Expression<Func<T, Brush>> propertyLambda, Brush newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(Brush))
+                {
+                    return this;
+                }
+                States.Add(Tuple.Create(property, (object?)newValue));
+            }
+            return this;
+        }
+        public TempStoryBoard<T> Add(Expression<Func<T, Point>> propertyLambda, Point newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(Brush))
+                {
+                    return this;
+                }
+                States.Add(Tuple.Create(property, (object?)newValue));
             }
             return this;
         }
@@ -111,18 +138,21 @@ namespace MinimalisticWPF
             Machine.States.Add(temp);
             if (TransferParams == null)
             {
-                Machine.Transfer("temp", 0);
+                Machine.Transfer("temp", (x) => x.Duration = 0);
             }
             else
             {
                 Machine.Transfer("temp",
-                    TransferParams.Duration,
-                    TransferParams.IsQueue,
-                    TransferParams.IsLast,
-                    TransferParams.IsUnique,
-                    TransferParams.FrameRate,
-                    TransferParams.WaitTime,
-                    TransferParams.ProtectNames);
+                        (x) =>
+                        {
+                            x.Duration = TransferParams.Duration;
+                            x.IsQueue = TransferParams.IsQueue;
+                            x.IsLast = TransferParams.IsLast;
+                            x.IsUnique = TransferParams.IsUnique;
+                            x.FrameRate = TransferParams.FrameRate;
+                            x.WaitTime = TransferParams.WaitTime;
+                            x.ProtectNames = TransferParams.ProtectNames;
+                        });
             }
             return Target;
         }

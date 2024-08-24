@@ -35,15 +35,18 @@ namespace MinimalisticWPF
                 if (kvp.Condition(Machine.Target))
                 {
                     Machine.Transfer(kvp.StateName,
-                        kvp.TransferParams.Duration,
-                        kvp.TransferParams.IsQueue,
-                        kvp.TransferParams.IsLast,
-                        kvp.TransferParams.IsUnique,
-                        kvp.TransferParams.FrameRate,
-                        kvp.TransferParams.WaitTime,
-                        kvp.TransferParams.ProtectNames);
-                    return;
+                        (x) =>
+                        {
+                            x.Duration = kvp.TransferParams.Duration;
+                            x.IsQueue = kvp.TransferParams.IsQueue;
+                            x.IsLast = kvp.TransferParams.IsLast;
+                            x.IsUnique = kvp.TransferParams.IsUnique;
+                            x.FrameRate = kvp.TransferParams.FrameRate;
+                            x.WaitTime = kvp.TransferParams.WaitTime;
+                            x.ProtectNames = kvp.TransferParams.ProtectNames;
+                        });
                 }
+                return;
             }
         }
     }

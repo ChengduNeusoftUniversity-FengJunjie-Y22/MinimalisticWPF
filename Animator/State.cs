@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
 using System.Dynamic;
 using System.Linq.Expressions;
+using System.Windows.Media;
+using System.Windows;
 
 namespace MinimalisticWPF
 {
@@ -13,12 +15,26 @@ namespace MinimalisticWPF
         {
             ObjType = Target.GetType();
             PropertyInfo[] Properties = ObjType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                                            .Where(x => x.CanWrite && x.CanRead && x.PropertyType == typeof(double))
-                                            .ToArray();
+                .Where(x => x.CanWrite && x.CanRead)
+                .ToArray();//所有可用属性
+            PropertyInfo[] DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double))
+                .ToArray();//筛选Double属性
+            PropertyInfo[] BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
+                .ToArray();//筛选Brush属性
+            PropertyInfo[] PointProperties = Properties.Where(x => x.PropertyType == typeof(Point))
+                .ToArray();//筛选Point属性
 
-            foreach (PropertyInfo propertyInfo in Properties)
+            foreach (PropertyInfo propertyInfo in DoubleProperties)
             {
-                DoubleValues.Add(propertyInfo.Name, (double)propertyInfo.GetValue(Target));
+                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
+            }
+            foreach (PropertyInfo propertyInfo in BrushProperties)
+            {
+                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
+            }
+            foreach (PropertyInfo propertyInfo in PointProperties)
+            {
+                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
             }
         }
 
@@ -29,7 +45,7 @@ namespace MinimalisticWPF
 
         public Type ObjType { get; internal set; }
 
-        public Dictionary<string, double> DoubleValues { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, object?> Values { get; set; } = new Dictionary<string, object?>();
 
         /// <summary>
         /// 获取该状态下,指定属性的具体值
@@ -37,16 +53,16 @@ namespace MinimalisticWPF
         /// <param name="propertyName">属性的名称</param>
         /// <returns>double 具体值</returns>
         /// <exception cref="ArgumentException"></exception>
-        public double this[string propertyName]
+        public object? this[string propertyName]
         {
             get
             {
-                if (!DoubleValues.TryGetValue(propertyName, out _))
+                if (!Values.TryGetValue(propertyName, out _))
                 {
                     throw new ArgumentException($"There is no property State value named [ {propertyName} ] in the state named [ {StateName} ]");
                 }
 
-                return DoubleValues[propertyName];
+                return Values[propertyName];
             }
         }
 

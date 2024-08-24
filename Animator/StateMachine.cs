@@ -15,6 +15,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Windows.Automation;
 using System.Windows.Media;
 using static System.TimeZoneInfo;
+using static MinimalisticWPF.StateMachine;
+using System.Security.Cryptography.Xml;
+using System.Reflection.PortableExecutable;
 
 namespace MinimalisticWPF
 {
@@ -24,12 +27,6 @@ namespace MinimalisticWPF
     /// <typeparam name="T">被状态机控制的对象的实际类型</typeparam>
     public class StateMachine
     {
-        private int _framecount = 0;
-        private int _defaultFrameRate = 244;
-        private bool _isInterrupted = false;
-        private Tuple<string, double, bool>? _tempTransfer = null;
-
-
         /// <param name="viewModel">受状态机控制的实例对象</param>
         /// <param name="states">所有该对象可能具备的状态</param>
         /// <exception cref="ArgumentException"></exception>
@@ -61,8 +58,10 @@ namespace MinimalisticWPF
             if (IConditions != null) { IConditions.Machine = this; }
             //尝试与Conditional模块建立连接
         }
-
-
+        /// <summary>
+        /// 全局受保护的属性
+        /// </summary>
+        public List<string> GlobalProtectedProperty { get; internal set; } = new List<string>();
         /// <summary>
         /// Public属性
         /// </summary>
@@ -79,8 +78,6 @@ namespace MinimalisticWPF
         /// Point属性
         /// </summary>
         public PropertyInfo[] PointProperties { get; internal set; }
-
-
         /// <summary>
         /// 受状态机控制的对象
         /// </summary>
@@ -89,54 +86,23 @@ namespace MinimalisticWPF
         /// 与状态机相连的Conditional模块
         /// </summary>
         public IConditionalTransfer? IConditions { get; internal set; }
-
-
         /// <summary>
         /// 此状态机可导向的所有非条件驱动状态
         /// </summary>
         public StateCollection States { get; set; } = new StateCollection();
-
-
         /// <summary>
-        /// 是否处于过渡过程中
+        /// 状态机过渡效果参数
         /// </summary>
-        public bool IsTransferRunning { get; internal set; } = false;
-        /// <summary>
-        /// 排队处理连续申请的Transfer操作
-        /// </summary>
-        internal Queue<Tuple<string, double>> Transfers { get; set; } = new Queue<Tuple<string, double>>();
-        /// <summary>
-        /// 当前正在执行的任务数量
-        /// </summary>
-        public int FrameCount
-        {
-            get => _framecount;
-            internal set
-            {
-                _framecount = value >= 0 ? value : 0;
-                IsTransferRunning = value > 0 ? true : false;
-                if (_framecount == 0 && Transfers.Count > 0 && !_isInterrupted)
-                {
-                    var temp = Transfers.Dequeue();
-                    Transfer(temp.Item1, temp.Item2);
-                }
-            }
-        }
-
+        public TransferParams TransferParams { get; set; } = new TransferParams();
 
         /// <summary>
-        /// 过渡帧率
+        /// 一帧持续的时间(单位: ms )
         /// </summary>
-        internal int FrameRate { get; set; } = 244;
+        public double DeltaTime { get => 1000.0 / TransferParams.FrameRate; }
         /// <summary>
-        /// 一帧持续的时长
+        /// 总计需要的帧数
         /// </summary>
-        public double FrameDuration { get => 1000.0 / FrameRate; }
-        /// <summary>
-        /// 全局受保护的属性
-        /// </summary>
-        public List<string> GlobalProtectedProperty { get; internal set; } = new List<string>();
-
+        public double FrameCount { get => (TransferParams.Duration == 0 ? 0.01 : TransferParams.Duration) * 1000 / DeltaTime; }
 
         /// <summary>
         /// 创建状态机
@@ -186,7 +152,7 @@ namespace MinimalisticWPF
         /// 保护属性不受状态机影响
         /// </summary>
         /// <param name="propertyNames">若干属性名</param>
-        public void SetProtects(params string[] propertyNames)
+        public StateMachine SetProtects(params string[] propertyNames)
         {
             if (propertyNames.Length == 0) GlobalProtectedProperty.Clear();
 
@@ -195,72 +161,97 @@ namespace MinimalisticWPF
                 var result = GlobalProtectedProperty.FirstOrDefault(x => x == propertyName);
                 if (result == null) { GlobalProtectedProperty.Add(propertyName); }
             }
+
+            return this;
         }
 
+        /// <summary>
+        /// 正在执行中的解释器
+        /// </summary>
+        internal AnimationInterpreter? Interpreter { get; set; }
+        /// <summary>
+        /// 排队等待执行的解释器
+        /// </summary>
+        internal Queue<AnimationInterpreter> Interpreters { get; set; } = new Queue<AnimationInterpreter>();
 
         /// <summary>
         /// 转移至目标状态
         /// </summary>
         /// <param name="stateName">状态名称</param>
-        /// <param name="transitionTime">过渡时间</param>
-        /// <param name="isQueue">是否排队</param>
-        /// <param name="isLast">是否视为最后一个转移操作</param>
-        /// <param name="frameRate">过渡帧率</param>
-        /// <param name="waitTime">延时启动</param>
-        /// <param name="isUnique">是否在队列中保持唯一</param>
-        /// <param name="protectNames">局部保护属性不受状态机影响</param>
+        /// <param name="actionSet">设置过渡参数</param>
         /// <exception cref="ArgumentException"></exception>
-        public void Transfer(string stateName, double transitionTime, bool isQueue = false, bool isLast = true, bool isUnique = false, int? frameRate = default, double waitTime = 0.008, ICollection<string>? protectNames = default)
+        public void Transfer(string stateName, Action<TransferParams>? actionSet)
         {
-            if (isLast) { Transfers.Clear(); }
+            var targetState = States.FirstOrDefault(x => x.StateName == stateName);
+            if (targetState == null) throw new ArgumentException($"The State Named [ {stateName} ] Cannot Be Found");
 
-            if (!isQueue && IsTransferRunning)
+            TransferParams transferParams = new TransferParams();
+            actionSet?.Invoke(transferParams);
+            TransferParams = transferParams;
+
+            AnimationInterpreter animationInterpreter = new AnimationInterpreter(this);
+            animationInterpreter.IsLast = TransferParams.IsLast;
+            animationInterpreter.DeltaTime = (int)DeltaTime;
+            animationInterpreter.Frams = ComputingFrames(targetState, TransferParams);
+
+            var targetInterpreter = Interpreters.Where(x => x.StateName == stateName).ToArray();
+            if (targetInterpreter.Length != 0 && TransferParams.IsUnique)
             {
-                _isInterrupted = true;
-                _tempTransfer = Tuple.Create(stateName, transitionTime, true);
-                FrameCount = 0;
-                LoadAnimation(stateName, transitionTime, waitTime, frameRate, protectNames);
-                return;
+                foreach (var target in targetInterpreter)
+                {
+                    target.IsStop = true;
+                }
             }
 
-            if (IsTransferRunning)
+            if (Interpreter == null)
             {
-                if (!isUnique)
+                Interpreter = animationInterpreter;
+                animationInterpreter.Interpret();
+            }
+            else
+            {
+                if (TransferParams.IsQueue)
                 {
-                    Transfers.Enqueue(Tuple.Create(stateName, transitionTime));
+                    Interpreters.Enqueue(animationInterpreter);
                 }
                 else
                 {
-                    var viewModel = Transfers.FirstOrDefault(x => x.Item1 == stateName);
-                    if (viewModel == null) { Transfers.Enqueue(Tuple.Create(stateName, transitionTime)); }
+                    Interpreter.Interrupt();
+                    Interpreter = animationInterpreter;
+                    animationInterpreter.Interpret();
                 }
-                return;
             }
-            LoadAnimation(stateName, transitionTime, waitTime, frameRate, protectNames);
         }
-        private async void LoadAnimation(string stateName, double transitionTime, double waitTime, int? frameRate, ICollection<string>? protectNames)
+        /// <summary>
+        /// 计算属性的每个帧状态
+        /// </summary>
+        internal List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state, TransferParams transferParams)
         {
-            IsTransferRunning = true;
-            FrameRate = frameRate == null ? _defaultFrameRate : (int)frameRate;
+            List<List<Tuple<PropertyInfo, List<object?>>>> result = new List<List<Tuple<PropertyInfo, List<object?>>>>();
+            //第一层List:按属性的类型进行划分
+            //第二层List:按同类型属性的名称进行划分
+            //Tuple层List:属性在每一帧所应具备的值
 
-            await Task.Delay((int)(waitTime * 1000));
-            //意义:例如在MouseLeave事件中,鼠标若移动过快,可能无法正确执行过渡效果,因此需要设置一个前置延迟
+            result.Add(DoubleComputing(state, transferParams));
+            result.Add(BrushComputing(state, transferParams));
+            //result.Add(PointComputing(state, transferParams));
 
-            var viewModelState = States.FirstOrDefault(x => x.StateName == stateName);
-            if (viewModelState == null)
-            {
-                throw new ArgumentException($"Failed to find state named [ {stateName} ] from controller");
-            }
-
-            List<Tuple<PropertyInfo, double>> viewModels = new List<Tuple<PropertyInfo, double>>();
+            return result;
+        }
+        internal List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(State state, TransferParams transferParams)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
+            //预加载:[ 所有Double属性变化帧序列 ]
+            List<Tuple<PropertyInfo, double?>> viewModels = new List<Tuple<PropertyInfo, double?>>();
             //预加载:[ 需要平滑过渡的属性 ]+[ 新值相对于旧值的变化量 ]
+
             for (int i = 0; i < DoubleProperties.Length; i++)
             {
-                if (protectNames?.FirstOrDefault(x => x == DoubleProperties[i].Name) == null &&
+                if (transferParams.ProtectNames?.FirstOrDefault(x => x == DoubleProperties[i].Name) == null &&
                     GlobalProtectedProperty.FirstOrDefault(x => x == DoubleProperties[i].Name) == null)
                 {
-                    double now = (double)DoubleProperties[i].GetValue(Target);
-                    double viewModel = viewModelState[DoubleProperties[i].Name];
+                    double? now = (double?)DoubleProperties[i].GetValue(Target);
+                    double? viewModel = (double?)state[DoubleProperties[i].Name];
                     if (now != viewModel)
                     {
                         viewModels.Add(Tuple.Create(DoubleProperties[i], viewModel - now));
@@ -268,119 +259,154 @@ namespace MinimalisticWPF
                 }
             }
 
-            var deltaTime = (int)FrameDuration;
-            //每一帧持续的时间
-
-            int frameCount = (int)(transitionTime / (FrameDuration / 1000));
-            //单个属性的渐变流程所需要的总帧数
-
-            List<List<Tuple<PropertyInfo, double>>> allFrames = new List<List<Tuple<PropertyInfo, double>>>();
-            //预加载:[ 所有待执行的属性变化帧 ]
             for (int i = 0; i < viewModels.Count; i++)
             {
-                allFrames.Add(new List<Tuple<PropertyInfo, double>>());
-
-                double delta = viewModels[i].Item2 / frameCount;
+                var delta = viewModels[i].Item2 / FrameCount;
                 //每帧变化的量
-
-                double currentValue = (double)viewModels[i].Item1.GetValue(Target);
+                var currentValue = (double?)viewModels[i].Item1.GetValue(Target);
                 //当前值
-
-                for (int j = 0; j < frameCount; j++)
+                List<object?> deltas = new List<object?>();
+                for (int j = 0; j < FrameCount; j++)
                 {
-                    double newValue = currentValue + j * delta;
-                    allFrames[i].Add(Tuple.Create(viewModels[i].Item1, newValue));
-                    FrameCount++;
+                    object? newValue = currentValue + j * delta;
+                    deltas.Add(newValue);
                 }
+                allFrames.Add(Tuple.Create(viewModels[i].Item1, deltas));
             }
-            if (allFrames.Count == 0) { return; }
 
-            //应用:[ 计算出的每一帧 ]
-            for (int i = 0; i < allFrames[0].Count; i++)
+            return allFrames;
+        }
+        internal List<Tuple<PropertyInfo, List<object?>>> BrushComputing(State state, TransferParams transferParams)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
+            List<Tuple<PropertyInfo, Brush?>> viewModels = new List<Tuple<PropertyInfo, Brush?>>();
+
+            // 预加载需要平滑过渡的属性及其变化量
+            for (int i = 0; i < BrushProperties.Length; i++)
             {
-                for (int j = 0; j < allFrames.Count; j++)
+                if (transferParams.ProtectNames?.FirstOrDefault(x => x == BrushProperties[i].Name) == null &&
+                    GlobalProtectedProperty.FirstOrDefault(x => x == BrushProperties[i].Name) == null)
                 {
-                    var result = allFrames[j][i];
-                    result.Item1.SetValue(Target, result.Item2);
+                    Brush? now = (Brush?)BrushProperties[i].GetValue(Target);
+                    Brush? viewModel = (Brush?)state[BrushProperties[i].Name];
+                    if (!object.Equals(now, viewModel))
+                    {
+                        viewModels.Add(Tuple.Create(BrushProperties[i], viewModel));
+                    }
                 }
-                await Task.Delay(deltaTime);
-                if (_isInterrupted) { break; }
             }
 
-            _isInterrupted = false;
-            IsTransferRunning = false;
-            if (FrameCount != 0) { FrameCount = 0; }
-        }
-        internal List<List<Tuple<PropertyInfo, object?>>> ComputingFrames()
-        {
-            List<List<Tuple<PropertyInfo, object?>>> result = new List<List<Tuple<PropertyInfo, object?>>>();
+            for (int i = 0; i < viewModels.Count; i++)
+            {
+                Brush? startValue = (Brush?)viewModels[i].Item1.GetValue(Target);
+                Brush? endValue = viewModels[i].Item2;
 
-            result.Add(DoubleComputing());
-            result.Add(BrushComputing());
-            result.Add(PointComputing());
+                List<object?> deltas = CalculateGradientSteps(startValue ?? Brushes.Transparent, endValue ?? Brushes.Transparent, (int)FrameCount);
+                allFrames.Add(Tuple.Create(viewModels[i].Item1, deltas));
+            }
 
-            return result;
+            return allFrames;
         }
-        internal List<Tuple<PropertyInfo, object?>> DoubleComputing()
+        internal List<Tuple<PropertyInfo, List<object?>>> PointComputing(State state, TransferParams transferParams)
         {
-            List<Tuple<PropertyInfo, object?>> result = new List<Tuple<PropertyInfo, object?>>();
+            List<Tuple<PropertyInfo, List<object?>>> result = new List<Tuple<PropertyInfo, List<object?>>>();
 
 
 
             return result;
         }
-        internal List<Tuple<PropertyInfo, object?>> BrushComputing()
+        private static List<object?> CalculateGradientSteps(Brush brushA, Brush brushB, int steps)
         {
-            List<Tuple<PropertyInfo, object?>> result = new List<Tuple<PropertyInfo, object?>>();
+            // 验证输入是否为 SolidColorBrush
+            if (!(brushA is SolidColorBrush solidBrushA) || !(brushB is SolidColorBrush solidBrushB))
+            {
+                throw new ArgumentException("Both brushes must be of type SolidColorBrush.");
+            }
 
+            Color colorA = solidBrushA.Color;
+            Color colorB = solidBrushB.Color;
 
+            var gradientSteps = new List<object?>();
 
-            return result;
+            for (int i = 0; i <= steps; i++)
+            {
+                double ratio = (double)i / steps;
+                Color interpolatedColor = InterpolateColor(colorA, colorB, ratio);
+                Brush gradientBrush = new SolidColorBrush(interpolatedColor);
+                gradientSteps.Add(gradientBrush);
+            }
+
+            return gradientSteps;
         }
-        internal List<Tuple<PropertyInfo, object?>> PointComputing()
+        private static Color InterpolateColor(Color colorA, Color colorB, double ratio)
         {
-            List<Tuple<PropertyInfo, object?>> result = new List<Tuple<PropertyInfo, object?>>();
-
-
-
-            return result;
+            byte r = (byte)(colorA.R + (colorB.R - colorA.R) * ratio);
+            byte g = (byte)(colorA.G + (colorB.G - colorA.G) * ratio);
+            byte b = (byte)(colorA.B + (colorB.B - colorA.B) * ratio);
+            byte a = (byte)(colorA.A + (colorB.A - colorA.A) * ratio);
+            return Color.FromArgb(a, r, g, b);
         }
-
 
         /// <summary>
         /// 动画解释器
         /// </summary>
         internal class AnimationInterpreter
         {
-            internal AnimationInterpreter() { }
+            internal AnimationInterpreter(StateMachine machine) { Machine = machine; }
 
-            internal object? Target { get; set; }
-            internal int DeltaTime { get; set; }
-            internal List<List<Tuple<PropertyInfo, object?>>> Frams { get; set; } = new List<List<Tuple<PropertyInfo, object?>>>();
+            internal StateMachine Machine { get; set; }
+            internal List<List<Tuple<PropertyInfo, List<object?>>>> Frams { get; set; } = new List<List<Tuple<PropertyInfo, List<object?>>>>();
+            internal string StateName { get; set; } = string.Empty;
+            internal int DeltaTime { get; set; } = 0;
+            internal bool IsLast { get; set; } = true;
             internal bool IsRunning { get; set; } = false;
             internal bool IsStop { get; set; } = false;
 
-            internal async void Interpreter()
+            internal async void Interpret()
             {
-                if (IsStop || IsRunning) { return; }
+                if (IsStop || IsRunning) { WhileEnded(); return; }
                 IsRunning = true;
 
-                for (int i = 0; i < Frams[0].Count; i++)
+                for (int i = 0; i < Machine.FrameCount; i++)
+                //按帧遍历
                 {
-                    if (IsStop) { return; }
                     for (int j = 0; j < Frams.Count; j++)
+                    //按不同类属性遍历
                     {
-
-                        var result = Frams[j][i];
-                        result.Item1.SetValue(Target, result.Item2);
+                        for (int k = 0; k < Frams[j].Count; k++)
+                        //按同类属性不同名遍历
+                        {
+                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                            await Task.Delay(DeltaTime);
+                        }
                     }
-                    await Task.Delay(DeltaTime);
+                    if (IsStop)
+                    {
+                        WhileEnded();
+                        return;
+                    }
                 }
+
+                WhileEnded();
             }
 
             internal void Interrupt()
             {
-                IsStop = true;
+                IsStop = IsRunning ? true : false;
+            }
+
+            internal void WhileEnded()
+            {
+                IsRunning = false;
+                IsStop = false;
+                if (IsLast)
+                {
+                    //Machine.Interpreters.Clear();
+                }
+                else
+                {
+                    Machine.Interpreters.Dequeue()?.Interpret();
+                }
             }
         }
     }

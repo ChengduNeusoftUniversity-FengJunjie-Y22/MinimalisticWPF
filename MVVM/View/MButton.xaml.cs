@@ -41,12 +41,12 @@ namespace MinimalisticWPF
 
         public void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            Machine.Transfer("mouseover", 0.35);
+            Machine.Transfer("mouseInside", (x) => x.Duration = 0.2);
         }
 
         public void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            Machine.Transfer("defualt", 0.15);
+            Machine.Transfer("defualt", (x) => x.Duration = 0.2);
         }
     }
 }
