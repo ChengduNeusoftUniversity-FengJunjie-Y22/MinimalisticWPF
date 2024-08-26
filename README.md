@@ -353,7 +353,7 @@ The same Grid widget called GD, now let's add a linear transition animation to i
 ```csharp
         private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            GD.MachineTransfer()
+            GD.StateMachineTransfer()
                 .Add(x => x.Width, 700)
                 .Add(x => x.Height, 300)
                 .Add(x => x.Opacity, 0.2)
@@ -367,7 +367,7 @@ The same Grid widget called GD, now let's add a linear transition animation to i
 
         private void GD_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            GD.MachineTransfer()
+            GD.StateMachineTransfer()
                 .Add(x => x.Width, 70)
                 .Add(x => x.Height, 30)
                 .Add(x => x.Opacity, 1)
