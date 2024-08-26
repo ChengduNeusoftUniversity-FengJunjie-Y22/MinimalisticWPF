@@ -45,7 +45,7 @@ Suppose the current state of the Grid control is A, when the mouse enters the co
 ## StateVector
 - If you are using the MVVM design pattern and want the control to automatically switch to a specific State when a certain condition is met, you need to create a StateVector object to record this relationship, as shown in the following code.
 - Of course, here we're using Grid for the sake of demonstration, but you should actually fill in the specific ViewModel type
-- [Example in MVVM design pattern](#ExampleUnderMVVM)
+- [Example in MVVM design pattern](#MVVM)
 ```csharp
         static StateVector DefaultCondition = StateVector.FromType<Grid>()
             .SetTarget(MInsideState)
@@ -103,7 +103,7 @@ Note that you will almost never define TransferParams separately; instead, they 
 |WaitTime|double|0.008|You will rarely use it, and after a few versions it will be discarded as the system improves|
 
 
-## Example Under MVVM
+## MVVM
 Suppose you have a control called MButton that has a Text property in its ViewModel
 - Here's your ViewModel 
 - Let's say you want MButton's background color to linearly gradient to Red when Text contains the word [Red] and to linearly gradient to [#1e1e1e] when Text does not contain the word [Red] Then you would write something like this in your ViewModel
