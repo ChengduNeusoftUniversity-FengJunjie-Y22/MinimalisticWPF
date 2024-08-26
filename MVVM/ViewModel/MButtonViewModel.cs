@@ -21,9 +21,6 @@ namespace MinimalisticWPF
             .SetName("mouseInside")
             .SetProperty(x => x.ActualBackgroundOpacity, 0.1)
             .ToState();
-        public static StateVector<MButtonViewModel> ConditionA = StateVector<MButtonViewModel>.Create(new MButtonViewModel())
-            .AddCondition(x => x.Text.Contains("Red"), MouseIn, (x) => { x.Duration = 0.1; })
-            .AddCondition(x => !x.Text.Contains("Red"), Start, (x) => { x.Duration = 0.1; });
 
         public string Text
         {
@@ -33,7 +30,6 @@ namespace MinimalisticWPF
                 Model.Text = value;
                 IsTextWidthBack = true;
                 OnPropertyChanged(nameof(Text));
-                OnConditionsChecked();
             }
         }
 

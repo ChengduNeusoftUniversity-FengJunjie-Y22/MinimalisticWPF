@@ -44,6 +44,7 @@ Suppose the current state of the Grid control is A, when the mouse enters the co
 ## StateVector
 - If you are using the MVVM design pattern and want the control to automatically switch to a specific State when a certain condition is met, you need to create a StateVector object to record this relationship, as shown in the following code.
 - Of course, here we're using Grid for the sake of demonstration, but you should actually fill in the specific ViewModel type
+- [Example in MVVM design pattern](#ExampleUnderMVVM)
 ```csharp
         static StateVector DefaultCondition = StateVector.FromType<Grid>()
             .SetTarget(MInsideState)
@@ -53,7 +54,8 @@ Suppose the current state of the Grid control is A, when the mouse enters the co
             .ToStateVector();
 ```
 ## StateMachine
-Using the State and StateVector objects, you can create a StateMachine instance and load the linear animation in the MouseEnter and MouseLeave events of a Grid control called GD
+- Using the State and StateVector objects, you can create a StateMachine instance and load the linear animation in the MouseEnter and MouseLeave events of a Grid control called GD
+- The [FrameworkElement](#FrameworkElement) has a more elegant way to quickly start the linear transitions StateMachine provides, and in fact, it's even better for non-MVVM design patterns, but note that StateMachine's linear transitions don't depend on storyboards at all. Therefore, when you mix the two, you need to avoid conflicts
 ```csharp
         public MainWindow()
         {
@@ -87,9 +89,67 @@ Using the State and StateVector objects, you can create a StateMachine instance 
         }
 ```
 ## Example Under MVVM
-…… under development >> The automatic switching function provided by StateVector has not passed the phase test
-## Example Under FrameworkElement 
-The [FrameworkElement](#FrameworkElement) has a more elegant way to quickly start the linear transitions StateMachine provides, and in fact, it's even better for non-MVVM design patterns, but note that StateMachine's linear transitions don't depend on storyboards at all. Therefore, when you mix the two, you need to avoid conflicts
+Suppose you have a control called MButton that has a Text property in its ViewModel
+- Here's your ViewModel 
+- Let's say you want MButton's background color to linearly gradient to Red when Text contains the word [Red] and to linearly gradient to [#1e1e1e] when Text does not contain the word [Red] Then you would write something like this in your ViewModel
+```xml
+    <UserControl.DataContext>
+        <local:MButtonViewModel x:Name="ViewModel" ActualBackground="#1e1e1e"/>
+    </UserControl.DataContext>
+
+            <TextBlock x:Name="ActualText"
+                   Text="{Binding Text}"
+                   Foreground="{Binding Foreground}"
+                   FontSize="{Binding FontSize}"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Center"
+                   IsHitTestVisible="False"/>
+```
+```csharp
+    public partial class MButton : UserControl
+    {
+        public MButton()
+        {
+            InitializeComponent();
+            this.StateMachineLoading(ViewModel);
+        }
+    }
+```
+```csharp
+namespace MinimalisticWPF
+{
+    public class MButtonViewModel : StateViewModelBase<MButtonViewModel>
+    {
+        public MButtonViewModel() { }
+
+        public static State Start = State.FromObject(new MButtonViewModel())
+            .SetName("defualt")
+            .SetProperty(x => x.ActualBackground, "#1e1e1e".ToBrush())
+            .ToState();
+        public static State MouseIn = State.FromObject(new MButtonViewModel())
+            .SetName("mouseInside")
+            .SetProperty(x => x.ActualBackground, Brushes.Red)
+            .ToState();
+
+        public static StateVector<MButtonViewModel> ConditionA = StateVector<MButtonViewModel>.Create(new MButtonViewModel())
+            .AddCondition(x => x.Text.Contains("Red"), MouseIn, (x) => { x.Duration = 0.1; })
+            .AddCondition(x => !x.Text.Contains("Red"), Start, (x) => { x.Duration = 0.1; });
+
+        public string Text
+        {
+            get => Model.Text;
+            set
+            {
+                Model.Text = value;
+                IsTextWidthBack = true;
+                OnPropertyChanged(nameof(Text));
+                OnConditionsChecked();
+            }
+        }
+    }
+}
+```
+- Of course, this is a simple example; if you're designing a password box that changes color to indicate to the user that the password is not strong enough, a state machine can be powerful
 
 
 # MinimalisticUserControls
