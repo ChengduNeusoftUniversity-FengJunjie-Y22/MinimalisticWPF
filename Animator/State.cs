@@ -21,8 +21,8 @@ namespace MinimalisticWPF
                 .ToArray();//筛选Double属性
             PropertyInfo[] BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
                 .ToArray();//筛选Brush属性
-            PropertyInfo[] PointProperties = Properties.Where(x => x.PropertyType == typeof(Point))
-                .ToArray();//筛选Point属性
+            PropertyInfo[] TransformGroupProperties = Properties.Where(x => x.PropertyType == typeof(TransformGroup))
+                .ToArray();//筛选TransformGroup属性
 
             foreach (PropertyInfo propertyInfo in DoubleProperties)
             {
@@ -32,7 +32,7 @@ namespace MinimalisticWPF
             {
                 Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
             }
-            foreach (PropertyInfo propertyInfo in PointProperties)
+            foreach (PropertyInfo propertyInfo in TransformGroupProperties)
             {
                 Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
             }
@@ -149,8 +149,8 @@ namespace MinimalisticWPF
         }
 
         public TempState<T> SetProperty(
-            Expression<Func<T, Point>> propertyLambda,
-            Point newValue)
+            Expression<Func<T, TransformGroup>> propertyLambda,
+            TransformGroup newValue)
         {
             var compiledLambda = propertyLambda.Compile();
             var obj = Value;
@@ -163,7 +163,7 @@ namespace MinimalisticWPF
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
                 var property = propertyExpr.Member as PropertyInfo;
-                if (property == null || !property.CanWrite || property.PropertyType != typeof(Point))
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(TransformGroup))
                 {
                     return this;
                 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Controls;
 
 namespace MinimalisticWPF
 {
@@ -37,5 +38,7 @@ namespace MinimalisticWPF
         public double ActualBackgroundOpacity { get; set; } = 1;
 
         public bool IsMouseOver { get; set; } = false;
+
+        public TransformGroup? TransformGroup { get; set; } = null;
     }
 }

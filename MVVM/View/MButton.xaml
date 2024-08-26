@@ -8,7 +8,8 @@
              x:Name="Total"
              Height="{Binding Height,Mode=TwoWay}"
              Width="{Binding Width,Mode=TwoWay}"
-             Background="{Binding FixedTransparent,Mode=TwoWay}">
+             Background="{Binding FixedTransparent,Mode=TwoWay}"
+             RenderTransform="{Binding TransformGroup,Mode=TwoWay}">
 
     <UserControl.DataContext>
         <local:MButtonViewModel x:Name="ViewModel"

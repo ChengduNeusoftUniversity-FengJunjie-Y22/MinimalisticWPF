@@ -4,143 +4,89 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace MinimalisticWPF
 {
-    public class StateVector
+    public class StateVector<T> where T : class
     {
-        internal StateVector() { }
-
-        public State State { get; set; } = new State("defualt");
-        public string Name { get; internal set; } = string.Empty;
-        public string StateName { get; internal set; } = string.Empty;
-        public Func<dynamic, bool>? Condition { get; internal set; } = null;
-        public TransferParams TransferParams { get; internal set; } = new TransferParams();
+        internal StateVector(T target) { Target = target; }
 
         /// <summary>
-        /// 开始记录指向指定状态的触发条件
+        /// 与条件模块相连接的状态机
         /// </summary>
-        public static TempStateVector<T> FromType<T>() where T : class
+        public StateMachine? Machine { get; set; }
+        /// <summary>
+        /// 条件判断基于对此对象属性值的比对
+        /// </summary>
+        public T Target { get; set; }
+        /// <summary>
+        /// Item1 条件检查委托
+        /// <para>Item2 满足条件时自动切换到的状态</para>
+        /// <para>Item3 此次切换状态的过渡参数</para>
+        /// </summary>
+        public List<Tuple<Func<T, bool>, State, TransferParams>> Conditions { get; internal set; } = new List<Tuple<Func<T, bool>, State, TransferParams>>();
+        /// <summary>
+        /// Item1 最新传入比对结果的索引位置
+        /// Tiem2 最新的比对结果
+        /// </summary>
+        public List<bool> TempValue { get; internal set; } = new List<bool>();
+
+        /// <summary>
+        /// 添加[Condition=>State+TransferParams]的条件切换关系映射
+        /// </summary>
+        public StateVector<T> AddCondition(Expression<Func<T, bool>> condition, State targetState, Action<TransferParams>? setTransferParams)
         {
-            TempStateVector<T> result = new TempStateVector<T>();
-            return result;
-        }
-    }
+            var checker = condition.Compile();
 
-    public class TransferParams
-    {
-        internal TransferParams() { }
-
-        internal TransferParams(double transitionTime = 0, bool isQueue = false, bool isLast = true, bool isUnique = false, int? frameRate = default, double waitTime = 0.008, ICollection<string>? protectNames = default)
-        {
-            Duration = transitionTime;
-            FrameRate = frameRate == null ? FrameRate : (int)frameRate;
-            IsQueue = isQueue;
-            IsLast = isLast;
-            IsUnique = isUnique;
-            WaitTime = waitTime;
-            ProtectNames = protectNames == null ? ProtectNames : ProtectNames;
-        }
-
-        /// <summary>
-        /// 持续时长(单位: s )
-        /// </summary>
-        public double Duration { get; set; } = 0;
-
-        /// <summary>
-        /// 过渡帧率(默认: 244 )
-        /// </summary>
-        public int FrameRate { get; set; } = 400;
-
-        /// <summary>
-        /// 是否排队执行(默认:不排队)
-        /// </summary>
-        public bool IsQueue { get; set; } = false;
-
-        /// <summary>
-        /// 是否在执行完后,清除其它排队中的过渡效果(默认:清除)
-        /// </summary>
-        public bool IsLast { get; set; } = true;
-
-        /// <summary>
-        /// 申请进入执行队列时,若已有同名切换操作处于列队中,是否继续加入队列(默认:不加入)
-        /// </summary>
-        public bool IsUnique { get; set; } = true;
-
-        /// <summary>
-        /// [ 测试参数 ] 若无法响应例如MouseLeave事件,可适当增加此参数(默认:0.008)
-        /// </summary>
-        public double WaitTime { get; set; } = 0.008;
-
-        /// <summary>
-        /// 本次过渡过程中,不受状态机影响的属性的名称
-        /// </summary>
-        public ICollection<string>? ProtectNames { get; set; } = default;
-    }
-
-    public class TempStateVector<T> where T : class
-    {
-        internal TempStateVector() { }
-
-        internal T? Target { get; set; } = null;
-
-        internal StateVector Value { get; set; } = new StateVector();
-
-        /// <summary>
-        /// 记录该条件的名称
-        /// </summary>
-        public TempStateVector<T> SetName(string stateVectorName)
-        {
-            Value.Name = stateVectorName;
-            return this;
-        }
-
-        /// <summary>
-        /// 设置该Vector指向的State
-        /// </summary>
-        public TempStateVector<T> SetTarget(State state)
-        {
-            Value.State = state;
-            return this;
-        }
-
-        /// <summary>
-        /// 记录具体的条件
-        /// </summary>
-        public TempStateVector<T> SetCondition(Expression<Func<T, bool>> condition)
-        {
-            var compiledCondition = condition.Compile();
-
-            Func<dynamic, bool> dynamicCondition = item =>
+            if (checker != null)
             {
-                if (item is T typedItem)
+                TransferParams tempParams = new TransferParams();
+                setTransferParams?.Invoke(tempParams);
+                Conditions.Add(Tuple.Create(checker, targetState, tempParams));
+                TempValue.Add(false);
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 启用委托对Target检测条件
+        /// </summary>
+        public void Check()
+        {
+            for (int i = 0; i < Conditions.Count; i++)
+            {
+                if (Conditions[i].Item1(Target))
                 {
-                    return compiledCondition(typedItem);
+                    if (!TempValue[i])
+                    {
+                        Machine?.Transfer(Conditions[i].Item2.StateName,
+                            (x) =>
+                            {
+                                x.Duration = Conditions[i].Item3.Duration;
+                                x.IsQueue = Conditions[i].Item3.IsQueue;
+                                x.IsLast = Conditions[i].Item3.IsLast;
+                                x.IsUnique = Conditions[i].Item3.IsUnique;
+                                x.WaitTime = Conditions[i].Item3.WaitTime;
+                                x.ProtectNames = Conditions[i].Item3.ProtectNames;
+                            });
+                        return;
+                    }
                 }
-                return false;
-            };
-
-            Value.Condition = dynamicCondition;
-
-            return this;
+                else
+                {
+                    TempValue[i] = false;
+                }
+            }
         }
 
         /// <summary>
-        /// 记录过渡效果相关的参数
+        /// 开始创建条件组
         /// </summary>
-        public TempStateVector<T> SetTransferParams(double transitionTime = 0, bool isQueue = false, bool isLast = true, bool isUnique = false, int? frameRate = default, double waitTime = 0.008, ICollection<string>? protectNames = default)
+        public static StateVector<T> Create(T target)
         {
-            TransferParams tempdata = new TransferParams(transitionTime, isQueue, isLast, isUnique, frameRate, waitTime, protectNames);
-            Value.TransferParams = tempdata;
-            return this;
-        }
-
-        /// <summary>
-        /// 输出StateVector
-        /// </summary>
-        public StateVector ToStateVector()
-        {
-            return Value;
+            StateVector<T> result = new StateVector<T>(target);
+            return result;
         }
     }
 }

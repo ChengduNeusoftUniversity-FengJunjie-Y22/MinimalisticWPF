@@ -7,31 +7,10 @@ namespace MinimalisticWPF
 {
     public partial class MButton : UserControl
     {
-        private StateMachine Machine { get; set; }
-
-        static State Start = State.FromObject(new MButtonViewModel())
-            .SetName("defualt")
-            .SetProperty(x=>x.ActualBackgroundOpacity,1)
-            .ToState();
-        static State MouseIn = State.FromObject(new MButtonViewModel())
-            .SetName("mouseInside")
-            .SetProperty(x => x.ActualBackgroundOpacity, 0.1)
-            .ToState();
-
-        static StateVector mECondition = StateVector.FromType<MButtonViewModel>()
-            .SetName("ToMInside")
-            .SetTarget(MouseIn)
-            .SetCondition(x => x.Text.Length > 10)
-            .SetTransferParams()
-            .ToStateVector();
-
         public MButton()
         {
             InitializeComponent();
-
-            Machine = StateMachine.Create(ViewModel)
-                .SetStates(Start, MouseIn)
-                .SetConditions(mECondition);
+            this.StateMachineLoading(ViewModel);
         }
 
         public event MouseButtonEventHandler? Click
@@ -42,12 +21,14 @@ namespace MinimalisticWPF
 
         public void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            Machine.Transfer("mouseInside", (x) => x.Duration = 0.2);
+            //ViewModel.StateMachine?.Transfer("mouseInside", (x) => x.Duration = 0.2);
+            ViewModel.Text = "Red";
         }
 
         public void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            Machine.Transfer("defualt", (x) => x.Duration = 0.1);
+            //ViewModel.StateMachine?.Transfer("defualt", (x) => x.Duration = 0.1);
+            ViewModel.Text = "Blue";
         }
     }
 }

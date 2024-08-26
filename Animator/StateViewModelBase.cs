@@ -9,23 +9,21 @@ using System.Threading.Tasks;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// [ 可用StateMachine + StateVector 更改当前State ] 的ViewModel
+    /// [可用StateMachine + StateVector更改当前State]的 ViewModel
     /// </summary>
-    public abstract class StateViewModelBase : INotifyPropertyChanged, IConditionalTransfer
+    public abstract class StateViewModelBase<T> : INotifyPropertyChanged, IConditionalTransfer<T> where T : class
     {
         public event PropertyChangedEventHandler? PropertyChanged;
         public void OnPropertyChanged(string propertyName)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));         
         }
 
-        IConditionalTransfer? Local = default;
-        public StateMachine? Machine { get; set; }
-        public List<StateVector> Conditions { get; set; } = new List<StateVector>();
-        public void OnConditionChecked()
+        public StateMachine? StateMachine { get; set; }
+        public StateVector<T>? StateVector { get; set; }
+        public void OnConditionsChecked()
         {
-            if (Local == null) Local = this;
-            Local.OnConditionsChecked();
+            StateVector?.Check();
         }
     }
 }

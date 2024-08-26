@@ -206,7 +206,7 @@ The [FrameworkElement](#FrameworkElement) has a more elegant way to quickly star
 ```
 ## FrameworkElement
 The same Grid widget called GD, now let's add a linear transition animation to it. When the mouse enters the Grid, the Grid expands and changes color, and when the mouse leaves, it returns to its initial state
-```cshapr
+```csharp
         private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
             GD.MachineTransfer()

@@ -9,10 +9,33 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
-    public class MButtonViewModel : StateViewModelBase
+    public class MButtonViewModel : StateViewModelBase<MButtonViewModel>
     {
         public MButtonViewModel() { }
-        public MButtonViewModel(MButtonModel model) { Model = model; }
+
+        public static State Start = State.FromObject(new MButtonViewModel())
+            .SetName("defualt")
+            .SetProperty(x => x.ActualBackgroundOpacity, 1)
+            .ToState();
+        public static State MouseIn = State.FromObject(new MButtonViewModel())
+            .SetName("mouseInside")
+            .SetProperty(x => x.ActualBackgroundOpacity, 0.1)
+            .ToState();
+        public static StateVector<MButtonViewModel> ConditionA = StateVector<MButtonViewModel>.Create(new MButtonViewModel())
+            .AddCondition(x => x.Text.Contains("Red"), MouseIn, (x) => { x.Duration = 0.1; })
+            .AddCondition(x => !x.Text.Contains("Red"), Start, (x) => { x.Duration = 0.1; });
+
+        public string Text
+        {
+            get => Model.Text;
+            set
+            {
+                Model.Text = value;
+                IsTextWidthBack = true;
+                OnPropertyChanged(nameof(Text));
+                OnConditionsChecked();
+            }
+        }
 
         internal bool IsTextWidthBack = false;
 
@@ -64,17 +87,6 @@ namespace MinimalisticWPF
             {
                 Model.FontSize = value;
                 OnPropertyChanged(nameof(FontSize));
-            }
-        }
-
-        public string Text
-        {
-            get => Model.Text;
-            set
-            {
-                Model.Text = value;
-                IsTextWidthBack = true;
-                OnPropertyChanged(nameof(Text));
             }
         }
 
@@ -135,6 +147,16 @@ namespace MinimalisticWPF
             {
                 Model.ActualBackgroundOpacity = value;
                 OnPropertyChanged(nameof(ActualBackgroundOpacity));
+            }
+        }
+
+        public TransformGroup? TransformGroup
+        {
+            get => Model.TransformGroup;
+            set
+            {
+                Model.TransformGroup = value;
+                OnPropertyChanged(nameof(TransformGroup));
             }
         }
     }

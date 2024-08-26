@@ -52,11 +52,6 @@ namespace MinimalisticWPF
                 if (temp == null) States.Add(state);
                 else throw new ArgumentException($"A state named [ {state.StateName} ] already exists in the collection.Modify the collection to ensure that the state name is unique");
             }//存储不重名的State
-
-            var DCProperty = Properties.FirstOrDefault(x => x.Name == "DataContext");
-            IConditions = DCProperty == null ? viewModel as IConditionalTransfer : DCProperty.GetValue(Target) as IConditionalTransfer;
-            if (IConditions != null) { IConditions.Machine = this; }
-            //尝试与Conditional模块建立连接
         }
         /// <summary>
         /// 全局受保护的属性
@@ -82,10 +77,6 @@ namespace MinimalisticWPF
         /// 受状态机控制的对象
         /// </summary>
         public object Target { get; internal set; }
-        /// <summary>
-        /// 与状态机相连的Conditional模块
-        /// </summary>
-        public IConditionalTransfer? IConditions { get; internal set; }
         /// <summary>
         /// 此状态机可导向的所有非条件驱动状态
         /// </summary>
@@ -114,7 +105,7 @@ namespace MinimalisticWPF
             return result;
         }
         /// <summary>
-        /// 设置非条件驱动状态集合
+        /// 设置可导向的State
         /// </summary>
         public StateMachine SetStates(params State[] states)
         {
@@ -127,25 +118,6 @@ namespace MinimalisticWPF
                 else throw new ArgumentException($"A state named [ {state.StateName} ] already exists in the collection.Modify the collection to ensure that the state name is unique");
             }
 
-            return this;
-        }
-        /// <summary>
-        /// 设置条件驱动状态集合
-        /// </summary>
-        public StateMachine SetConditions(params StateVector[] conditionGroups)
-        {
-            if (IConditions != null)
-            {
-                if (conditionGroups.Length == 0) IConditions.Conditions.Clear();
-
-                foreach (var condition in conditionGroups)
-                {
-                    if (IConditions.Conditions.FirstOrDefault(x => x.Name == condition.Name) == null)
-                    {
-                        IConditions.Conditions.Add(condition);
-                    }
-                }
-            }
             return this;
         }
         /// <summary>
@@ -165,6 +137,7 @@ namespace MinimalisticWPF
             return this;
         }
 
+        public string? CurrentState { get; internal set; }
         /// <summary>
         /// 正在执行中的解释器
         /// </summary>
@@ -207,8 +180,11 @@ namespace MinimalisticWPF
                 }
             }
         }
+        /// <summary>
+        /// 调度解释器开始执行动画
+        /// </summary>
         private async void InterpreterScheduler(string stateName, Action<TransferParams>? actionSet)
-        {          
+        {
             var targetState = States.FirstOrDefault(x => x.StateName == stateName);
             if (targetState == null) throw new ArgumentException($"The State Named [ {stateName} ] Cannot Be Found");
 
@@ -216,7 +192,7 @@ namespace MinimalisticWPF
             actionSet?.Invoke(transferParams);
             TransferParams = transferParams;
 
-            await Task.Delay((int)(TransferParams.WaitTime*1000));
+            await Task.Delay((int)(TransferParams.WaitTime * 1000));
 
             AnimationInterpreter animationInterpreter = new AnimationInterpreter(this);
             animationInterpreter.IsLast = TransferParams.IsLast;
@@ -226,7 +202,7 @@ namespace MinimalisticWPF
             {
                 animationInterpreter.Frams = ComputingFrames(targetState, TransferParams);
             });
-
+            CurrentState = stateName;
             animationInterpreter.Interpret();
         }
         /// <summary>
@@ -420,6 +396,7 @@ namespace MinimalisticWPF
                     var newAni = Machine.Interpreters.Dequeue();
                     Machine.InterpreterScheduler(newAni.Item1, newAni.Item2);
                 }
+                Machine.CurrentState = null;
             }
         }
     }
