@@ -24,7 +24,6 @@ namespace MinimalisticWPF
     /// <summary>
     /// 状态机
     /// </summary>
-    /// <typeparam name="T">被状态机控制的对象的实际类型</typeparam>
     public class StateMachine
     {
         /// <param name="viewModel">受状态机控制的实例对象</param>
@@ -360,7 +359,7 @@ namespace MinimalisticWPF
                         for (int k = 0; k < Frams[j].Count; k++)
                         //按同类属性不同名遍历
                         {
-                            if (IsStop)
+                            if (IsStop || Application.Current == null)
                             {
                                 WhileEnded();
                                 return;

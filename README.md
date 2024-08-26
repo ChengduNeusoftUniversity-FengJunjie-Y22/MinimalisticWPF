@@ -4,6 +4,7 @@
     - Use a [State](#State) object to keep track of the control's property values at the current time
     - Use a [StateVector](#StateVector) object to describe the conditions under which the StateMachine transitions to which state
     - Use a [StateMachine](#StateMachine) object and give it State objects and StateVector objects to implement linear animations
+    - Provides the [StateViewModelBase< T >](#StateViewModelBase) base class, which helps you quickly build ViewModels powered by state machines
     - Use a [TransferParams](#TransferParams) object to describe the details of a linear transition animation.It usually appears as a Lambda in State, StateVector, or StateMachine.Transfer()
     - Properties that currently support linear transitions
       - double
@@ -56,7 +57,8 @@ Suppose the current state of the Grid control is A, when the mouse enters the co
 ```
 ## StateMachine
 - Using the State and StateVector objects, you can create a StateMachine instance and load the linear animation in the MouseEnter and MouseLeave events of a Grid control called GD
-- The [FrameworkElement](#FrameworkElement) has a more elegant way to quickly start the linear transitions StateMachine provides, and in fact, it's even better for non-MVVM design patterns, but note that StateMachine's linear transitions don't depend on storyboards at all. Therefore, when you mix the two, you need to avoid conflicts
+- The FrameworkElement has a more elegant way to quickly start the linear transitions StateMachine provides, and in fact, it's even better for non-MVVM design patterns, but note that StateMachine's linear transitions don't depend on storyboards at all. Therefore, when you mix the two, you need to avoid conflicts
+- [Example About FrameworkElement](#FrameworkElement)
 ```csharp
         public MainWindow()
         {
@@ -102,74 +104,135 @@ Note that you will almost never define TransferParams separately; instead, they 
 |ProtectNames|ICollection< string >?|null|The name of the property in this transition that is not affected by the state machine|
 |WaitTime|double|0.008|You will rarely use it, and after a few versions it will be discarded as the system improves|
 
+## StateViewModelBase
+- The essence is an abstract base class that implements the INotifyPropertyChanged interface and the IConditionalTransfer< T > interface
+- The [OnConditionsChecked()]() method is provided to determine if the condition to switch states has been met
 
 ## MVVM
-Suppose you have a control called MButton that has a Text property in its ViewModel
-- Here's your ViewModel 
-- Let's say you want MButton's background color to linearly gradient to Red when Text contains the word [Red] and to linearly gradient to [#1e1e1e] when Text does not contain the word [Red] Then you would write something like this in your ViewModel
+Take the [MPasswordBox](#MPasswordBox) control provided by the class library as an example
+- [PasswordStrengthColor]() is bound to [BorderBrush]() to indicate password strength with color
 ```xml
+<UserControl x:Class="MinimalisticWPF.MPasswordBox"
+    
     <UserControl.DataContext>
-        <local:MButtonViewModel x:Name="ViewModel" ActualBackground="#1e1e1e"/>
+        <local:MPasswordBoxViewModel x:Name="ViewModel"/>
     </UserControl.DataContext>
 
-            <TextBlock x:Name="ActualText"
-                   Text="{Binding Text}"
-                   Foreground="{Binding Foreground}"
-                   FontSize="{Binding FontSize}"
-                   VerticalAlignment="Center"
-                   HorizontalAlignment="Center"
-                   IsHitTestVisible="False"/>
+    <Grid Background="{Binding FixedTransparent,Mode=TwoWay}"
+          Width="{Binding ElementName=Total,Path=Width}"
+          Height="{Binding ElementName=Total,Path=Height}">
+        <Border x:Name="FixedBorder"
+                Background="{Binding FixedTransparent}"
+                CornerRadius="{Binding CornerRadius}"
+                BorderThickness="2"
+                BorderBrush="{Binding PasswordStrengthColor}"
+                ClipToBounds="True"/>
+        <Border ClipToBounds="True">
+            <TextBox x:Name="TruePWD"
+                 Width="{Binding ElementName=Total,Path=Width}"
+                 Height="{Binding ElementName=Total,Path=Height}"
+                 Foreground="{Binding FixedTransparent}"
+                 Background="{Binding FixedTransparent}"
+                 TextChanged="TruePWD_TextChanged"
+                 Grid.ZIndex="2"
+                 BorderThickness="0"
+                 CaretBrush="Transparent"
+                 FontSize="0.01"
+                 ContextMenuOpening="TruePWD_ContextMenuOpening"/>
+        </Border>
+    </Grid>
+</UserControl>
 ```
+- The [StateMachine]() is loaded at initialization time
+- [TextChanged]() event internally passes the latest password value
 ```csharp
-    public partial class MButton : UserControl
+    public partial class MPasswordBox : UserControl
     {
-        public MButton()
+        public MPasswordBox()
         {
             InitializeComponent();
             this.StateMachineLoading(ViewModel);
         }
+
+        private void TruePWD_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            ViewModel.TruePassword = TruePWD.Text;
+        }
+
+        private void TruePWD_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            e.Handled = true;
+        }
     }
 ```
+- Now we can [automatically togple the border color using a preset State and StateVector]()
+- Note that the State and StateVector must be [Public Static]()
+- [CheckPasswordStrength(8)](#string) means that the minimum password length is 8, and anything less than that is considered a strength level of 0
 ```csharp
-namespace MinimalisticWPF
-{
-    public class MButtonViewModel : StateViewModelBase<MButtonViewModel>
+    public class MPasswordBoxViewModel : StateViewModelBase<MPasswordBoxViewModel>
     {
-        public MButtonViewModel() { }
+        public MPasswordBoxViewModel() { }
 
-        public static State Start = State.FromObject(new MButtonViewModel())
-            .SetName("defualt")
-            .SetProperty(x => x.ActualBackground, "#1e1e1e".ToBrush())
-            .ToState();
-        public static State MouseIn = State.FromObject(new MButtonViewModel())
-            .SetName("mouseInside")
-            .SetProperty(x => x.ActualBackground, Brushes.Red)
+        public MPasswordBoxModel Model { get; set; } = new MPasswordBoxModel();
+
+        public static State Default = State.FromObject(new MPasswordBoxViewModel())
+            .SetName("default")
+            .SetProperty(x => x.PasswordStrengthColor, Brushes.White)
             .ToState();
 
-        public static StateVector<MButtonViewModel> ConditionA = StateVector<MButtonViewModel>.Create(new MButtonViewModel())
-            .AddCondition(x => x.Text.Contains("Red"), MouseIn, (x) => { x.Duration = 0.1; })
-            .AddCondition(x => !x.Text.Contains("Red"), Start, (x) => { x.Duration = 0.1; });
+        public static State Level1 = State.FromObject(new MPasswordBoxViewModel())
+            .SetName("L1")
+            .SetProperty(x => x.PasswordStrengthColor, Brushes.Tomato)
+            .ToState();
+        public static State Level2 = State.FromObject(new MPasswordBoxViewModel())
+            .SetName("L2")
+            .SetProperty(x => x.PasswordStrengthColor, Brushes.Yellow)
+            .ToState();
+        public static State Level3 = State.FromObject(new MPasswordBoxViewModel())
+            .SetName("L3")
+            .SetProperty(x => x.PasswordStrengthColor, Brushes.Cyan)
+            .ToState();
+        public static State Level4 = State.FromObject(new MPasswordBoxViewModel())
+            .SetName("L4")
+            .SetProperty(x => x.PasswordStrengthColor, Brushes.Lime)
+            .ToState();
 
-        public string Text
+        public static StateVector<MPasswordBoxViewModel> ConditionA = StateVector<MPasswordBoxViewModel>.Create(new MPasswordBoxViewModel())
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 0, Default, (x) => { x.Duration = 0.1; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 1, Level1, (x) => { x.Duration = 0.1; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 2, Level2, (x) => { x.Duration = 0.1; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 3, Level3, (x) => { x.Duration = 0.1; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 4, Level4, (x) => { x.Duration = 0.1; });
+
+        public string TruePassword
         {
-            get => Model.Text;
+            get => Model.TruePassword;
             set
             {
-                Model.Text = value;
-                IsTextWidthBack = true;
-                OnPropertyChanged(nameof(Text));
+                Model.TruePassword = value;
+                string result = string.Empty;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    result += ReplacingCharacters;
+                }
+                UIPassword = result;
+                OnPropertyChanged(nameof(TruePassword));
                 OnConditionsChecked();
             }
         }
     }
-}
 ```
-- Of course, this is a simple example; if you're designing a password box that changes color to indicate to the user that the password is not strong enough, a state machine can be powerful
+### Tips 
+- Of course, this is just a simple exercise. Because the state machine is [type-specific](), it can in theory do more complex things than just animating. 
+- The [IConditionalTransfer]() interface is the key component that allows the StateMachine to interact with the StateVector
 
 
 # MinimalisticUserControls
-…… under development >> The authors are working on using StateMachine entirely for linear animations in MVVM design pattern
-
+- ## MButton
+  - …… Under development
+- ## MPasswordBox
+  - Changes the border color based on password strength
+  - …… Under development
 # ExtensionMethod
 ## string
 - Value conversion
@@ -278,6 +341,12 @@ namespace MinimalisticWPF
    var resultB = sourceB.CaptureLike("https://", "com");
    //Captures strings that conform to an ordered set of features
    //Output[ https://aiowdjoajfo.com ] [ https://tn.com ]
+```
+- Password strength
+```csharp
+   string password = "12345678";
+   int Level = password.CheckPasswordStrength(MinLength=8);
+   //An integer between 0 and 4 is returned to indicate the strength of the password
 ```
 ## FrameworkElement
 The same Grid widget called GD, now let's add a linear transition animation to it. When the mouse enters the Grid, the Grid expands and changes color, and when the mouse leaves, it returns to its initial state

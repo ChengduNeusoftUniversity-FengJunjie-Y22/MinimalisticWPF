@@ -3,36 +3,93 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows;
+using System.Collections;
+using System.Windows.Input;
 
 namespace MinimalisticWPF
 {
-    public class MButtonViewModel : StateViewModelBase<MButtonViewModel>
+    public class MPasswordBoxViewModel : StateViewModelBase<MPasswordBoxViewModel>
     {
-        public MButtonViewModel() { }
+        public MPasswordBoxViewModel() { }
 
-        public static State Start = State.FromObject(new MButtonViewModel())
-            .SetName("defualt")
-            .SetProperty(x => x.ActualBackgroundOpacity, 1)
+        public MPasswordBoxModel Model { get; set; } = new MPasswordBoxModel();
+
+        public static State Default = State.FromObject(new MPasswordBoxViewModel())
+            .SetName("default")
+            .SetProperty(x => x.PasswordStrengthColor, Brushes.White)
             .ToState();
-        public static State MouseIn = State.FromObject(new MButtonViewModel())
-            .SetName("mouseInside")
-            .SetProperty(x => x.ActualBackgroundOpacity, 0.1)
+        public static State Level1 = State.FromObject(new MPasswordBoxViewModel())
+            .SetName("L1")
+            .SetProperty(x => x.PasswordStrengthColor, Brushes.Tomato)
+            .ToState();
+        public static State Level2 = State.FromObject(new MPasswordBoxViewModel())
+            .SetName("L2")
+            .SetProperty(x => x.PasswordStrengthColor, Brushes.Yellow)
+            .ToState();
+        public static State Level3 = State.FromObject(new MPasswordBoxViewModel())
+            .SetName("L3")
+            .SetProperty(x => x.PasswordStrengthColor, Brushes.Cyan)
+            .ToState();
+        public static State Level4 = State.FromObject(new MPasswordBoxViewModel())
+            .SetName("L4")
+            .SetProperty(x => x.PasswordStrengthColor, Brushes.Lime)
             .ToState();
 
-        public string Text
+        public static StateVector<MPasswordBoxViewModel> ConditionA = StateVector<MPasswordBoxViewModel>.Create(new MPasswordBoxViewModel())
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 0, Default, (x) => { x.Duration = 0.1; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 1, Level1, (x) => { x.Duration = 0.1; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 2, Level2, (x) => { x.Duration = 0.1; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 3, Level3, (x) => { x.Duration = 0.1; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 4, Level4, (x) => { x.Duration = 0.1; });
+
+        public string TruePassword
         {
-            get => Model.Text;
+            get => Model.TruePassword;
             set
             {
-                Model.Text = value;
-                OnPropertyChanged(nameof(Text));
+                Model.TruePassword = value;
+                string result = string.Empty;
+                for (int i = 0; i < value.Length; i++)
+                {
+                    result += ReplacingCharacters;
+                }
+                UIPassword = result;
+                OnPropertyChanged(nameof(TruePassword));
+                OnConditionsChecked();
             }
         }
 
-        public MButtonModel Model { get; set; } = new MButtonModel();
+        public string UIPassword
+        {
+            get => Model.UIPassword;
+            set
+            {
+                Model.UIPassword = value;
+                OnPropertyChanged(nameof(UIPassword));
+            }
+        }
+
+        public string ReplacingCharacters
+        {
+            get => Model.ReplacingCharacters;
+            set
+            {
+                Model.ReplacingCharacters = value;
+                OnPropertyChanged(nameof(ReplacingCharacters));
+            }
+        }
+
+        public Brush PasswordStrengthColor
+        {
+            get => Model.PasswordStrengthColor;
+            set
+            {
+                Model.PasswordStrengthColor = value;
+                OnPropertyChanged(nameof(PasswordStrengthColor));
+            }
+        }
 
         public Brush FixedTransparent
         {

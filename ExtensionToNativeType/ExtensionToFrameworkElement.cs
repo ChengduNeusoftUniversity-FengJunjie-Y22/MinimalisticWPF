@@ -66,7 +66,7 @@ namespace MinimalisticWPF
         /// 尝试为对象的DataContext加载状态机
         /// </summary>
         /// <typeparam name="T">DataContext的真实类型</typeparam>
-        public static void StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class
+        public static StateMachine StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class
         {
             var vectorInterface = viewModel as IConditionalTransfer<T>;
             //检查datacontext是否是T类型的IConditionalTransfer<T>对象
@@ -97,13 +97,15 @@ namespace MinimalisticWPF
                         vectorInterface.StateMachine.States.Add(state);
                     }
                 }
-            }          
+            }
             if (StateVector != null)
             {
                 StateVector.Target = viewModel;
                 vectorInterface.StateVector = StateVector;
                 vectorInterface.StateVector.Machine = machine;
             }
+
+            return machine;
         }
     }
 

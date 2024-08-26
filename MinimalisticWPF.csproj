@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
+		<NoWarn>0103</NoWarn>
 		<NoWarn>1573</NoWarn>
 		<NoWarn>1591</NoWarn>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -21,7 +22,7 @@
 3. Dark theme, minimalist user controls, all implemented with MVVM+StateMachine, great for making small personal projects quickly
 &gt;&gt;&gt;This is still an experimental stage, non-linear animations, more supported properties, richer use cases are all expected in the near future...……</Description>
 		<RepositoryType>git</RepositoryType>
-		<Version>1.3.0</Version>
+		<Version>1.3.1</Version>
 	</PropertyGroup>
 
 	<ItemGroup>

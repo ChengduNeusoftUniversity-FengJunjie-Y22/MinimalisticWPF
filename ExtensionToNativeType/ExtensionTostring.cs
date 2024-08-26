@@ -11,6 +11,36 @@ namespace MinimalisticWPF
     public static class ExtensionTostring
     {
         /// <summary>
+        /// 简易检查密码强度
+        /// </summary>
+        public static int CheckPasswordStrength(this string password, int MinLength = 8)
+        {
+            if (string.IsNullOrEmpty(password))
+            {
+                return 0;
+            }
+
+            int length = password.Length;
+            bool hasUpperCase = Regex.IsMatch(password, @"[A-Z]");
+            bool hasLowerCase = Regex.IsMatch(password, @"[a-z]");
+            bool hasDigit = Regex.IsMatch(password, @"\d");
+            bool hasSpecialChar = Regex.IsMatch(password, @"[\W_]");
+
+            if (length < MinLength)
+            {
+                return 0;
+            }
+
+            int score = 0;
+            if (hasUpperCase) score++;
+            if (hasLowerCase) score++;
+            if (hasDigit) score++;
+            if (hasSpecialChar) score++;
+
+            return score;
+        }
+
+        /// <summary>
         /// Levenshtein距离(长文本匹配)
         /// </summary>
         public static int LevenshteinDistance(this string source, string target)
