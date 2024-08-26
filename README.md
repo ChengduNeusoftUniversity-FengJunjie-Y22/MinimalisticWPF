@@ -4,6 +4,7 @@
     - Use a [State](#State) object to keep track of the control's property values at the current time
     - Use a [StateVector](#StateVector) object to describe the conditions under which the StateMachine transitions to which state
     - Use a [StateMachine](#StateMachine) object and give it State objects and StateVector objects to implement linear animations
+    - Use a [TransferParams](#TransferParams) object to describe the details of a linear transition animation.It usually appears as a Lambda in State, StateVector, or StateMachine.Transfer()
     - Properties that currently support linear transitions
       - double
       - Brush
@@ -88,6 +89,20 @@ Suppose the current state of the Grid control is A, when the mouse enters the co
                 });
         }
 ```
+## TransferParams 
+Note that you will almost never define TransferParams separately; instead, they are passed in as Lambda expressions during State and StateVector setup
+
+|Property|class|Default|Meaning|
+|--------|-----|-------|-------|
+|Duration|double|0|Animation duration ( unit: s )|
+|IsQueue|bool|false|When you apply for a transition operation, whether the state machine waits for the change currently in execution to complete|
+|IsLast|bool|false|Whether to clear the queued transition operation when the currently requested transition operation is completed|
+|IsUnique|bool|true|If the same operation as the transition operation applied for this time already exists in the queue, whether to continue to join the queue|
+|FrameRate|int|400|The frame rate of linear transition determines the fluency and performance of the transition effect|
+|ProtectNames|ICollection< string >?|null|The name of the property in this transition that is not affected by the state machine|
+|WaitTime|double|0.008|You will rarely use it, and after a few versions it will be discarded as the system improves|
+
+
 ## Example Under MVVM
 Suppose you have a control called MButton that has a Text property in its ViewModel
 - Here's your ViewModel 
