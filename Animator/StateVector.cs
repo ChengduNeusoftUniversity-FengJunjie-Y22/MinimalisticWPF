@@ -26,11 +26,6 @@ namespace MinimalisticWPF
         /// <para>Item3 此次切换状态的过渡参数</para>
         /// </summary>
         public List<Tuple<Func<T, bool>, State, TransferParams>> Conditions { get; internal set; } = new List<Tuple<Func<T, bool>, State, TransferParams>>();
-        /// <summary>
-        /// Item1 最新传入比对结果的索引位置
-        /// Tiem2 最新的比对结果
-        /// </summary>
-        public List<bool> TempValue { get; internal set; } = new List<bool>();
 
         /// <summary>
         /// 添加[Condition=>State+TransferParams]的条件切换关系映射
@@ -44,7 +39,6 @@ namespace MinimalisticWPF
                 TransferParams tempParams = new TransferParams();
                 setTransferParams?.Invoke(tempParams);
                 Conditions.Add(Tuple.Create(checker, targetState, tempParams));
-                TempValue.Add(false);
             }
 
             return this;
@@ -58,24 +52,17 @@ namespace MinimalisticWPF
             {
                 if (Conditions[i].Item1(Target))
                 {
-                    if (!TempValue[i])
-                    {
-                        Machine?.Transfer(Conditions[i].Item2.StateName,
-                            (x) =>
-                            {
-                                x.Duration = Conditions[i].Item3.Duration;
-                                x.IsQueue = Conditions[i].Item3.IsQueue;
-                                x.IsLast = Conditions[i].Item3.IsLast;
-                                x.IsUnique = Conditions[i].Item3.IsUnique;
-                                x.WaitTime = Conditions[i].Item3.WaitTime;
-                                x.ProtectNames = Conditions[i].Item3.ProtectNames;
-                            });
-                        return;
-                    }
-                }
-                else
-                {
-                    TempValue[i] = false;
+                    Machine?.Transfer(Conditions[i].Item2.StateName,
+                        (x) =>
+                        {
+                            x.Duration = Conditions[i].Item3.Duration;
+                            x.IsQueue = Conditions[i].Item3.IsQueue;
+                            x.IsLast = Conditions[i].Item3.IsLast;
+                            x.IsUnique = Conditions[i].Item3.IsUnique;
+                            x.WaitTime = Conditions[i].Item3.WaitTime;
+                            x.ProtectNames = Conditions[i].Item3.ProtectNames;
+                        });
+                    return;
                 }
             }
         }

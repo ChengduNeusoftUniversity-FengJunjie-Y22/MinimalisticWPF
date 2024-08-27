@@ -139,6 +139,9 @@ namespace MinimalisticWPF
 
         TransferParams TransferParams { get; set; } = new TransferParams();
 
+        /// <summary>
+        /// 添加新状态值
+        /// </summary>
         public TempStoryBoard<T> Add(Expression<Func<T, double>> propertyLambda, double newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
@@ -152,6 +155,9 @@ namespace MinimalisticWPF
             }
             return this;
         }
+        /// <summary>
+        /// 添加新状态值
+        /// </summary>
         public TempStoryBoard<T> Add(Expression<Func<T, Brush>> propertyLambda, Brush newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
@@ -165,26 +171,17 @@ namespace MinimalisticWPF
             }
             return this;
         }
-        public TempStoryBoard<T> Add(Expression<Func<T, Point>> propertyLambda, Point newValue)
-        {
-            if (propertyLambda.Body is MemberExpression propertyExpr)
-            {
-                var property = propertyExpr.Member as PropertyInfo;
-                if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(Brush))
-                {
-                    return this;
-                }
-                States.Add(Tuple.Create(property, (object?)newValue));
-            }
-            return this;
-        }
-
+        /// <summary>
+        /// 设置本次过渡的参数
+        /// </summary>
         public TempStoryBoard<T> Set(Action<TransferParams>? modifyParams = null)
         {
             modifyParams?.Invoke(TransferParams);
             return this;
         }
-
+        /// <summary>
+        /// 启动过渡
+        /// </summary>
         public T Start()
         {
             T sta = new T();

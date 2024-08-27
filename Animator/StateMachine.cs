@@ -42,8 +42,6 @@ namespace MinimalisticWPF
                 .ToArray();//筛选Double属性
             BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
                 .ToArray();//筛选Brush属性
-            PointProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
-                .ToArray();//筛选Point属性
 
             foreach (var state in states)
             {
@@ -68,10 +66,6 @@ namespace MinimalisticWPF
         /// Brush属性
         /// </summary>
         public PropertyInfo[] BrushProperties { get; internal set; }
-        /// <summary>
-        /// Point属性
-        /// </summary>
-        public PropertyInfo[] PointProperties { get; internal set; }
         /// <summary>
         /// 受状态机控制的对象
         /// </summary>
@@ -210,23 +204,19 @@ namespace MinimalisticWPF
         internal List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state, TransferParams transferParams)
         {
             List<List<Tuple<PropertyInfo, List<object?>>>> result = new List<List<Tuple<PropertyInfo, List<object?>>>>();
-            //第一层List:按属性的类型进行划分
-            //第二层List:按同类型属性的名称进行划分
-            //Tuple层List:属性在每一帧所应具备的值
 
             result.Add(DoubleComputing(state, transferParams));
             result.Add(BrushComputing(state, transferParams));
-            //result.Add(PointComputing(state, transferParams));
 
             return result;
         }
+
         internal List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(State state, TransferParams transferParams)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
             //预加载:[ 所有Double属性变化帧序列 ]
             List<Tuple<PropertyInfo, double?>> viewModels = new List<Tuple<PropertyInfo, double?>>();
             //预加载:[ 需要平滑过渡的属性 ]+[ 新值相对于旧值的变化量 ]
-
             for (int i = 0; i < DoubleProperties.Length; i++)
             {
                 if (transferParams.ProtectNames?.FirstOrDefault(x => x == DoubleProperties[i].Name) == null &&
@@ -243,14 +233,11 @@ namespace MinimalisticWPF
 
             for (int i = 0; i < viewModels.Count; i++)
             {
-                var delta = viewModels[i].Item2 / FrameCount;
-                //每帧变化的量
                 var currentValue = (double?)viewModels[i].Item1.GetValue(Target);
-                //当前值
                 List<object?> deltas = new List<object?>();
                 for (int j = 0; j < FrameCount; j++)
                 {
-                    object? newValue = currentValue + j * delta;
+                    object? newValue = currentValue + viewModels[i].Item2 * (j + 1) / FrameCount;
                     deltas.Add(newValue);
                 }
                 allFrames.Add(Tuple.Create(viewModels[i].Item1, deltas));
@@ -288,14 +275,6 @@ namespace MinimalisticWPF
             }
 
             return allFrames;
-        }
-        internal List<Tuple<PropertyInfo, List<object?>>> PointComputing(State state, TransferParams transferParams)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> result = new List<Tuple<PropertyInfo, List<object?>>>();
-
-
-
-            return result;
         }
         private static List<object?> CalculateGradientSteps(Brush brushA, Brush brushB, int steps)
         {
@@ -344,6 +323,9 @@ namespace MinimalisticWPF
             internal bool IsRunning { get; set; } = false;
             internal bool IsStop { get; set; } = false;
 
+            /// <summary>
+            /// 执行动画
+            /// </summary>
             internal async void Interpret()
             {
                 if (IsStop || IsRunning) { WhileEnded(); return; }
@@ -353,34 +335,40 @@ namespace MinimalisticWPF
                 for (int i = 0; i < Machine.FrameCount; i++)
                 //按帧遍历
                 {
+                    if (IsStop || Application.Current == null)
+                    {
+                        WhileEnded();
+                        return;
+                    }
                     for (int j = 0; j < Frams.Count; j++)
                     //按不同类属性遍历
                     {
                         for (int k = 0; k < Frams[j].Count; k++)
                         //按同类属性不同名遍历
                         {
-                            if (IsStop || Application.Current == null)
-                            {
-                                WhileEnded();
-                                return;
-                            }
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
                             });
-                            await Task.Delay(DeltaTime);
                         }
                     }
+                    await Task.Delay(DeltaTime);
                 }
 
                 WhileEnded();
             }
 
+            /// <summary>
+            /// 打断动画
+            /// </summary>
             internal void Interrupt()
             {
                 IsStop = IsRunning ? true : false;
             }
 
+            /// <summary>
+            /// 当动画终止时
+            /// </summary>
             internal void WhileEnded()
             {
                 IsRunning = false;

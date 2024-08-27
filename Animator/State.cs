@@ -21,8 +21,8 @@ namespace MinimalisticWPF
                 .ToArray();//筛选Double属性
             PropertyInfo[] BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
                 .ToArray();//筛选Brush属性
-            PropertyInfo[] TransformGroupProperties = Properties.Where(x => x.PropertyType == typeof(TransformGroup))
-                .ToArray();//筛选TransformGroup属性
+            PropertyInfo[] PointProperties = Properties.Where(x => x.PropertyType == typeof(Point))
+                .ToArray();//筛选Point属性
 
             foreach (PropertyInfo propertyInfo in DoubleProperties)
             {
@@ -32,7 +32,7 @@ namespace MinimalisticWPF
             {
                 Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
             }
-            foreach (PropertyInfo propertyInfo in TransformGroupProperties)
+            foreach (PropertyInfo propertyInfo in PointProperties)
             {
                 Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
             }
@@ -94,7 +94,7 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 记录该状态下的属性值
+        /// 记录新状态对应的属性值
         /// </summary>
         public TempState<T> SetProperty(
             Expression<Func<T, double>> propertyLambda,
@@ -121,7 +121,9 @@ namespace MinimalisticWPF
 
             return this;
         }
-
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
         public TempState<T> SetProperty(
             Expression<Func<T, Brush>> propertyLambda,
             Brush newValue)
@@ -138,32 +140,6 @@ namespace MinimalisticWPF
             {
                 var property = propertyExpr.Member as PropertyInfo;
                 if (property == null || !property.CanWrite || property.PropertyType != typeof(Brush))
-                {
-                    return this;
-                }
-
-                property.SetValue(obj, newValue);
-            }
-
-            return this;
-        }
-
-        public TempState<T> SetProperty(
-            Expression<Func<T, TransformGroup>> propertyLambda,
-            TransformGroup newValue)
-        {
-            var compiledLambda = propertyLambda.Compile();
-            var obj = Value;
-
-            if (obj == null)
-            {
-                return this;
-            }
-
-            if (propertyLambda.Body is MemberExpression propertyExpr)
-            {
-                var property = propertyExpr.Member as PropertyInfo;
-                if (property == null || !property.CanWrite || property.PropertyType != typeof(TransformGroup))
                 {
                     return this;
                 }
