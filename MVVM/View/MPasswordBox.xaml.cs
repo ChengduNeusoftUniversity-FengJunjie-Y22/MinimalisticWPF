@@ -23,6 +23,18 @@ namespace MinimalisticWPF
             this.StateMachineLoading(ViewModel);
         }
 
+        public string Password
+        {
+            get => ViewModel.TruePassword;
+            set => ViewModel.TruePassword = value;
+        }
+
+        public string Replace
+        {
+            get => ViewModel.ReplacingCharacters;
+            set => ViewModel.ReplacingCharacters = value;
+        }
+
         private void TruePWD_TextChanged(object sender, TextChangedEventArgs e)
         {
             ViewModel.TruePassword = TruePWD.Text;

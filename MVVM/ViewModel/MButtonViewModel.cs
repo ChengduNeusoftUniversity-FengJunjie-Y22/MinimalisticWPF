@@ -142,15 +142,5 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(ActualBackgroundOpacity));
             }
         }
-
-        public TransformGroup? TransformGroup
-        {
-            get => Model.TransformGroup;
-            set
-            {
-                Model.TransformGroup = value;
-                OnPropertyChanged(nameof(TransformGroup));
-            }
-        }
     }
 }

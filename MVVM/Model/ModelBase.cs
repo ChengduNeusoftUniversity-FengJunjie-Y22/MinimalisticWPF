@@ -22,8 +22,6 @@ namespace MinimalisticWPF
 
         public virtual double ActualBackgroundOpacity { get; set; } = 1;
 
-        public virtual TransformGroup? TransformGroup { get; set; } = null;
-
         public virtual double Height { get; set; } = 80;
 
         public virtual double Width { get; set; } = 280;

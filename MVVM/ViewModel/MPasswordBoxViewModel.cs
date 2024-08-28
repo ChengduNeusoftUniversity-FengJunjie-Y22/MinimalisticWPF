@@ -77,6 +77,12 @@ namespace MinimalisticWPF
             set
             {
                 Model.ReplacingCharacters = value;
+                string result = string.Empty;
+                for (int i = 0; i < TruePassword.Length; i++)
+                {
+                    result += ReplacingCharacters;
+                }
+                UIPassword = result;
                 OnPropertyChanged(nameof(ReplacingCharacters));
             }
         }
@@ -197,16 +203,6 @@ namespace MinimalisticWPF
             {
                 Model.ActualBackgroundOpacity = value;
                 OnPropertyChanged(nameof(ActualBackgroundOpacity));
-            }
-        }
-
-        public TransformGroup? TransformGroup
-        {
-            get => Model.TransformGroup;
-            set
-            {
-                Model.TransformGroup = value;
-                OnPropertyChanged(nameof(TransformGroup));
             }
         }
     }
