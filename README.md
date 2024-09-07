@@ -10,10 +10,14 @@
       - double
       - Brush
       - …… under development >>
+- [WebServices](#WebServices)
+  - [ GaoDe ] WebApi
+    - IPService
+    - WeatherService
 - [Minimalistic UserControls](#MinimalisticUserControls)
     - Uniform dark theme
     - All animations based on StateMachine
-- [Extension Method](#ExtensionMethod)
+- [Extension Methods](#ExtensionMethods)
     - [string](#string)
       - Value conversion
       - Fuzzy matching
@@ -226,6 +230,48 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
 - Of course, this is just a simple exercise. Because the state machine is [type-specific](), it can in theory do more complex things than just animating. 
 - The [IConditionalTransfer]() interface is the key component that allows the StateMachine to interact with the StateVector
 
+# WebServices
+- ## GaoDe
+  - Disposition
+    - GaoDeServiceMeta/GaoDeKey.txt [ the key of api ]
+    - GaoDeServiceMeta/GaoDeIP.xml [ the ip you got ]
+      - Read the IP of the last record
+        ```csharp
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            GaoDeAPISet.ReadKey();
+            GaoDeAPISet.ReadIP();
+        }
+        ```
+      - Manually refresh IP addresses once
+        ```csharp
+        await GaoDeAPISet.UpdateIP();
+        ```
+  - IPService
+    - Obtain IP information, mainly including province and city
+      ```csharp
+      var ip = await IPService.GetIP();
+      MessageBox.Show(ip.GetCombined());
+      ```
+    - Gets the administrative district code by name
+      ```csharp
+      var adcode = await IPService.GetAdCode("都江堰");
+      MessageBox.Show(adcode);
+      ```
+  - WeatherService
+    - Automatically locate and get weather information
+      ```csharp
+      var weathers = await WeatherService.GetWeathers();
+      MessageBox.Show(weathers[0].GetCombined());
+      ```
+    - Query the weather by region name
+      ```csharp
+      var weathers = await WeatherService.GetWeathers("都江堰");
+      MessageBox.Show(weathers[0].GetCombined());
+      ```
+    - weather[0] represents today's weather
 
 # MinimalisticUserControls
 - ## MButton
@@ -233,7 +279,7 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
 - ## MPasswordBox
   - Changes the border color based on password strength
   - …… Under development
-# ExtensionMethod
+# ExtensionMethods
 ## string
 - Value conversion
 ```csharp
