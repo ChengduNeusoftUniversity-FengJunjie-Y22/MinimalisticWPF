@@ -233,22 +233,16 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
 # WebServices
 - ## GaoDe
   - Disposition
-    - GaoDeServiceMeta/GaoDeKey.txt [ the key of api ]
-    - GaoDeServiceMeta/GaoDeIP.xml [ the ip you got ]
-      - Read the IP of the last record
-        ```csharp
+  - Get Key From https://console.amap.com/dev/key/app
+    ```csharp
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
 
-            GaoDeAPISet.ReadKey();
-            GaoDeAPISet.ReadIP();
+            GaoDeAPISet.Awake(Key: "Your_Api_Key", IsUpdateIP: true);
+            //[ IsUpdateIP ] Describes whether to refresh local IP information upon activation
         }
-        ```
-      - Manually refresh IP addresses once
-        ```csharp
-        await GaoDeAPISet.UpdateIP();
-        ```
+    ```
   - IPService
     - Obtain IP information, mainly including province and city
       ```csharp

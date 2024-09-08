@@ -8,6 +8,7 @@ namespace MinimalisticWPF.GaoDeServices
 {
     public struct Weather
     {
+        public string Adress { get; set; }
         public string Date { get; set; }
         public string Week { get; set; }
         public string DayTemp { get; set; }
@@ -23,6 +24,7 @@ namespace MinimalisticWPF.GaoDeServices
         {
             string result = string.Empty;
 
+            result += $"地区:{Adress}\n";
             result += $"日期:{Date}\n";
             result += $"星期:{Week}\n\n";
             result += $"白天:\n气温:{DayTemp}℃\n";
@@ -37,7 +39,7 @@ namespace MinimalisticWPF.GaoDeServices
             return result;
         }
 
-        internal static List<Weather> Create(string xml)
+        internal static List<Weather> Create(string xml, string? adress = default)
         {
             List<string> dates = xml.CaptureBetween("<date>", "</date>");
             List<string> weeks = xml.CaptureBetween("<week>", "</week>");
@@ -67,6 +69,7 @@ namespace MinimalisticWPF.GaoDeServices
                     DayPower = dayPowers[i],
                     NightPower = nightPowers[i]
                 };
+                if (adress != null) weather.Adress = adress;
                 weatherForecasts.Add(weather);
             }
 

@@ -11,60 +11,71 @@ namespace MinimalisticWPF.GaoDeServices
 {
     public static class GaoDeAPISet
     {
-        private const string GaoDeDatas = "GaoDeServiceMeta";
-        private const string IPFile = "GaoDeIP.xml";
-        private const string KeyFile = "GaoDeKey.txt";
+        private const string IPFileName = "GaoDeIP";
 
-        public static IP LocalIP;
+        internal static IP IP;
+        internal static string ApiKey = "None";
+
         /// <summary>
-        /// 从.exe所在层级,读取"GaoDeServiceMeta/GaoDeIP.xml"文件,该文件是高德地图WebApi最近一次提供的IP信息
+        /// 存储IP对象的文件路径
         /// </summary>
-        public static async void ReadIP()
+        public static string IPFile
         {
-            try
-            {
-                var filepath = Path.Combine(GaoDeDatas.CreatFolder(), IPFile);
-                if (File.Exists(filepath))
-                {
-                    LocalIP = File.ReadAllText(filepath).XmlParse<IP>();
-                }
-            }
-            finally
-            {
-                if (string.IsNullOrEmpty(LocalIP.City))
-                {
-                    await UpdateIP();
-                }
-            }
-        }
-        /// <summary>
-        /// 手动刷新IP
-        /// </summary>
-        public static async Task UpdateIP()
-        {
-            LocalIP = await IPService.GetIP();
-            IPFile.CreatXmlFile(GaoDeDatas.CreatFolder(), LocalIP);
+            get => Path.Combine(APISet.ApiMetaFolder, IPFileName);
         }
 
-        private static string ApiKey = "None";
         /// <summary>
-        /// 从.exe所在层级,读取"GaoDeServiceMeta/GaoDeKey.txt"文件,该文件是高德地图WebApi的Key
+        /// 激活高德地图提供的WebService
         /// </summary>
-        public static bool ReadKey()
+        /// <param name="Key">从高德地图控制台申请的Key</param>
+        /// <param name="IsUpdateIP">反应是否更新一次IP</param>
+        public static async void Awake(string? Key = default, bool IsUpdateIP = true)
         {
-            bool result;
-
-            try
+            var filePath = Path.Combine(APISet.ApiMetaFolder, IPFile + ".xml");
+            if (string.IsNullOrEmpty(Key))
             {
-                ApiKey = File.ReadAllText(Path.Combine(GaoDeDatas.CreatFolder(), KeyFile));
-                result = true;
+                throw new Exception("ApiKey Is Null Or Empty");
             }
-            catch
+            if (!IsUpdateIP && !File.Exists(filePath))
             {
-                result = false;
+                throw new Exception("No historical IP query result exists, specify IsUpdateIP as true");
             }
 
-            return result;
+            IP LastIP = new IP();
+            if (File.Exists(filePath))
+            {
+                LastIP = File.ReadAllText(filePath).XmlParse<IP>();
+            }
+
+            ApiKey = Key;
+            if (IsUpdateIP)
+            {
+                IP = await IPService.GetIP();
+                IP.HistoricalAdress = LastIP.HistoricalAdress;
+                IP.HistoricalAdcode = LastIP.HistoricalAdcode;
+            }
+            else
+            {
+                if (LastIP.City == null || LastIP.Adcode == null)
+                {
+                    var newIP = await IPService.GetIP();
+                    newIP.HistoricalAdress = LastIP.HistoricalAdress;
+                    newIP.HistoricalAdcode = LastIP.HistoricalAdcode;
+                    IP = newIP;
+                    Save();
+                    return;
+                }
+                IP = LastIP;
+            }
+            Save();
+        }
+
+        /// <summary>
+        /// 保存数据
+        /// </summary>
+        public static void Save()
+        {
+            IPFile.CreatXmlFile(APISet.ApiMetaFolder, IP);
         }
 
         private const string WeatherApiBaseUrl = $"https://restapi.amap.com/v3/weather/weatherInfo?";

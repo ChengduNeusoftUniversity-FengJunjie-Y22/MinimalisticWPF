@@ -472,7 +472,7 @@ namespace MinimalisticWPF
         {
             if (!IsPathValid(folderPath) || !Directory.Exists(folderPath))
             {
-                throw new ArgumentException("Unavailable folder path");
+                throw new ArgumentException($"Unavailable folder path {folderPath}");
             }
 
             string fileName = source + ".xml";

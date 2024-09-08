@@ -13,6 +13,9 @@ namespace MinimalisticWPF.GaoDeServices
         public string Adcode { get; set; }
         public Rectangle Coordinate { get; set; }
 
+        public string HistoricalAdress { get; set; }
+        public string HistoricalAdcode { get; set; }
+
         public string GetCombined()
         {
             string result = string.Empty;
@@ -20,7 +23,7 @@ namespace MinimalisticWPF.GaoDeServices
             result += $"省:{Province}\n\n";
             result += $"市:{City}\n\n";
             result += $"地区编码:{Adcode}\n\n";
-            result += $"坐标:[{Coordinate.X1},{Coordinate.Y1}][{Coordinate.X2},{Coordinate.Y2}]";
+            result += $"坐标:\n[{Coordinate.X1},{Coordinate.Y1}]\n[{Coordinate.X2},{Coordinate.Y2}]";
 
             return result;
         }
