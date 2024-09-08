@@ -18,7 +18,7 @@
 		<IncludeSymbols>False</IncludeSymbols>
 		<Description>It encapsulates features commonly used in WPF development, such as minimalist user controls, weather forecasting services, string parsing, serialization, and so on. What makes it unique is that it provides a state machine system for back-end people to write linear animations</Description>
 		<RepositoryType>git</RepositoryType>
-		<Version>1.3.4</Version>
+		<Version>1.3.5</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
