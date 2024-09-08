@@ -283,7 +283,7 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
     xmlns:mn="clr-namespace:MinimalisticWPF;assembly=MinimalisticWPF"
     ```
 - ## MButton
-  - ![](https://imgse.com/i/pAeLPyQ)
+  - ![Effect](https://imgse.com/i/pAeLPyQ)
   - Click
   - Text
   - TextBrush
@@ -293,11 +293,11 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
   - HoverBrush
   - CornerRadius
 - ## MPasswordBox
-  - ![](https://imgse.com/i/pAeLEoq)
+  - ![Effect](https://imgse.com/i/pAeLEoq)
   - Password
   - Replace
 - ## MProgressBar
-  - ![](https://imgse.com/i/pAeLkes)
+  - ![Effect](https://imgse.com/i/pAeLkes)
   - Size
   - Value
   - Shape
