@@ -11,9 +11,9 @@ namespace MinimalisticWPF
     {
         public double FontSizeConvertRate { get; set; } = 0.7;
 
-        public double FontSize { get; set; } = 56;
+        public double FontSize { get; set; } = 1;
 
-        public string Text { get; set; } = "MButton";
+        public string Text { get; set; } = string.Empty;
 
         public Brush Foreground { get; set; } = Brushes.White;
     }

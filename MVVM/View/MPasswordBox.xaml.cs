@@ -23,12 +23,18 @@ namespace MinimalisticWPF
             this.StateMachineLoading(ViewModel);
         }
 
+        /// <summary>
+        /// 实际密码
+        /// </summary>
         public string Password
         {
             get => ViewModel.TruePassword;
             set => ViewModel.TruePassword = value;
         }
 
+        /// <summary>
+        /// 密码替换符
+        /// </summary>
         public string Replace
         {
             get => ViewModel.ReplacingCharacters;

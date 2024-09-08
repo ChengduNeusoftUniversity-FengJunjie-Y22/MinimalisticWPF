@@ -231,6 +231,11 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
 - The [IConditionalTransfer]() interface is the key component that allows the StateMachine to interact with the StateVector
 
 # WebServices
+- ## Using
+  - C#
+    ```csharp
+    using MinimalisticWPF.GaoDeServices;
+    ```
 - ## GaoDe
   - Disposition
   - Get Key From https://console.amap.com/dev/key/app
@@ -268,11 +273,42 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
     - weather[0] represents today's weather
 
 # MinimalisticUserControls
+- ## Using
+  - C#
+    ```csharp
+    using MinimalisticWPF;
+    ```
+  - XAML
+    ```xml
+    xmlns:mn="clr-namespace:MinimalisticWPF;assembly=MinimalisticWPF"
+    ```
 - ## MButton
-  - …… Under development
+  - ![](https://imgse.com/i/pAeLPyQ)
+  - Click
+  - Text
+  - TextBrush
+  - FontSizeRatio
+  - EdgeBrush
+  - EdgeThickness
+  - HoverBrush
+  - CornerRadius
 - ## MPasswordBox
-  - Changes the border color based on password strength
-  - …… Under development
+  - ![](https://imgse.com/i/pAeLEoq)
+  - Password
+  - Replace
+- ## MProgressBar
+  - ![](https://imgse.com/i/pAeLkes)
+  - Size
+  - Value
+  - Shape
+  - Thickness
+  - BottomColor
+  - FillBrush
+  - TextBrush
+  - FontSizeRatio
+  - IsReverse
+  - StartAngle
+  - EndAngle
 # ExtensionMethods
 ## string
 - Value conversion

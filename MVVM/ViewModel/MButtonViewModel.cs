@@ -15,11 +15,11 @@ namespace MinimalisticWPF
 
         public static State Start = State.FromObject(new MButtonViewModel())
             .SetName("defualt")
-            .SetProperty(x => x.ActualBackgroundOpacity, 1)
+            .SetProperty(x => x.ActualBackgroundOpacity, 0)
             .ToState();
         public static State MouseIn = State.FromObject(new MButtonViewModel())
             .SetName("mouseInside")
-            .SetProperty(x => x.ActualBackgroundOpacity, 0.1)
+            .SetProperty(x => x.ActualBackgroundOpacity, 0.2)
             .ToState();
 
         public string Text

@@ -11,7 +11,7 @@ namespace MinimalisticWPF
     {
         public MPasswordBoxModel() { }
 
-        public override double Height { get; set; } = 40;
+        public override double Height { get; set; } = 80;
 
         public override double Width { get; set; } = 380;
 

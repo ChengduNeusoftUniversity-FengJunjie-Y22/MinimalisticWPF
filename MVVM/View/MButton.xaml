@@ -6,14 +6,12 @@
              xmlns:local="clr-namespace:MinimalisticWPF"
              mc:Ignorable="d"
              x:Name="Total"
-             Height="{Binding Height,Mode=TwoWay}"
-             Width="{Binding Width,Mode=TwoWay}"
-             Background="{Binding FixedTransparent,Mode=TwoWay}"
-             RenderTransform="{Binding TransformGroup,Mode=TwoWay}">
+             Height="{Binding Height}"
+             Width="{Binding Width}"
+             Background="{Binding FixedTransparent,Mode=TwoWay}">
 
     <UserControl.DataContext>
-        <local:MButtonViewModel x:Name="ViewModel"
-                                ActualBackground="#1e1e1e"/>
+        <local:MButtonViewModel x:Name="ViewModel"/>
     </UserControl.DataContext>
 
     <Grid Background="{Binding FixedTransparent,Mode=TwoWay}"
