@@ -273,7 +273,7 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
     - weather[0] represents today's weather
 
 # MinimalisticUserControls
-- ## Using
+- ## ☆ Using
   - C#
     ```csharp
     using MinimalisticWPF;
@@ -282,8 +282,9 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
     ```xml
     xmlns:mn="clr-namespace:MinimalisticWPF;assembly=MinimalisticWPF"
     ```
-- ## MButton
-  - ![Effect](https://imgse.com/i/pAeLPyQ)
+- ## ☆ MButton
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLPyQ.png)
+  ### Property
   - Click
   - Text
   - TextBrush
@@ -292,17 +293,19 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
   - EdgeThickness
   - HoverBrush
   - CornerRadius
-- ## MPasswordBox
-  - ![Effect](https://imgse.com/i/pAeLEoq)
+- ## ☆ MPasswordBox
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLEoq.png)
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLQOJ.png)
+  ### Property
   - Password
   - Replace
-- ## MProgressBar
-  - ![Effect](https://imgse.com/i/pAeLkes)
+- ### ☆ MProgressBar
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLkes.png)
   - Size
   - Value
   - Shape
   - Thickness
-  - BottomColor
+  - BottomBrush
   - FillBrush
   - TextBrush
   - FontSizeRatio
