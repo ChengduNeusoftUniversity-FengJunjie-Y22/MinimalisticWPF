@@ -284,7 +284,7 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
     ```
 - ## ☆ MButton
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLPyQ.png)
-  ### Property
+  ## Property
   - Click
   - Text
   - TextBrush
@@ -296,11 +296,12 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
 - ## ☆ MPasswordBox
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLEoq.png)
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLQOJ.png)
-  ### Property
+  ## Property
   - Password
   - Replace
 - ### ☆ MProgressBar
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLkes.png)
+  ## Property
   - Size
   - Value
   - Shape
