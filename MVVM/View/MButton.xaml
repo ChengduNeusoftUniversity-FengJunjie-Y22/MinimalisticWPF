@@ -5,27 +5,31 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MinimalisticWPF"
              mc:Ignorable="d"
-             x:Name="Total"
-             Height="{Binding Height}"
-             Width="{Binding Width}"
-             Background="{Binding FixedTransparent,Mode=TwoWay}">
+             Height="{Binding Height,Mode=TwoWay}"
+             Width="{Binding Width,Mode=TwoWay}"
+             Background="{Binding FixedTransparent}">
 
     <UserControl.DataContext>
-        <local:MButtonViewModel x:Name="ViewModel"/>
+        <local:MButtonViewModel x:Name="ViewModel"
+                                Width="300"
+                                Height="80"
+                                Text="MButton"
+                                TextBrush="White"
+                                EdgeBrush="White"
+                                HoverBackground="White"
+                                CornerRadius="10"/>
     </UserControl.DataContext>
 
-    <Grid Background="{Binding FixedTransparent,Mode=TwoWay}"
-          Width="{Binding ElementName=Total,Path=Width}"
-          Height="{Binding ElementName=Total,Path=Height}">
+    <Grid>
         <Border x:Name="FixedBorder"
                 Background="{Binding FixedTransparent}"
                 CornerRadius="{Binding CornerRadius}"
-                BorderThickness="{Binding FixedBorderThickness}"
-                BorderBrush="{Binding FixedBorderBrush}"
+                BorderThickness="{Binding EdgeThickness}"
+                BorderBrush="{Binding EdgeBrush}"
                 ClipToBounds="True"/>
         <Border x:Name="BackgroundBorder"
-                Opacity="{Binding ActualBackgroundOpacity}"
-                Background="{Binding ActualBackground}"
+                Opacity="{Binding HoverBackgroundOpacity}"
+                Background="{Binding HoverBackground}"
                 CornerRadius="{Binding CornerRadius}"
                 BorderThickness="1"
                 BorderBrush="{Binding FixedTransparent}"
@@ -36,8 +40,8 @@
                 Grid.ZIndex="0"/>
         <TextBlock x:Name="ActualText"
                    Text="{Binding Text}"
-                   Foreground="{Binding Foreground}"
-                   FontSize="{Binding FontSize}"
+                   Foreground="{Binding TextBrush}"
+                   FontSize="{Binding TextSize}"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Center"
                    IsHitTestVisible="False"/>

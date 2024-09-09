@@ -23,18 +23,30 @@ namespace MinimalisticWPF
             this.StateMachineLoading(ViewModel);
         }
 
-        /// <summary>
-        /// 实际密码
-        /// </summary>
+        public double FontSizeRatio
+        {
+            get => ViewModel.FontSizeConvertRate;
+            set => ViewModel.FontSizeConvertRate = value;
+        }
+
+        public double WiseHeight
+        {
+            get => ViewModel.Height;
+            set => ViewModel.Height = value;
+        }
+
+        public double WiseWidth
+        {
+            get => ViewModel.Width;
+            set => ViewModel.Width = value;
+        }
+
         public string Password
         {
             get => ViewModel.TruePassword;
             set => ViewModel.TruePassword = value;
         }
 
-        /// <summary>
-        /// 密码替换符
-        /// </summary>
         public string Replace
         {
             get => ViewModel.ReplacingCharacters;

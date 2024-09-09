@@ -191,6 +191,10 @@ namespace MinimalisticWPF
             animationInterpreter.IsLast = TransferParams.IsLast;
             animationInterpreter.DeltaTime = (int)DeltaTime;
 
+            if (Application.Current == null)
+            {
+                return;
+            }
             Application.Current.Dispatcher.Invoke(() =>
             {
                 animationInterpreter.Frams = ComputingFrames(targetState, TransferParams);

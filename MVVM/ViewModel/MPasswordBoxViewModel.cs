@@ -10,11 +10,9 @@ using System.Windows.Input;
 
 namespace MinimalisticWPF
 {
-    public class MPasswordBoxViewModel : StateViewModelBase<MPasswordBoxViewModel>
+    public class MPasswordBoxViewModel : ViewModelBase<MPasswordBoxViewModel, MPasswordBoxModel>
     {
         public MPasswordBoxViewModel() { }
-
-        public MPasswordBoxModel Model { get; set; } = new MPasswordBoxModel();
 
         public static State Default = State.FromObject(new MPasswordBoxViewModel())
             .SetName("default")
@@ -37,12 +35,14 @@ namespace MinimalisticWPF
             .SetProperty(x => x.PasswordStrengthColor, Brushes.Lime)
             .ToState();
 
+        public static string[] protects = new string[] { "TextSize", "TextBrush", "BackBrush","Width","Height", "FontSizeConvertRate" };
+
         public static StateVector<MPasswordBoxViewModel> ConditionA = StateVector<MPasswordBoxViewModel>.Create(new MPasswordBoxViewModel())
-            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 0, Default, (x) => { x.Duration = 0.1; })
-            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 1, Level1, (x) => { x.Duration = 0.1; })
-            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 2, Level2, (x) => { x.Duration = 0.1; })
-            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 3, Level3, (x) => { x.Duration = 0.1; })
-            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 4, Level4, (x) => { x.Duration = 0.1; });
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 0, Default, (x) => { x.Duration = 0.1; x.ProtectNames = protects; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 1, Level1, (x) => { x.Duration = 0.1; x.ProtectNames = protects; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 2, Level2, (x) => { x.Duration = 0.1; x.ProtectNames = protects; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 3, Level3, (x) => { x.Duration = 0.1; x.ProtectNames = protects; })
+            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 4, Level4, (x) => { x.Duration = 0.1; x.ProtectNames = protects; });
 
         public string TruePassword
         {
@@ -94,115 +94,6 @@ namespace MinimalisticWPF
             {
                 Model.PasswordStrengthColor = value;
                 OnPropertyChanged(nameof(PasswordStrengthColor));
-            }
-        }
-
-        public Brush FixedTransparent
-        {
-            get => Model.FixedTransparent;
-            set
-            {
-                OnPropertyChanged(nameof(FixedTransparent));
-            }
-        }
-
-        public double Height
-        {
-            get => Model.Height;
-            set
-            {
-                Model.Height = value;
-                OnPropertyChanged(nameof(Height));
-            }
-        }
-
-        public double Width
-        {
-            get => Model.Width;
-            set
-            {
-                Model.Width = value;
-                OnPropertyChanged(nameof(Width));
-            }
-        }
-
-        public double FontSizeConvertRate
-        {
-            get => Model.FontSizeConvertRate;
-            set
-            {
-                Model.FontSizeConvertRate = value;
-                OnPropertyChanged(nameof(FontSizeConvertRate));
-            }
-        }
-
-        public double FontSize
-        {
-            get => Model.Height * Model.FontSizeConvertRate;
-            set
-            {
-                Model.FontSize = value;
-                OnPropertyChanged(nameof(FontSize));
-            }
-        }
-
-        public Brush Foreground
-        {
-            get => Model.Foreground;
-            set
-            {
-                Model.Foreground = value;
-                OnPropertyChanged(nameof(Foreground));
-            }
-        }
-
-        public CornerRadius CornerRadius
-        {
-            get => Model.CornerRadius;
-            set
-            {
-                Model.CornerRadius = value;
-                OnPropertyChanged(nameof(CornerRadius));
-            }
-        }
-
-        public Thickness FixedBorderThickness
-        {
-            get => Model.FixedBorderThickness;
-            set
-            {
-                Model.FixedBorderThickness = value;
-                OnPropertyChanged(nameof(FixedBorderThickness));
-            }
-        }
-
-        public Brush FixedBorderBrush
-        {
-            get => Model.FixedBorderBrush;
-            set
-            {
-                Model.FixedBorderBrush = value;
-                OnPropertyChanged(nameof(FixedBorderBrush));
-            }
-        }
-
-        public Brush ActualBackground
-        {
-            get => Model.ActualBackground;
-            set
-            {
-                Model.ActualBackground = value;
-                OnPropertyChanged(nameof(ActualBackground));
-            }
-        }
-
-        public double ActualBackgroundOpacity
-        {
-            get => Model.ActualBackgroundOpacity;
-            set
-            {
-                Model.ActualBackgroundOpacity = value;
-                OnPropertyChanged(nameof(ActualBackgroundOpacity));
             }
         }
     }

@@ -8,133 +8,18 @@ using System.Windows;
 
 namespace MinimalisticWPF
 {
-    public class MProgressBarViewModel : StateViewModelBase<MProgressBarViewModel>
+    public class MProgressBarViewModel : ViewModelBase<MProgressBarViewModel, MProgressBarModel>
     {
         public MProgressBarViewModel() { }
 
-        public MProgressBarModel Model { get; set; } = new MProgressBarModel();
-
-        public Brush FixedTransparent
-        {
-            get => Model.FixedTransparent;
-            set
-            {
-                OnPropertyChanged(nameof(FixedTransparent));
-            }
-        }
-
-        public double Height
-        {
-            get => Model.Height;
-            set
-            {
-                Model.Height = value;
-                if (Shape == ProgressShapes.Ring && Width != value)
-                {
-                    Width = value;
-                }
-                OnPropertyChanged(nameof(Height));
-            }
-        }
-        public double Width
+        public override double Width
         {
             get => Model.Width;
             set
             {
                 Model.Width = value;
-                FontSize = value * Model.FontSizeConvertRate;
-                if (Shape == ProgressShapes.Ring && Height != value)
-                {
-                    Height = value;
-                }
-                StripValue = value * Value;
+                Height = Shape == ProgressShapes.Ring ? value : Thickness;
                 OnPropertyChanged(nameof(Width));
-            }
-        }
-
-        public string Text
-        {
-            get => Model.Text;
-            set
-            {
-                Model.Text = value;
-                OnPropertyChanged(nameof(Text));
-            }
-        }
-
-        public double FontSizeConvertRate
-        {
-            get => Model.FontSizeConvertRate;
-            set
-            {
-                Model.FontSizeConvertRate = value;
-                FontSize = Model.Width * value;
-                OnPropertyChanged(nameof(FontSizeConvertRate));
-            }
-        }
-        public double FontSize
-        {
-            get => Model.Width * Model.FontSizeConvertRate;
-            set
-            {
-                Model.FontSize = value;
-                OnPropertyChanged(nameof(FontSize));
-            }
-        }
-        public Brush Foreground
-        {
-            get => Model.Foreground;
-            set
-            {
-                Model.Foreground = value;
-                OnPropertyChanged(nameof(Foreground));
-            }
-        }
-
-        public CornerRadius CornerRadius
-        {
-            get => Model.CornerRadius;
-            set
-            {
-                Model.CornerRadius = value;
-                OnPropertyChanged(nameof(CornerRadius));
-            }
-        }
-        public Thickness FixedBorderThickness
-        {
-            get => Model.FixedBorderThickness;
-            set
-            {
-                Model.FixedBorderThickness = value;
-                OnPropertyChanged(nameof(FixedBorderThickness));
-            }
-        }
-        public Brush FixedBorderBrush
-        {
-            get => Model.FixedBorderBrush;
-            set
-            {
-                Model.FixedBorderBrush = value;
-                OnPropertyChanged(nameof(FixedBorderBrush));
-            }
-        }
-
-        public Brush ActualBackground
-        {
-            get => Model.ActualBackground;
-            set
-            {
-                Model.ActualBackground = value;
-                OnPropertyChanged(nameof(ActualBackground));
-            }
-        }
-        public double ActualBackgroundOpacity
-        {
-            get => Model.ActualBackgroundOpacity;
-            set
-            {
-                Model.ActualBackgroundOpacity = value;
-                OnPropertyChanged(nameof(ActualBackgroundOpacity));
             }
         }
 
@@ -162,7 +47,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(StripValue));
             }
         }
-
         public double StartAngle
         {
             get => Model.StartAngle;
@@ -183,7 +67,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(EndAngle));
             }
         }
-
         public double FillEndAngle
         {
             get => Model.FillEndAngle;
@@ -196,7 +79,6 @@ namespace MinimalisticWPF
                 }
             }
         }
-
         public Brush FillBrush
         {
             get => Model.FillBrush;
@@ -215,7 +97,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(BaseColor));
             }
         }
-
         public double Thickness
         {
             get => Model.Thickness;
@@ -229,7 +110,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(Thickness));
             }
         }
-
         public ProgressShapes Shape
         {
             get => Model.Type;
@@ -242,7 +122,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(Type));
             }
         }
-
         public double RingOpacity
         {
             get => Model.RingOpacity;
@@ -252,7 +131,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(RingOpacity));
             }
         }
-
         public double StripOpacity
         {
             get => Model.StripOpacity;

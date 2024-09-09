@@ -13,13 +13,14 @@
     <UserControl.DataContext>
         <local:MProgressBarViewModel x:Name="ViewModel"
                                      FontSizeConvertRate="0.3"
+                                     TextBrush="White"
                                      Shape="Ring"
                                      Width="50"
                                      StartAngle="0"
                                      EndAngle="360"                               
                                      Value="0"
                                      Thickness="1"
-                                     FixedBorderThickness="0"
+                                     EdgeThickness="0"
                                      FillBrush="Cyan"/>
     </UserControl.DataContext>
     <Grid>
@@ -27,15 +28,15 @@
             <Border Height="{Binding Thickness}" 
                     Width="{Binding Width}" 
                     Background="{Binding BaseColor}"
-                    BorderBrush="{Binding FixedBorderBrush}"
-                    BorderThickness="{Binding FixedBorderThickness}"
+                    BorderBrush="{Binding EdgeBrush}"
+                    BorderThickness="{Binding EdgeThickness}"
                     />
             <Border Height="{Binding Thickness}" 
                     Background="{Binding FillBrush}"
                     HorizontalAlignment="Left"
                     Width="{Binding StripValue}"
-                    BorderBrush="{Binding FixedBorderBrush}"
-                    BorderThickness="{Binding FixedBorderThickness}"
+                    BorderBrush="{Binding EdgeBrush}"
+                    BorderThickness="{Binding EdgeThickness}"
                     />
         </Grid>
         <Grid Opacity="{Binding RingOpacity}">
@@ -53,9 +54,9 @@
                 x:Name="RevB2"/>
             <TextBlock HorizontalAlignment="Center" 
                    VerticalAlignment="Center" 
-                   FontSize="{Binding FontSize}"
+                   FontSize="{Binding TextSize}"
                    Text="{Binding Text}" 
-                   Foreground="{Binding Foreground}"/>
+                   Foreground="{Binding TextBrush}"/>
         </Grid>
     </Grid>
 </UserControl>

@@ -5,8 +5,94 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MinimalisticWPF"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
-    </Grid>
+             Width="{Binding Width,Mode=TwoWay}"
+             Height="{Binding Height,Mode=TwoWay}"
+             Background="{Binding FixedTransparent,Mode=TwoWay}"
+             BorderBrush="{Binding FixedTransparent,Mode=TwoWay}"
+             BorderThickness="{Binding EdgeThickness,Mode=TwoWay}"
+             MouseLeftButtonDown="UserControl_MouseLeftButtonDown">
+    <UserControl.DataContext>
+        <local:MTopBarViewModel x:Name="ViewModel"
+                                Text="TopBar"
+                                TextBrush="White"
+                                FontSizeConvertRate="0.7"
+                                CornerRadius="0"
+                                />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center"         
+                          VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="False">
+                    <Setter Property="Background" Value="{x:Null}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Border BorderBrush="{Binding EdgeBrush}"
+            BorderThickness="{Binding EdgeThickness}"
+            CornerRadius="{Binding CornerRadius}">
+        <Grid>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0,0,0">
+                <Image Source="{Binding Icon,Mode=TwoWay}"
+                   Width="{Binding TextSize}"
+                   Height="{Binding TextSize}"/>
+                <TextBlock HorizontalAlignment="Left" 
+                       VerticalAlignment="Center"
+                       FontSize="{Binding TextSize}"
+                       Foreground="{Binding TextBrush}"
+                       Text="{Binding Text}"
+                       Margin="10,0,0,0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="MinSize"
+                    Width="{Binding Height}" 
+                    Background="Transparent" 
+                    Foreground="{Binding TextBrush}" 
+                    FontSize="{Binding TextSize}" 
+                    Content="-" 
+                    VerticalContentAlignment="Center" 
+                    HorizontalContentAlignment="Center" 
+                    BorderThickness="0"
+                    Click="MinSize_Click"
+                    MouseEnter="OnMouseEnter"
+                    MouseLeave="OnMouseLeave"/>
+                <Button x:Name="MidelSize" 
+                    Width="{Binding Height}" 
+                    Background="Transparent" 
+                    Foreground="{Binding TextBrush}" 
+                    FontSize="{Binding TextSize}" 
+                    Content="❒" 
+                    VerticalContentAlignment="Center" 
+                    HorizontalContentAlignment="Center" 
+                    BorderThickness="0"
+                    Click="MidelSize_Click"
+                    MouseEnter="OnMouseEnter"
+                    MouseLeave="OnMouseLeave"/>
+                <Button x:Name="WindowClose" 
+                    Width="{Binding Height}" 
+                    Background="Transparent" 
+                    Foreground="{Binding TextBrush}" 
+                    FontSize="{Binding TextSize}" 
+                    Content="×" 
+                    VerticalContentAlignment="Center" 
+                    HorizontalContentAlignment="Center" 
+                    BorderThickness="0"
+                    Click="WindowClose_Click"
+                    MouseEnter="OnMouseEnter"
+                    MouseLeave="OnMouseLeave"/>
+            </StackPanel>
+        </Grid>
+    </Border>
 </UserControl>

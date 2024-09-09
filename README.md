@@ -282,10 +282,16 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
     ```xml
     xmlns:mn="clr-namespace:MinimalisticWPF;assembly=MinimalisticWPF"
     ```
+  - You almost only need to use the properties listed in the following documentation
+  - The text size of the control is typically 70% of its height, and properties with the Ratio suffix usually describe the specific value of this percentage
+  - Usually the layout of these controls is controlled by the WiseHeight, WiseWidth, Size, etc properties. You need to set their values and then drag and drop controls, which is the Margin property
+  - Since it's a dark theme, it's generally recommended that you set the Window's background color to "#1e1e1e" or some other dark color, and the control's background color is already locked to transparent, so using a dark background can avoid some visual issues
 - ## ☆ MButton
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLPyQ.png)
   ## Property
   - Click
+  - WiseHeight
+  - WiseWidth
   - Text
   - TextBrush
   - FontSizeRatio
@@ -293,10 +299,26 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
   - EdgeThickness
   - HoverBrush
   - CornerRadius
+- ## MTopBar
+  ![pAmMfv8.md.png](https://s21.ax1x.com/2024/09/09/pAmMfv8.md.png)
+  ![pAmQnVH.md.png](https://s21.ax1x.com/2024/09/09/pAmQnVH.md.png)
+  ## Property
+  - WiseHeight
+  - WiseWidth
+  - Title
+  - SizeRatio
+  - EdgeBrush
+  - EdgeThickness
+  - HoverBrush
+  - CornerRadius
+  - Icon
 - ## ☆ MPasswordBox
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLEoq.png)
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLQOJ.png)
   ## Property
+  - WiseHeight
+  - WiseWidth
+  - FontSizeRatio
   - Password
   - Replace
 - ### ☆ MProgressBar

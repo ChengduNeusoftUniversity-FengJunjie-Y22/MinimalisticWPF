@@ -11,6 +11,6 @@ namespace MinimalisticWPF
     {
         public MTopBarModel() { }
 
-        public Brush ModifyKeyPressed { get; set; } = Brushes.Transparent;
+        public ImageSource? Icon { get; set; } = null;
     }
 }

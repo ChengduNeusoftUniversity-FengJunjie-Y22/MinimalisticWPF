@@ -14,6 +14,18 @@ namespace MinimalisticWPF
             this.StateMachineLoading(ViewModel);
         }
 
+        public double WiseHeight
+        {
+            get => ViewModel.Height;
+            set => ViewModel.Height = value;
+        }
+
+        public double WiseWidth
+        {
+            get => ViewModel.Width;
+            set => ViewModel.Width = value;
+        }
+
         public event MouseButtonEventHandler? Click
         {
             add { BackgroundBorder.PreviewMouseLeftButtonDown += value; }
@@ -34,26 +46,26 @@ namespace MinimalisticWPF
 
         public Brush TextBrush
         {
-            get => ViewModel.Foreground;
-            set => ViewModel.Foreground = value;
+            get => ViewModel.TextBrush;
+            set => ViewModel.TextBrush = value;
         }
 
         public Brush HoverBrush
         {
-            get => ViewModel.ActualBackground;
-            set => ViewModel.ActualBackground = value;
+            get => ViewModel.HoverBackground;
+            set => ViewModel.HoverBackground = value;
         }
 
         public Brush EdgeBrush
         {
-            get => ViewModel.FixedBorderBrush;
-            set => ViewModel.FixedBorderBrush = value;
+            get => ViewModel.EdgeBrush;
+            set => ViewModel.EdgeBrush = value;
         }
 
         public Thickness EdgeThickness
         {
-            get => ViewModel.FixedBorderThickness;
-            set => ViewModel.FixedBorderThickness = value;
+            get => ViewModel.EdgeThickness;
+            set => ViewModel.EdgeThickness = value;
         }
 
         public CornerRadius CornerRadius
@@ -62,14 +74,56 @@ namespace MinimalisticWPF
             set => ViewModel.CornerRadius = value;
         }
 
-        public void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        public double HoverOpacity
         {
-            ViewModel.StateMachine?.Transfer("mouseInside", (x) => { x.Duration = 0.4; x.ProtectNames = new string[] { "Foreground", "ActualBackground", "FixedBorderBrush" }; });
+            get => ViewModel.HoverBackgroundOpacity;
+            internal set => ViewModel.HoverBackgroundOpacity = value;
         }
 
-        public void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        private void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            ViewModel.StateMachine?.Transfer("defualt", (x) => { x.Duration = 0.1; x.ProtectNames = new string[] { "Foreground", "ActualBackground", "FixedBorderBrush" }; });
+            this.StateMachineTransfer()
+                .Add(x => x.HoverOpacity, 0.2)
+                .Set((x) =>
+                {
+                    x.Duration = 0.3;
+                    x.ProtectNames = new string[]
+                    {
+                        nameof(FontSizeRatio),
+                        nameof(Width),
+                        nameof(Height),
+                        nameof(TextBrush),
+                        nameof(FontSize),
+                        nameof(HoverBrush),
+                        nameof(EdgeBrush),
+                        nameof(WiseHeight),
+                        nameof(WiseWidth)
+                    };
+                })
+                .Start();
+        }
+
+        private void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            this.StateMachineTransfer()
+                .Add(x => x.HoverOpacity, 0)
+                .Set((x) =>
+                {
+                    x.Duration = 0.1;
+                    x.ProtectNames = new string[]
+                    {
+                        nameof(FontSizeRatio),
+                        nameof(Width),
+                        nameof(Height),
+                        nameof(TextBrush),
+                        nameof(FontSize),
+                        nameof(HoverBrush),
+                        nameof(EdgeBrush),
+                        nameof(WiseHeight),
+                        nameof(WiseWidth)
+                    };
+                })
+                .Start();
         }
     }
 }

@@ -90,8 +90,8 @@ namespace MinimalisticWPF
         /// </summary>
         public Brush TextBrush
         {
-            get => ViewModel.Foreground;
-            set => ViewModel.Foreground = value;
+            get => ViewModel.TextBrush;
+            set => ViewModel.TextBrush = value;
         }
 
         /// <summary>
