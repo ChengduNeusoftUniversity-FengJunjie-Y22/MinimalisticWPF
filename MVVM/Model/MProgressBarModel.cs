@@ -14,7 +14,7 @@ public enum ProgressShapes
 
 namespace MinimalisticWPF
 {
-    public class MProgressBarModel : ModelWithTextBase
+    public class MProgressBarModel : ModelBase
     {
         public MProgressBarModel() { }
 

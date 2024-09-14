@@ -7,7 +7,7 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
-    public class MTopBarModel : ModelWithTextBase
+    public class MTopBarModel : ModelBase
     {
         public MTopBarModel() { }
 

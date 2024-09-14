@@ -9,7 +9,7 @@ using System.Windows.Controls;
 
 namespace MinimalisticWPF
 {
-    public class MButtonModel : ModelWithTextBase
+    public class MButtonModel : ModelBase
     {
         public MButtonModel() { }
     }

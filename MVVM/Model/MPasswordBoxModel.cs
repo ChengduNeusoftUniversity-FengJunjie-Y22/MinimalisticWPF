@@ -7,7 +7,7 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
-    public class MPasswordBoxModel : ModelWithTextBase
+    public class MPasswordBoxModel : ModelBase
     {
         public MPasswordBoxModel() { }
 
