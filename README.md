@@ -1,12 +1,12 @@
 ﻿# MinimalisticWPF
 ## Target
 - [StateMachine System](#StateMachine)
-    - Use a [State](#State) object to keep track of the control's property values at the current time
-    - Use a [StateVector](#StateVector) object to describe the conditions under which the StateMachine transitions to which state
-    - Use a [StateMachine](#StateMachine) object and give it State objects and StateVector objects to implement linear animations
-    - Provides the [StateViewModelBase< T >](#StateViewModelBase) base class, which helps you quickly build ViewModels powered by state machines
-    - Use a [TransferParams](#TransferParams) object to describe the details of a linear transition animation.It usually appears as a Lambda in State, StateVector, or StateMachine.Transfer()
-    - Properties that currently support linear transitions
+    - [State](#State) Describes the attribute value corresponding to the state
+    - [StateVector](#StateVector) Describes the state that should be switched to when certain conditions are met
+    - [StateMachine](#StateMachine) Make a linear change to the attribute value
+    - [StateViewModelBase< T >](#StateViewModelBase) Types implementing this interface automatically switch State based on the StateVector
+    - [TransferParams](#TransferParams) Describes the effect of a linear transition
+    - Currently supported property types
       - double
       - Brush
       - …… under development >>
@@ -38,8 +38,6 @@
 # StateMachine System
 [![pAu2vOP.md.png](https://s21.ax1x.com/2024/09/15/pAu2vOP.md.png)](https://imgse.com/i/pAu2vOP)
 ## State
-- Use State to predescribe the property values of an object at a particular state
-- Since version 1.4.0, the State machine only works for properties that have been set in state
 ```csharp
    public static State MInsideState = State.FromObject(new Grid())
             .SetName("mouseinside")
@@ -148,6 +146,17 @@
 ## StateViewModelBase
 - The essence is an abstract base class that implements the INotifyPropertyChanged interface and the IConditionalTransfer< T > interface
 - The [OnConditionsChecked()]() method is provided to determine if the condition to switch states has been met
+```csharp
+        public override bool IsMouseInside
+        {
+            get => base.IsMouseInside;
+            set
+            {
+                base.IsMouseInside = value;
+                OnConditionsChecked();
+            }
+        }
+```
 
 # WebServices
 - ## GaoDe
