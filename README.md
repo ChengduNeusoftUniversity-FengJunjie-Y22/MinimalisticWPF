@@ -22,6 +22,7 @@
       - Value conversion
       - Fuzzy matching
       - Crawler analysis
+      - Password strength
 	- [FrameworkElement](#FrameworkElement)
       - Linear animation based on StateMachine
       - Storyboard-based animations
@@ -105,7 +106,7 @@ Note that you will almost never define TransferParams separately; instead, they 
 |IsLast|bool|false|Whether to clear the queued transition operation when the currently requested transition operation is completed|
 |IsUnique|bool|true|If the same operation as the transition operation applied for this time already exists in the queue, whether to continue to join the queue|
 |FrameRate|int|400|The frame rate of linear transition determines the fluency and performance of the transition effect|
-|ProtectNames|ICollection< string >?|null|The name of the property in this transition that is not affected by the state machine|
+|ProtectNames|ICollection< string >?|null|（ Deprecated since version 1.4.0 ） The name of the property in this transition that is not affected by the state machine|
 |WaitTime|double|0.008|You will rarely use it, and after a few versions it will be discarded as the system improves|
 
 ## StateViewModelBase
