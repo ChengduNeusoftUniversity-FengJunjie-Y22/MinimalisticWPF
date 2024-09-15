@@ -51,10 +51,6 @@ namespace MinimalisticWPF
             }//存储不重名的State
         }
         /// <summary>
-        /// 全局受保护的属性
-        /// </summary>
-        public List<string> GlobalProtectedProperty { get; internal set; } = new List<string>();
-        /// <summary>
         /// Public属性
         /// </summary>
         public PropertyInfo[] Properties { get; internal set; }
@@ -106,22 +102,6 @@ namespace MinimalisticWPF
                 var temp = States.FirstOrDefault(x => x.StateName == state.StateName);
                 if (temp == null) States.Add(state);
                 else throw new ArgumentException($"A state named [ {state.StateName} ] already exists in the collection.Modify the collection to ensure that the state name is unique");
-            }
-
-            return this;
-        }
-        /// <summary>
-        /// 保护属性不受状态机影响
-        /// </summary>
-        /// <param name="propertyNames">若干属性名</param>
-        public StateMachine SetProtects(params string[] propertyNames)
-        {
-            if (propertyNames.Length == 0) GlobalProtectedProperty.Clear();
-
-            foreach (var propertyName in propertyNames)
-            {
-                var result = GlobalProtectedProperty.FirstOrDefault(x => x == propertyName);
-                if (result == null) { GlobalProtectedProperty.Add(propertyName); }
             }
 
             return this;
@@ -220,9 +200,7 @@ namespace MinimalisticWPF
             //预加载:[ 需要平滑过渡的属性 ]+[ 新值相对于旧值的变化量 ]
             for (int i = 0; i < DoubleProperties.Length; i++)
             {
-                if (transferParams.ProtectNames?.FirstOrDefault(x => x == DoubleProperties[i].Name) == null &&
-                    GlobalProtectedProperty.FirstOrDefault(x => x == DoubleProperties[i].Name) == null &&
-                    state.Values.ContainsKey(DoubleProperties[i].Name))
+                if (state.Values.ContainsKey(DoubleProperties[i].Name))
                 {
                     double? now = (double?)DoubleProperties[i].GetValue(Target);
                     double? viewModel = (double?)state[DoubleProperties[i].Name];
@@ -255,9 +233,7 @@ namespace MinimalisticWPF
             // 预加载需要平滑过渡的属性及其变化量
             for (int i = 0; i < BrushProperties.Length; i++)
             {
-                if (transferParams.ProtectNames?.FirstOrDefault(x => x == BrushProperties[i].Name) == null &&
-                    GlobalProtectedProperty.FirstOrDefault(x => x == BrushProperties[i].Name) == null &&
-                    state.Values.ContainsKey(BrushProperties[i].Name))
+                if (state.Values.ContainsKey(BrushProperties[i].Name))
                 {
                     Brush? now = (Brush?)BrushProperties[i].GetValue(Target);
                     Brush? viewModel = (Brush?)state[BrushProperties[i].Name];
@@ -351,7 +327,28 @@ namespace MinimalisticWPF
                         {
                             Application.Current.Dispatcher.Invoke(() =>
                             {
-                                Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                if (Frams.Count > 0 && j >= 0 && j < Frams.Count)
+                                {
+                                    if (Frams[j].Count > 0 && k >= 0 && k < Frams[j].Count)
+                                    {
+                                        if (Frams[j][k].Item2.Count > 0 && i >= 0 && i < Frams[j][k].Item2.Count)
+                                        {
+                                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                        }
+                                        else
+                                        {
+                                            WhileEnded();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        WhileEnded();
+                                    }
+                                }
+                                else
+                                {
+                                    WhileEnded();
+                                }
                             });
                         }
                     }

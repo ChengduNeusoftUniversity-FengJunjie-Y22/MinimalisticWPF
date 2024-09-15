@@ -20,9 +20,9 @@ namespace MinimalisticWPF
         /// </summary>
         public double Duration { get; set; } = 0;
         /// <summary>
-        /// 过渡帧率(默认: 144 )
+        /// 过渡帧率(默认: 165 )
         /// </summary>
-        public int FrameRate { get; set; } = 144;
+        public int FrameRate { get; set; } = 165;
         /// <summary>
         /// 是否排队执行(默认:不排队)
         /// </summary>
@@ -39,9 +39,5 @@ namespace MinimalisticWPF
         /// [ 测试参数 ] 若无法响应例如MouseLeave事件,可适当增加此参数(默认:0.008)
         /// </summary>
         public double WaitTime { get; set; } = 0.008;
-        /// <summary>
-        /// 本次过渡过程中,不受状态机影响的属性的名称
-        /// </summary>
-        public ICollection<string>? ProtectNames { get; set; } = default;
     }
 }

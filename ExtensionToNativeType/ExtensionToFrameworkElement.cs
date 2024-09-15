@@ -116,10 +116,6 @@ namespace MinimalisticWPF
         internal TempStoryBoard(T target)
         {
             Target = target;
-            Properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.CanWrite && x.CanRead)
-                .Select(x => x.Name)
-                .ToList();
 
             var temp = MachinePool.FirstOrDefault(x => x.Item2 == target);
             if (temp != null)
@@ -137,7 +133,7 @@ namespace MinimalisticWPF
 
         internal T Target { get; set; }
 
-        List<string> Properties { get; set; } = new List<string>();
+        List<string> WhiteList { get; set; } = new List<string>();
 
         internal StateMachine Machine { get; set; }
 
@@ -158,7 +154,7 @@ namespace MinimalisticWPF
                     return this;
                 }
                 States.Add(Tuple.Create(property, (object?)newValue));
-                Properties.Remove(property.Name);
+                WhiteList.Add(property.Name);
             }
             return this;
         }
@@ -175,7 +171,7 @@ namespace MinimalisticWPF
                     return this;
                 }
                 States.Add(Tuple.Create(property, (object?)newValue));
-                Properties.Remove(property.Name);
+                WhiteList.Add(property.Name);
             }
             return this;
         }
@@ -199,8 +195,7 @@ namespace MinimalisticWPF
             }
             State temp = State.FromObject(sta)
                 .SetName("temp")
-                .Except(Properties)
-                .ToState();
+                .ToState(WhiteList);
             Machine.States.Add(temp);
             if (TransferParams == null)
             {
@@ -217,7 +212,6 @@ namespace MinimalisticWPF
                             x.IsUnique = TransferParams.IsUnique;
                             x.FrameRate = TransferParams.FrameRate;
                             x.WaitTime = TransferParams.WaitTime;
-                            x.ProtectNames = TransferParams.ProtectNames;
                         });
             }
             return Target;

@@ -60,7 +60,6 @@ namespace MinimalisticWPF
                             x.IsLast = Conditions[i].Item3.IsLast;
                             x.IsUnique = Conditions[i].Item3.IsUnique;
                             x.WaitTime = Conditions[i].Item3.WaitTime;
-                            x.ProtectNames = Conditions[i].Item3.ProtectNames;
                         });
                     return;
                 }

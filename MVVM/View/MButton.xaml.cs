@@ -87,18 +87,6 @@ namespace MinimalisticWPF
                 .Set((x) =>
                 {
                     x.Duration = 0.3;
-                    x.ProtectNames = new string[]
-                    {
-                        nameof(FontSizeRatio),
-                        nameof(Width),
-                        nameof(Height),
-                        nameof(TextBrush),
-                        nameof(FontSize),
-                        nameof(HoverBrush),
-                        nameof(EdgeBrush),
-                        nameof(WiseHeight),
-                        nameof(WiseWidth)
-                    };
                 })
                 .Start();
         }
@@ -110,18 +98,6 @@ namespace MinimalisticWPF
                 .Set((x) =>
                 {
                     x.Duration = 0.1;
-                    x.ProtectNames = new string[]
-                    {
-                        nameof(FontSizeRatio),
-                        nameof(Width),
-                        nameof(Height),
-                        nameof(TextBrush),
-                        nameof(FontSize),
-                        nameof(HoverBrush),
-                        nameof(EdgeBrush),
-                        nameof(WiseHeight),
-                        nameof(WiseWidth)
-                    };
                 })
                 .Start();
         }

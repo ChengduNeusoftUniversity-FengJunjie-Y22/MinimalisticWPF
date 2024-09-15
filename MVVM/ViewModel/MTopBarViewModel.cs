@@ -12,8 +12,6 @@ namespace MinimalisticWPF
     {
         public MTopBarViewModel() { }
 
-
-
         public ImageSource? Icon
         {
             get => Model.Icon;

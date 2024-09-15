@@ -6,23 +6,18 @@ using System.Windows;
 
 namespace MinimalisticWPF
 {
-    /// <summary>
-    /// 表示Target的一个状态
-    /// </summary>
     public class State
     {
         internal State(object Target)
         {
-            ObjType = Target.GetType();
-            PropertyInfo[] Properties = ObjType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            ActualType = Target.GetType();
+            PropertyInfo[] Properties = ActualType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(x => x.CanWrite && x.CanRead)
                 .ToArray();//所有可用属性
             PropertyInfo[] DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double))
                 .ToArray();//筛选Double属性
             PropertyInfo[] BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
                 .ToArray();//筛选Brush属性
-            PropertyInfo[] PointProperties = Properties.Where(x => x.PropertyType == typeof(Point))
-                .ToArray();//筛选Point属性
 
             foreach (PropertyInfo propertyInfo in DoubleProperties)
             {
@@ -32,7 +27,23 @@ namespace MinimalisticWPF
             {
                 Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
             }
-            foreach (PropertyInfo propertyInfo in PointProperties)
+        }
+        internal State(object Target, ICollection<string> WhileList)
+        {
+            ActualType = Target.GetType();
+            PropertyInfo[] Properties = ActualType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(x => x.CanWrite && x.CanRead)
+                .ToArray();//所有可用属性
+            PropertyInfo[] DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double) && WhileList.Contains(x.Name))
+                .ToArray();//筛选Double属性
+            PropertyInfo[] BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush) && WhileList.Contains(x.Name))
+                .ToArray();//筛选Brush属性
+
+            foreach (PropertyInfo propertyInfo in DoubleProperties)
+            {
+                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
+            }
+            foreach (PropertyInfo propertyInfo in BrushProperties)
             {
                 Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
             }
@@ -42,11 +53,14 @@ namespace MinimalisticWPF
         /// 状态的名称
         /// </summary>
         public string StateName { get; internal set; } = string.Empty;
-
-        public Type ObjType { get; internal set; }
-
-        public Dictionary<string, object?> Values { get; set; } = new Dictionary<string, object?>();
-
+        /// <summary>
+        /// 记录状态对象的真实类型
+        /// </summary>
+        public Type ActualType { get; internal set; }
+        /// <summary>
+        /// 记录的状态值
+        /// </summary>
+        public Dictionary<string, object?> Values { get; internal set; } = new Dictionary<string, object?>();
         /// <summary>
         /// 获取该状态下,指定属性的具体值
         /// </summary>
@@ -65,7 +79,6 @@ namespace MinimalisticWPF
                 return Values[propertyName];
             }
         }
-
         /// <summary>
         /// 开始记录指定对象的状态
         /// </summary>
@@ -81,10 +94,8 @@ namespace MinimalisticWPF
         internal TempState(T target) { Value = target; }
 
         internal T Value { get; set; }
-
         internal string Name { get; set; } = string.Empty;
-
-        internal List<string> BlackList { get; set; } = new List<string>();
+        internal List<string> WhiteList { get; set; } = new List<string>();
 
         /// <summary>
         /// 记录该状态的名称
@@ -117,8 +128,8 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-
                 property.SetValue(obj, newValue);
+                WhiteList.Add(property.Name);
             }
 
             return this;
@@ -145,33 +156,10 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-
                 property.SetValue(obj, newValue);
+                WhiteList.Add(property.Name);
             }
 
-            return this;
-        }
-
-        /// <summary>
-        /// 不记录的属性
-        /// </summary>
-        public TempState<T> Except(params string[] propertyNames)
-        {
-            foreach (var propertyName in propertyNames)
-            {
-                BlackList.Add(propertyName);
-            }
-            return this;
-        }
-        /// <summary>
-        /// 不记录的属性
-        /// </summary>
-        public TempState<T> Except(ICollection<string> propertyNames)
-        {
-            foreach (var propertyName in propertyNames)
-            {
-                BlackList.Add(propertyName);
-            }
             return this;
         }
 
@@ -180,12 +168,14 @@ namespace MinimalisticWPF
         /// </summary>
         public State ToState()
         {
-            State result = new State(Value);
+            State result = new State(Value, WhiteList);
             result.StateName = Name;
-            foreach (var item in BlackList)
-            {
-                result.Values.Remove(item);
-            }
+            return result;
+        }
+        internal State ToState(ICollection<string> whiteList)
+        {
+            State result = new State(Value, whiteList);
+            result.StateName = Name;
             return result;
         }
     }
