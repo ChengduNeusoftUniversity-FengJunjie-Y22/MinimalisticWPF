@@ -23,9 +23,8 @@
       - Fuzzy matching
       - Crawler analysis
       - Password strength
-	- [FrameworkElement](#FrameworkElement)
+	- FrameworkElement
       - Linear animation based on StateMachine
-      - Storyboard-based animations
 ## Framework
 - [.NET6.0-windows] 
 - [.NET8.0-windows]
@@ -37,10 +36,12 @@
 [2]: https://www.nuget.org/packages/MinimalisticWPF/
 
 # StateMachine System
+[![pAu2vOP.md.png](https://s21.ax1x.com/2024/09/15/pAu2vOP.md.png)](https://imgse.com/i/pAu2vOP)
 ## State
-Suppose the current state of the Grid control is A, when the mouse enters the control, I want its length, width, height and background color to have a linear gradient effect, and the final result of the gradient is recorded as state B, then the state at the time of B can be recorded as this code
+- Use State to predescribe the property values of an object at a particular state
+- Since version 1.4.0, the State machine only works for properties that have been set in state
 ```csharp
-        static State MInsideState = State.FromObject(new Grid())
+   public static State MInsideState = State.FromObject(new Grid())
             .SetName("mouseinside")
             .SetProperty(x => x.Height, 300)
             .SetProperty(x => x.Width, 700)
@@ -49,21 +50,20 @@ Suppose the current state of the Grid control is A, when the mouse enters the co
             .ToState();
 ```
 ## StateVector
-- If you are using the MVVM design pattern and want the control to automatically switch to a specific State when a certain condition is met, you need to create a StateVector object to record this relationship, as shown in the following code.
-- Of course, here we're using Grid for the sake of demonstration, but you should actually fill in the specific ViewModel type
-- [Example in MVVM design pattern](#MVVM)
+- Param1. Specifies the conditions that an object instance of a type should meet
+- Param2. Automatically switches to the State of if the object meets the criteria
+- Param3. When switching states, linearly animate related parameters
 ```csharp
-        static StateVector DefaultCondition = StateVector.FromType<Grid>()
-            .SetTarget(MInsideState)
-            .SetName("LimitHeight")
-            .SetCondition(x => x.Width > 260 || x.Height >= 500)
-            .SetTransferParams(transitionTime: 0.3, frameRate: 244)
-            .ToStateVector();
+   public static StateVector DefaultCondition = StateVector.FromType<Grid>()
+            .AddCondition(x => x.Width>100, 
+                 StateA, 
+                 (x) => 
+                 { 
+                    x.Duration = 0.3; }
+                 );
 ```
 ## StateMachine
-- Using the State and StateVector objects, you can create a StateMachine instance and load the linear animation in the MouseEnter and MouseLeave events of a Grid control called GD
-- The FrameworkElement has a more elegant way to quickly start the linear transitions StateMachine provides, and in fact, it's even better for non-MVVM design patterns, but note that StateMachine's linear transitions don't depend on storyboards at all. Therefore, when you mix the two, you need to avoid conflicts
-- [Example About FrameworkElement](#FrameworkElement)
+- Create a StateMachine instance and load the linear animation
 ```csharp
         public MainWindow()
         {
@@ -96,9 +96,46 @@ Suppose the current state of the Grid control is A, when the mouse enters the co
                 });
         }
 ```
-## TransferParams 
-Note that you will almost never define TransferParams separately; instead, they are passed in as Lambda expressions during State and StateVector setup
+- The FrameworkElement has an easier way to initiate transitions
+```csharp
+        private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GD.StateMachineTransfer()
+                .Add(x => x.Width, 700)
+                .Add(x => x.Height, 300)
+                .Add(x => x.Opacity, 0.2)
+                .Add(x => x.Background, Brushes.Lime)
+                .Set((x) =>
+                {
+                    x.Duration = 0.1;
+                })
+                .Start();
+        }
 
+        private void GD_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GD.StateMachineTransfer()
+                .Add(x => x.Width, 70)
+                .Add(x => x.Height, 30)
+                .Add(x => x.Opacity, 1)
+                .Add(x => x.Background, Brushes.Tomato)
+                .Set((x) =>
+                {
+                    x.Duration = 0.1;
+                })
+                .Start();
+        }
+```
+
+
+## TransferParams 
+- Note that you will almost never define TransferParams separately; instead, they are passed in as Lambda expressions during State and StateVector setup,like this 
+```csharp
+(x) =>
+{
+    x.Duration = 0.1;
+});
+```
 |Property|class|Default|Meaning|
 |--------|-----|-------|-------|
 |Duration|double|0|Animation duration ( unit: s )|
@@ -106,139 +143,18 @@ Note that you will almost never define TransferParams separately; instead, they 
 |IsLast|bool|false|Whether to clear the queued transition operation when the currently requested transition operation is completed|
 |IsUnique|bool|true|If the same operation as the transition operation applied for this time already exists in the queue, whether to continue to join the queue|
 |FrameRate|int|400|The frame rate of linear transition determines the fluency and performance of the transition effect|
-|ProtectNames|ICollection< string >?|null|（ Deprecated since version 1.4.0 ） The name of the property in this transition that is not affected by the state machine|
 |WaitTime|double|0.008|You will rarely use it, and after a few versions it will be discarded as the system improves|
 
 ## StateViewModelBase
 - The essence is an abstract base class that implements the INotifyPropertyChanged interface and the IConditionalTransfer< T > interface
 - The [OnConditionsChecked()]() method is provided to determine if the condition to switch states has been met
 
-## MVVM
-Take the [MPasswordBox](#MPasswordBox) control provided by the class library as an example
-- [PasswordStrengthColor]() is bound to [BorderBrush]() to indicate password strength with color
-```xml
-<UserControl x:Class="MinimalisticWPF.MPasswordBox"
-    
-    <UserControl.DataContext>
-        <local:MPasswordBoxViewModel x:Name="ViewModel"/>
-    </UserControl.DataContext>
-
-    <Grid Background="{Binding FixedTransparent,Mode=TwoWay}"
-          Width="{Binding ElementName=Total,Path=Width}"
-          Height="{Binding ElementName=Total,Path=Height}">
-        <Border x:Name="FixedBorder"
-                Background="{Binding FixedTransparent}"
-                CornerRadius="{Binding CornerRadius}"
-                BorderThickness="2"
-                BorderBrush="{Binding PasswordStrengthColor}"
-                ClipToBounds="True"/>
-        <Border ClipToBounds="True">
-            <TextBox x:Name="TruePWD"
-                 Width="{Binding ElementName=Total,Path=Width}"
-                 Height="{Binding ElementName=Total,Path=Height}"
-                 Foreground="{Binding FixedTransparent}"
-                 Background="{Binding FixedTransparent}"
-                 TextChanged="TruePWD_TextChanged"
-                 Grid.ZIndex="2"
-                 BorderThickness="0"
-                 CaretBrush="Transparent"
-                 FontSize="0.01"
-                 ContextMenuOpening="TruePWD_ContextMenuOpening"/>
-        </Border>
-    </Grid>
-</UserControl>
-```
-- The [StateMachine]() is loaded at initialization time
-- [TextChanged]() event internally passes the latest password value
-```csharp
-    public partial class MPasswordBox : UserControl
-    {
-        public MPasswordBox()
-        {
-            InitializeComponent();
-            this.StateMachineLoading(ViewModel);
-        }
-
-        private void TruePWD_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            ViewModel.TruePassword = TruePWD.Text;
-        }
-
-        private void TruePWD_ContextMenuOpening(object sender, ContextMenuEventArgs e)
-        {
-            e.Handled = true;
-        }
-    }
-```
-- Now we can [automatically togple the border color using a preset State and StateVector]()
-- Note that the State and StateVector must be [Public Static]()
-- [CheckPasswordStrength(8)](#string) means that the minimum password length is 8, and anything less than that is considered a strength level of 0
-```csharp
-    public class MPasswordBoxViewModel : StateViewModelBase<MPasswordBoxViewModel>
-    {
-        public MPasswordBoxViewModel() { }
-
-        public MPasswordBoxModel Model { get; set; } = new MPasswordBoxModel();
-
-        public static State Default = State.FromObject(new MPasswordBoxViewModel())
-            .SetName("default")
-            .SetProperty(x => x.PasswordStrengthColor, Brushes.White)
-            .ToState();
-
-        public static State Level1 = State.FromObject(new MPasswordBoxViewModel())
-            .SetName("L1")
-            .SetProperty(x => x.PasswordStrengthColor, Brushes.Tomato)
-            .ToState();
-        public static State Level2 = State.FromObject(new MPasswordBoxViewModel())
-            .SetName("L2")
-            .SetProperty(x => x.PasswordStrengthColor, Brushes.Yellow)
-            .ToState();
-        public static State Level3 = State.FromObject(new MPasswordBoxViewModel())
-            .SetName("L3")
-            .SetProperty(x => x.PasswordStrengthColor, Brushes.Cyan)
-            .ToState();
-        public static State Level4 = State.FromObject(new MPasswordBoxViewModel())
-            .SetName("L4")
-            .SetProperty(x => x.PasswordStrengthColor, Brushes.Lime)
-            .ToState();
-
-        public static StateVector<MPasswordBoxViewModel> ConditionA = StateVector<MPasswordBoxViewModel>.Create(new MPasswordBoxViewModel())
-            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 0, Default, (x) => { x.Duration = 0.1; })
-            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 1, Level1, (x) => { x.Duration = 0.1; })
-            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 2, Level2, (x) => { x.Duration = 0.1; })
-            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 3, Level3, (x) => { x.Duration = 0.1; })
-            .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 4, Level4, (x) => { x.Duration = 0.1; });
-
-        public string TruePassword
-        {
-            get => Model.TruePassword;
-            set
-            {
-                Model.TruePassword = value;
-                string result = string.Empty;
-                for (int i = 0; i < value.Length; i++)
-                {
-                    result += ReplacingCharacters;
-                }
-                UIPassword = result;
-                OnPropertyChanged(nameof(TruePassword));
-                OnConditionsChecked();
-            }
-        }
-    }
-```
-### Tips 
-- Of course, this is just a simple exercise. Because the state machine is [type-specific](), it can in theory do more complex things than just animating. 
-- The [IConditionalTransfer]() interface is the key component that allows the StateMachine to interact with the StateVector
-
 # WebServices
-- ## Using
-  - C#
+- ## GaoDe
+  - Using
     ```csharp
     using MinimalisticWPF.GaoDeServices;
     ```
-- ## GaoDe
-  - Disposition
   - Get Key From https://console.amap.com/dev/key/app
     ```csharp
         protected override void OnSourceInitialized(EventArgs e)
@@ -283,10 +199,8 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
     ```xml
     xmlns:mn="clr-namespace:MinimalisticWPF;assembly=MinimalisticWPF"
     ```
-  - You almost only need to use the properties listed in the following documentation
-  - The text size of the control is typically 70% of its height, and properties with the Ratio suffix usually describe the specific value of this percentage
-  - Usually the layout of these controls is controlled by the WiseHeight, WiseWidth, Size, etc properties. You need to set their values and then drag and drop controls, which is the Margin property
-  - Since it's a dark theme, it's generally recommended that you set the Window's background color to "#1e1e1e" or some other dark color, and the control's background color is already locked to transparent, so using a dark background can avoid some visual issues
+  - Change the Size by adjusting the Wise/Size property, and then add Margin to adjust the position
+  - Using "#1e1e1e" as the background color might be more appropriate for these controls
 - ## ☆ MButton
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLPyQ.png)
   ## Property
@@ -300,7 +214,7 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
   - EdgeThickness
   - HoverBrush
   - CornerRadius
-- ## MTopBar
+- ## ☆ MTopBar
   ![pAmMfv8.md.png](https://s21.ax1x.com/2024/09/09/pAmMfv8.md.png)
   ![pAmQnVH.md.png](https://s21.ax1x.com/2024/09/09/pAmQnVH.md.png)
   ## Property
@@ -450,36 +364,5 @@ Take the [MPasswordBox](#MPasswordBox) control provided by the class library as 
    string password = "12345678";
    int Level = password.CheckPasswordStrength(MinLength=8);
    //An integer between 0 and 4 is returned to indicate the strength of the password
-```
-## FrameworkElement
-The same Grid widget called GD, now let's add a linear transition animation to it. When the mouse enters the Grid, the Grid expands and changes color, and when the mouse leaves, it returns to its initial state
-```csharp
-        private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            GD.StateMachineTransfer()
-                .Add(x => x.Width, 700)
-                .Add(x => x.Height, 300)
-                .Add(x => x.Opacity, 0.2)
-                .Add(x => x.Background, Brushes.Lime)
-                .Set((x) =>
-                {
-                    x.Duration = 0.1;
-                })
-                .Start();
-        }
-
-        private void GD_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            GD.StateMachineTransfer()
-                .Add(x => x.Width, 70)
-                .Add(x => x.Height, 30)
-                .Add(x => x.Opacity, 1)
-                .Add(x => x.Background, Brushes.Tomato)
-                .Set((x) =>
-                {
-                    x.Duration = 0.1;
-                })
-                .Start();
-        }
 ```
 
