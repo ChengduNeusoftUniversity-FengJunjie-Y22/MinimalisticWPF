@@ -84,6 +84,8 @@ namespace MinimalisticWPF
 
         internal string Name { get; set; } = string.Empty;
 
+        internal List<string> BlackList { get; set; } = new List<string>();
+
         /// <summary>
         /// 记录该状态的名称
         /// </summary>
@@ -151,12 +153,39 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
+        /// 不记录的属性
+        /// </summary>
+        public TempState<T> Except(params string[] propertyNames)
+        {
+            foreach (var propertyName in propertyNames)
+            {
+                BlackList.Add(propertyName);
+            }
+            return this;
+        }
+        /// <summary>
+        /// 不记录的属性
+        /// </summary>
+        public TempState<T> Except(ICollection<string> propertyNames)
+        {
+            foreach (var propertyName in propertyNames)
+            {
+                BlackList.Add(propertyName);
+            }
+            return this;
+        }
+
+        /// <summary>
         /// 记录完毕
         /// </summary>
         public State ToState()
         {
             State result = new State(Value);
             result.StateName = Name;
+            foreach (var item in BlackList)
+            {
+                result.Values.Remove(item);
+            }
             return result;
         }
     }

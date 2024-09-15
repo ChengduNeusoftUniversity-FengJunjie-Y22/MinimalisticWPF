@@ -74,11 +74,8 @@ namespace MinimalisticWPF
         /// 此状态机可导向的所有非条件驱动状态
         /// </summary>
         public StateCollection States { get; set; } = new StateCollection();
-        /// <summary>
-        /// 状态机过渡效果参数
-        /// </summary>
-        public TransferParams TransferParams { get; set; } = new TransferParams();
 
+        internal TransferParams TransferParams { get; set; } = new TransferParams();
         /// <summary>
         /// 一帧持续的时间(单位: ms )
         /// </summary>
@@ -224,7 +221,8 @@ namespace MinimalisticWPF
             for (int i = 0; i < DoubleProperties.Length; i++)
             {
                 if (transferParams.ProtectNames?.FirstOrDefault(x => x == DoubleProperties[i].Name) == null &&
-                    GlobalProtectedProperty.FirstOrDefault(x => x == DoubleProperties[i].Name) == null)
+                    GlobalProtectedProperty.FirstOrDefault(x => x == DoubleProperties[i].Name) == null &&
+                    state.Values.ContainsKey(DoubleProperties[i].Name))
                 {
                     double? now = (double?)DoubleProperties[i].GetValue(Target);
                     double? viewModel = (double?)state[DoubleProperties[i].Name];
@@ -258,7 +256,8 @@ namespace MinimalisticWPF
             for (int i = 0; i < BrushProperties.Length; i++)
             {
                 if (transferParams.ProtectNames?.FirstOrDefault(x => x == BrushProperties[i].Name) == null &&
-                    GlobalProtectedProperty.FirstOrDefault(x => x == BrushProperties[i].Name) == null)
+                    GlobalProtectedProperty.FirstOrDefault(x => x == BrushProperties[i].Name) == null &&
+                    state.Values.ContainsKey(BrushProperties[i].Name))
                 {
                     Brush? now = (Brush?)BrushProperties[i].GetValue(Target);
                     Brush? viewModel = (Brush?)state[BrushProperties[i].Name];
