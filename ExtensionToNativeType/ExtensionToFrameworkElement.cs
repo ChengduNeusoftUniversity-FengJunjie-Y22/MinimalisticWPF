@@ -100,9 +100,7 @@ namespace MinimalisticWPF
             }
             if (StateVector != null)
             {
-                StateVector.Target = viewModel;
                 vectorInterface.StateVector = StateVector;
-                vectorInterface.StateVector.Machine = machine;
             }
 
             return machine;

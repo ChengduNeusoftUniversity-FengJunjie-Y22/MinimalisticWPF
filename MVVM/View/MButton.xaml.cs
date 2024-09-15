@@ -82,24 +82,12 @@ namespace MinimalisticWPF
 
         private void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            this.StateMachineTransfer()
-                .Add(x => x.HoverOpacity, 0.2)
-                .Set((x) =>
-                {
-                    x.Duration = 0.3;
-                })
-                .Start();
+            ViewModel.IsMouseInside = true;
         }
 
         private void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            this.StateMachineTransfer()
-                .Add(x => x.HoverOpacity, 0)
-                .Set((x) =>
-                {
-                    x.Duration = 0.1;
-                })
-                .Start();
+            ViewModel.IsMouseInside = false;
         }
     }
 }

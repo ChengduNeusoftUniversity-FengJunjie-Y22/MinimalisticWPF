@@ -28,5 +28,6 @@ namespace MinimalisticWPF
         public virtual double HoverGlobalOpacity { get; set; } = 0;
         public virtual double Height { get; set; } = double.NaN;
         public virtual double Width { get; set; } = double.NaN;
+        public virtual bool IsMouseInside { get; set; } = false;
     }
 }

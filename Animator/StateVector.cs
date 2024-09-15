@@ -10,16 +10,8 @@ namespace MinimalisticWPF
 {
     public class StateVector<T> where T : class
     {
-        internal StateVector(T target) { Target = target; }
+        internal StateVector() { }
 
-        /// <summary>
-        /// 与条件模块相连接的状态机
-        /// </summary>
-        public StateMachine? Machine { get; set; }
-        /// <summary>
-        /// 条件判断基于对此对象属性值的比对
-        /// </summary>
-        public T Target { get; set; }
         /// <summary>
         /// Item1 条件检查委托
         /// <para>Item2 满足条件时自动切换到的状态</para>
@@ -46,13 +38,13 @@ namespace MinimalisticWPF
         /// <summary>
         /// 启用委托对Target检测条件
         /// </summary>
-        public void Check()
+        public void Check(T target, StateMachine stateMachine)
         {
             for (int i = 0; i < Conditions.Count; i++)
             {
-                if (Conditions[i].Item1(Target))
+                if (Conditions[i].Item1(target))
                 {
-                    Machine?.Transfer(Conditions[i].Item2.StateName,
+                    stateMachine.Transfer(Conditions[i].Item2.StateName,
                         (x) =>
                         {
                             x.Duration = Conditions[i].Item3.Duration;
@@ -69,9 +61,9 @@ namespace MinimalisticWPF
         /// <summary>
         /// 开始创建条件组
         /// </summary>
-        public static StateVector<T> Create(T target)
+        public static StateVector<T> Create()
         {
-            StateVector<T> result = new StateVector<T>(target);
+            StateVector<T> result = new StateVector<T>();
             return result;
         }
     }

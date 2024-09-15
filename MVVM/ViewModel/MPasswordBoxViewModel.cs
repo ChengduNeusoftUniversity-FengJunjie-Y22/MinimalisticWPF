@@ -35,7 +35,7 @@ namespace MinimalisticWPF
             .SetProperty(x => x.PasswordStrengthColor, Brushes.Lime)
             .ToState();
 
-        public static StateVector<MPasswordBoxViewModel> ConditionA = StateVector<MPasswordBoxViewModel>.Create(new MPasswordBoxViewModel())
+        public static StateVector<MPasswordBoxViewModel> ConditionA = StateVector<MPasswordBoxViewModel>.Create()
             .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 0, Default, (x) => { x.Duration = 0.3; })
             .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 1, Level1, (x) => { x.Duration = 0.3; })
             .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 2, Level2, (x) => { x.Duration = 0.3; })
