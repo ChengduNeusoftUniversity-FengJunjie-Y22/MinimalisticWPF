@@ -1,0 +1,81 @@
+﻿<Window x:Class="MinimalisticWPF.Notification"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MinimalisticWPF"
+        mc:Ignorable="d"
+        Title="Notification"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Width="{Binding Width,Mode=TwoWay}"
+        Height="{Binding Height,Mode=TwoWay}"
+        Background="{Binding FixedTransparent,Mode=TwoWay}"
+        AllowsTransparency="True"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        MouseEnter="Window_MouseEnter"
+        MouseLeave="Window_MouseLeave"
+        Topmost="True">
+    <Window.DataContext>
+        <local:NotificationViewModel x:Name="ViewModel"
+                                     Width="350"
+                                     Height="180"
+                                     TextBrush="White"
+                                     Text="Empty"
+                                     Title="Notification"/>
+    </Window.DataContext>
+    <Window.Resources>
+        <local:DoubleCvt x:Key="TitleCvt" ConvertRate="0.1"/>
+        <local:DoubleCvt x:Key="TextCvt" ConvertRate="0.7"/>
+        <local:DoubleCvt x:Key="ButtonCvt" ConvertRate="0.2"/>
+        <local:DoubleCvt x:Key="HalfCvt" ConvertRate="0.5"/>
+    </Window.Resources>
+    <Grid>
+        <Grid Background="#1e1e1e" Opacity="0.9"/>
+        <Border x:Name="AnimationA" BorderBrush="White" Opacity="0" BorderThickness="0,1,0,1" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        <Border x:Name="AnimationB" BorderBrush="White" Opacity="0" BorderThickness="0,1,0,1" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="{Binding Height,Converter={StaticResource TitleCvt}}"/>
+                <RowDefinition Height="{Binding Height,Converter={StaticResource TextCvt}}"/>
+                <RowDefinition Height="{Binding Height,Converter={StaticResource ButtonCvt}}"/>
+            </Grid.RowDefinitions>
+            <Border x:Name="AnimationC" BorderBrush="White" Opacity="0" Width="1" BorderThickness="0,0,0,1" Grid.Row="1" HorizontalAlignment="Left"/>
+            <Border x:Name="AnimationD" BorderBrush="White" Opacity="0" Width="1" BorderThickness="0,1,0,0" Grid.Row="1" HorizontalAlignment="Right"/>
+            <TextBlock Text="{Binding Title}"
+                   Foreground="{Binding TextBrush}"
+                   FontSize="{Binding TextSize,Converter={StaticResource TitleCvt}}"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left" Margin="6,0,0,0"
+                   />
+            <Border Grid.Row="1" ClipToBounds="True">
+                <ScrollViewer  Margin="0,0,-18,0" PreviewMouseLeftButtonDown="SC_MouseLeftButtonDown">
+                    <TextBlock Text="{Binding Text}"
+                   Foreground="{Binding TextBrush}"
+                   FontSize="{Binding TextSize,Converter={StaticResource TitleCvt}}"                  
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Center"/>
+                </ScrollViewer>
+            </Border>
+            <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Grid.Row="2">
+                <local:MButton x:Name="B1" WiseHeight="30"
+                       WiseWidth="175"
+                       EdgeBrush="Transparent"
+                       Grid.ZIndex="2"
+                       Text="Yes"
+                       Grid.Row="2"
+                       Click="MButton_Click1"/>
+                <local:MButton x:Name="B2"  WiseHeight="30"
+                       WiseWidth="175"
+                       EdgeBrush="Transparent"
+                       Grid.ZIndex="2"
+                       Text="No"
+                       Grid.Row="2"
+                       Click="MButton_Click2"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

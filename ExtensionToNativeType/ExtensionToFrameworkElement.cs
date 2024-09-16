@@ -210,6 +210,9 @@ namespace MinimalisticWPF
                             x.IsUnique = TransferParams.IsUnique;
                             x.FrameRate = TransferParams.FrameRate;
                             x.WaitTime = TransferParams.WaitTime;
+                            x.Start = TransferParams.Start;
+                            x.Update = TransferParams.Update;
+                            x.Completed = TransferParams.Completed;
                         });
             }
             return Target;

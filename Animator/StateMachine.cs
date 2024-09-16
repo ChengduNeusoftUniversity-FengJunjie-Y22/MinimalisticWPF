@@ -167,6 +167,9 @@ namespace MinimalisticWPF
             AnimationInterpreter animationInterpreter = new AnimationInterpreter(this);
             animationInterpreter.IsLast = TransferParams.IsLast;
             animationInterpreter.DeltaTime = (int)DeltaTime;
+            animationInterpreter.Start = TransferParams.Start;
+            animationInterpreter.Update = TransferParams.Update;
+            animationInterpreter.Completed = TransferParams.Completed;
 
             if (Application.Current == null)
             {
@@ -301,6 +304,10 @@ namespace MinimalisticWPF
             internal bool IsLast { get; set; } = true;
             internal bool IsRunning { get; set; } = false;
             internal bool IsStop { get; set; } = false;
+            internal Action? Start { get; set; }
+            internal Action? Update { get; set; }
+            internal Action? Completed { get; set; }
+            internal bool IsLoop { get; set; }
 
             /// <summary>
             /// 执行动画
@@ -310,6 +317,7 @@ namespace MinimalisticWPF
                 if (IsStop || IsRunning) { WhileEnded(); return; }
                 IsRunning = true;
                 Machine.Interpreter = this;
+                Start?.Invoke();
 
                 for (int i = 0; i < Machine.FrameCount; i++)
                 //按帧遍历
@@ -319,6 +327,7 @@ namespace MinimalisticWPF
                         WhileEnded();
                         return;
                     }
+                    Update?.Invoke();
                     for (int j = 0; j < Frams.Count; j++)
                     //按不同类属性遍历
                     {
@@ -384,6 +393,7 @@ namespace MinimalisticWPF
                     Machine.InterpreterScheduler(newAni.Item1, newAni.Item2);
                 }
                 Machine.CurrentState = null;
+                Completed?.Invoke();
             }
         }
     }
