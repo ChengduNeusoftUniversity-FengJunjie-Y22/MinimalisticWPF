@@ -11,6 +11,7 @@ namespace MinimalisticWPF
     {
         public MTopBarModel() { }
 
+        public override double Width { get; set; } = double.NaN;
         public ImageSource? Icon { get; set; } = null;
     }
 }

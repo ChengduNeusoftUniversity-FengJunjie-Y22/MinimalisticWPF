@@ -60,8 +60,92 @@
                     x.Duration = 0.3; }
                  );
 ```
+- Once the State and StateVector are defined, StateMachine is activated at initialization time
+  - The State and StateVector must be Pulibc and Static
+  - The ViewModel must implement the IConditionalTransfer< T > interface
+  - The following example illustrates the technique of smoothly transitioning the opacity of the background panel when the mouse hovers over the control.
+    - Xaml - View
+    ```xml
+    <UserControl.DataContext>
+        <local:MButtonViewModel x:Name="ViewModel"/>
+    </UserControl.DataContext>
+    ```
+    - C# - View
+    ```csharp
+    public partial class MButton : UserControl
+    {
+        public MButton()
+        {
+            InitializeComponent();
+            this.StateMachineLoading(ViewModel);
+        }
+    }
+    ```
+    - C# - ViewModel
+    ```csharp
+    public class MButtonViewModel : ViewModelBase<MButtonViewModel, MButtonModel>
+    {
+        public MButtonViewModel() { }
+
+        public static State Start = State.FromObject(new MButtonViewModel())
+            .SetName("defualt")
+            .SetProperty(x => x.HoverBackgroundOpacity, 0)
+            .ToState();
+        public static State MouseIn = State.FromObject(new MButtonViewModel())
+            .SetName("mouseInside")
+            .SetProperty(x => x.HoverBackgroundOpacity, 0.2)
+            .ToState();
+
+        public static StateVector<MButtonViewModel> ConditionA = StateVector<MButtonViewModel>.Create()
+            .AddCondition(x => x.IsMouseInside, MouseIn, (x) => { x.Duration = 0.2; })
+            .AddCondition(x => !x.IsMouseInside, Start, (x) => { x.Duration = 0.2; });
+
+        public override bool IsMouseInside
+        {
+            get => base.IsMouseInside;
+            set
+            {
+                base.IsMouseInside = value;
+  
+                OnConditionsChecked();
+                //This is where you check to see if the current ViewModel satisfies the conditions contained in StateVector
+            }
+        }
+    }
+    ```
+
 ## StateMachine
-- Create a StateMachine instance and load the linear animation
+- The FrameworkElement has an easier way to initiate transitions ( ★ Recommended )
+```csharp
+        private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GD.StateMachineTransfer()
+                .Add(x => x.Width, 700)
+                .Add(x => x.Height, 300)
+                .Add(x => x.Opacity, 0.2)
+                .Add(x => x.Background, Brushes.Lime)
+                .Set((x) =>
+                {
+                    x.Duration = 0.1;
+                })
+                .Start();
+        }
+
+        private void GD_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GD.StateMachineTransfer()
+                .Add(x => x.Width, 70)
+                .Add(x => x.Height, 30)
+                .Add(x => x.Opacity, 1)
+                .Add(x => x.Background, Brushes.Tomato)
+                .Set((x) =>
+                {
+                    x.Duration = 0.1;
+                })
+                .Start();
+        }
+```
+- Non-mvvm creation methods ( ⚠ Not Recommended )
 ```csharp
         public MainWindow()
         {
@@ -94,37 +178,6 @@
                 });
         }
 ```
-- The FrameworkElement has an easier way to initiate transitions
-```csharp
-        private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            GD.StateMachineTransfer()
-                .Add(x => x.Width, 700)
-                .Add(x => x.Height, 300)
-                .Add(x => x.Opacity, 0.2)
-                .Add(x => x.Background, Brushes.Lime)
-                .Set((x) =>
-                {
-                    x.Duration = 0.1;
-                })
-                .Start();
-        }
-
-        private void GD_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            GD.StateMachineTransfer()
-                .Add(x => x.Width, 70)
-                .Add(x => x.Height, 30)
-                .Add(x => x.Opacity, 1)
-                .Add(x => x.Background, Brushes.Tomato)
-                .Set((x) =>
-                {
-                    x.Duration = 0.1;
-                })
-                .Start();
-        }
-```
-
 
 ## TransferParams 
 - Note that you will almost never define TransferParams separately; instead, they are passed in as Lambda expressions during State and StateVector setup,like this 

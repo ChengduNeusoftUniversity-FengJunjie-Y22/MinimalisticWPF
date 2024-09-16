@@ -13,6 +13,7 @@
              MouseLeftButtonDown="UserControl_MouseLeftButtonDown">
     <UserControl.DataContext>
         <local:MTopBarViewModel x:Name="ViewModel"
+                                Height="30"
                                 Text="TopBar"
                                 TextBrush="White"
                                 FontSizeConvertRate="0.7"
