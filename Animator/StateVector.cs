@@ -52,6 +52,10 @@ namespace MinimalisticWPF
                             x.IsLast = Conditions[i].Item3.IsLast;
                             x.IsUnique = Conditions[i].Item3.IsUnique;
                             x.WaitTime = Conditions[i].Item3.WaitTime;
+                            x.Start = Conditions[i].Item3.Start;
+                            x.Update = Conditions[i].Item3.Update;
+                            x.LateUpdate = Conditions[i].Item3.LateUpdate;
+                            x.Completed = Conditions[i].Item3.Completed;
                         });
                     return;
                 }
