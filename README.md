@@ -35,6 +35,8 @@
 [1]: https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF
 [2]: https://www.nuget.org/packages/MinimalisticWPF/
 
+---
+
 # StateMachine System
 [![pAu2vOP.md.png](https://s21.ax1x.com/2024/09/15/pAu2vOP.md.png)](https://imgse.com/i/pAu2vOP)
 ## State
@@ -215,7 +217,7 @@
             }
         }
 ```
-
+---
 # WebServices
 - ## GaoDe
   - Using
@@ -255,7 +257,7 @@
       MessageBox.Show(weathers[0].GetCombined());
       ```
     - weather[0] represents today's weather
-
+---
 # MinimalisticUserControls
 - ## ☆ Using
   - C#
@@ -318,13 +320,16 @@
   - StartAngle
   - EndAngle
 - ### ☆ Notification
+  ![Effect](https://pic.imgdb.cn/item/66e96423f21886ccc0090fc6.png)
+  ![Effect](https://pic.imgdb.cn/item/66e96418f21886ccc008fda6.png)
+  ## Method calls
   ```csharp
             if (Notification.Select("Are you sure you want to check the weather ?"))
             {
                 Notification.Message("Weather");
             }
   ```
-  
+---
 # ExtensionMethods
 ## string
 - Value conversion
