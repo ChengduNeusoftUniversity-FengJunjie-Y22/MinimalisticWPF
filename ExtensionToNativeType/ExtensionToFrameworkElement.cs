@@ -213,6 +213,7 @@ namespace MinimalisticWPF
                             x.Start = TransferParams.Start;
                             x.Update = TransferParams.Update;
                             x.Completed = TransferParams.Completed;
+                            x.LateUpdate = TransferParams.LateUpdate;
                         });
             }
             return Target;

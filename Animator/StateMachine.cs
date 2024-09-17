@@ -170,6 +170,7 @@ namespace MinimalisticWPF
             animationInterpreter.Start = TransferParams.Start;
             animationInterpreter.Update = TransferParams.Update;
             animationInterpreter.Completed = TransferParams.Completed;
+            animationInterpreter.LateUpdate = TransferParams.LateUpdate;
 
             if (Application.Current == null)
             {
@@ -209,6 +210,8 @@ namespace MinimalisticWPF
                     double? viewModel = (double?)state[DoubleProperties[i].Name];
                     if (now != viewModel)
                     {
+                        now = now == null ? 0 : double.IsNaN((double)now) ? 0 : now;
+                        viewModel = viewModel == null ? 0 : double.IsNaN((double)viewModel) ? 0 : viewModel;
                         viewModels.Add(Tuple.Create(DoubleProperties[i], viewModel - now));
                     }
                 }
@@ -307,7 +310,7 @@ namespace MinimalisticWPF
             internal Action? Start { get; set; }
             internal Action? Update { get; set; }
             internal Action? Completed { get; set; }
-            internal bool IsLoop { get; set; }
+            internal Action? LateUpdate { get; set; }
 
             /// <summary>
             /// 执行动画
@@ -317,7 +320,18 @@ namespace MinimalisticWPF
                 if (IsStop || IsRunning) { WhileEnded(); return; }
                 IsRunning = true;
                 Machine.Interpreter = this;
-                Start?.Invoke();
+
+                try
+                {
+                    Start?.Invoke();
+                }
+                catch
+                {
+                    if (Application.Current != null && Start != null)
+                    {
+                        Application.Current.Dispatcher.Invoke(Start);
+                    }
+                }
 
                 for (int i = 0; i < Machine.FrameCount; i++)
                 //按帧遍历
@@ -327,7 +341,19 @@ namespace MinimalisticWPF
                         WhileEnded();
                         return;
                     }
-                    Update?.Invoke();
+
+                    try
+                    {
+                        Update?.Invoke();
+                    }
+                    catch
+                    {
+                        if (Application.Current != null && Update != null)
+                        {
+                            Application.Current.Dispatcher.Invoke(Update);
+                        }
+                    }
+
                     for (int j = 0; j < Frams.Count; j++)
                     //按不同类属性遍历
                     {
@@ -361,6 +387,19 @@ namespace MinimalisticWPF
                             });
                         }
                     }
+
+                    try
+                    {
+                        LateUpdate?.Invoke();
+                    }
+                    catch
+                    {
+                        if (Application.Current != null && LateUpdate != null)
+                        {
+                            Application.Current.Dispatcher.Invoke(LateUpdate);
+                        }
+                    }
+
                     await Task.Delay(DeltaTime);
                 }
 
@@ -380,6 +419,17 @@ namespace MinimalisticWPF
             /// </summary>
             internal void WhileEnded()
             {
+                try
+                {
+                    Completed?.Invoke();
+                }
+                catch
+                {
+                    if (Application.Current != null && Completed != null)
+                    {
+                        Application.Current.Dispatcher.Invoke(Completed);
+                    }
+                }
                 IsRunning = false;
                 IsStop = false;
                 Machine.Interpreter = null;
@@ -393,7 +443,6 @@ namespace MinimalisticWPF
                     Machine.InterpreterScheduler(newAni.Item1, newAni.Item2);
                 }
                 Machine.CurrentState = null;
-                Completed?.Invoke();
             }
         }
     }

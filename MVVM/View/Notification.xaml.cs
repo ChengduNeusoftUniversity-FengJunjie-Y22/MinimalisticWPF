@@ -24,7 +24,7 @@ namespace MinimalisticWPF
         public Notification()
         {
             InitializeComponent();
-            this.StateMachineLoading(ViewModel);
+            this.StateMachineLoading(ViewModel);            
         }
 
         internal bool Result = false;
@@ -39,7 +39,13 @@ namespace MinimalisticWPF
             base.OnClosed(e);
         }
 
-        public static void Message(string message, string title, string YesText = "Yes")
+        /// <summary>
+        /// 打印通知消息
+        /// </summary>
+        /// <param name="message">消息</param>
+        /// <param name="title">标题</param>
+        /// <param name="YesText">确定键的文本</param>
+        public static void Message(string message, string title = "Message", string YesText = "Yes")
         {
             var result = new Notification();
             result.ViewModel.Text = message;
@@ -47,12 +53,18 @@ namespace MinimalisticWPF
             result.B1.WiseWidth = 350;
             result.B1.Text = YesText;
             result.B2.WiseWidth = 0;
-
-
             result.ShowDialog();
         }
 
-        public static bool Select(string message, string title, string YesText = "Yes", string NoText = "No")
+        /// <summary>
+        /// 等待用户选择下一步是否要继续执行
+        /// </summary>
+        /// <param name="message">消息</param>
+        /// <param name="title">标题</param>
+        /// <param name="YesText">确定键文本</param>
+        /// <param name="NoText">否定键文本</param>
+        /// <returns>bool 用户选择的结果</returns>
+        public static bool Select(string message, string title = "Select", string YesText = "Yes", string NoText = "No")
         {
             var result = new Notification();
             result.ViewModel.Text = message;

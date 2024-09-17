@@ -16,13 +16,21 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 启动动画前需要做的事情
+        /// 过渡启动前执行
         /// </summary>
         public Action? Start { get; set; }
         /// <summary>
-        /// 每个更新帧需要做的事情
+        /// 每一帧开始时执行
         /// </summary>
         public Action? Update { get; set; }
+        /// <summary>
+        /// 每一帧结束时执行
+        /// </summary>
+        public Action? LateUpdate { get; set; }
+        /// <summary>
+        /// 动画结束后执行
+        /// </summary>
+        public Action? Completed { get; set; }
         /// <summary>
         /// 持续时长(单位: s )
         /// </summary>
@@ -47,9 +55,5 @@ namespace MinimalisticWPF
         /// [ 测试参数 ] 若无法响应例如MouseLeave事件,可适当增加此参数(默认:0.008)
         /// </summary>
         public double WaitTime { get; set; } = 0.008;
-        /// <summary>
-        /// 动画完成后需要做的事情
-        /// </summary>
-        public Action? Completed { get; set; }
     }
 }

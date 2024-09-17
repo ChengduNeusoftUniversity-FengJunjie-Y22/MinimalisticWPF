@@ -187,9 +187,14 @@
     x.Duration = 0.1;
 });
 ```
+
 |Property|class|Default|Meaning|
 |--------|-----|-------|-------|
 |Duration|double|0|Animation duration ( unit: s )|
+|Start|Action|null|Do something at the beginning|
+|Update|Action|null|Do something at the beginning of each frame|
+|LateUpdate|Action|null|Do something at the end of each frame|
+|Completed|Action|null|Do something at the end|
 |IsQueue|bool|false|When you apply for a transition operation, whether the state machine waits for the change currently in execution to complete|
 |IsLast|bool|false|Whether to clear the queued transition operation when the currently requested transition operation is completed|
 |IsUnique|bool|true|If the same operation as the transition operation applied for this time already exists in the queue, whether to continue to join the queue|

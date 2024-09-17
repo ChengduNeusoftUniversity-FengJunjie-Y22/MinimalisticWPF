@@ -32,8 +32,6 @@
     </Window.Resources>
     <Grid>
         <Grid Background="#1e1e1e" Opacity="0.9"/>
-        <Border x:Name="AnimationA" BorderBrush="White" Opacity="0" BorderThickness="0,1,0,1" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-        <Border x:Name="AnimationB" BorderBrush="White" Opacity="0" BorderThickness="0,1,0,1" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="{Binding Height,Converter={StaticResource TitleCvt}}"/>
