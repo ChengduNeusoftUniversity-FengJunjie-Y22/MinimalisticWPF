@@ -9,6 +9,10 @@ namespace MinimalisticWPF
 {
     internal static class APISet
     {
-        public static string ApiMetaFolder = "ApiMeta".CreatFolder();
+        public static string FolderName { get; set; } = "ApiMeta";
+        public static string ApiMetaFolder
+        {
+            get => FolderName.CreatFolder();
+        }
     }
 }
