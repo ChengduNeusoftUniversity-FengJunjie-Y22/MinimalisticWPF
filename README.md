@@ -177,7 +177,7 @@
 
         private void GD_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            GridMachine.Transfer("mouseinside",
+            GridMachine.Transfer("defualt",
                 (x) =>
                 {
                     x.Duration = 0.1;
