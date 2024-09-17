@@ -195,7 +195,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 转为double
         /// </summary>
-        public static double? ToDouble(this string source)
+        public static double ToDouble(this string source)
         {
             double? result = null;
             bool success = double.TryParse(source, out double temp);
@@ -203,7 +203,7 @@ namespace MinimalisticWPF
             {
                 result = temp;
             }
-            return result;
+            return result == null ? double.NaN : (double)result;
         }
 
         /// <summary>

@@ -47,7 +47,7 @@
             .SetProperty(x => x.Background, Brushes.Lime)
             .ToState();
 ```
-## StateVector
+## StateVector ( ★ Recommended )
 - Param1. Specifies the conditions that an object instance of a type should meet
 - Param2. Automatically switches to the State of if the object meets the criteria
 - Param3. When switching states, linearly animate related parameters
@@ -317,6 +317,14 @@
   - IsReverse
   - StartAngle
   - EndAngle
+- ### ☆ Notification
+  ```csharp
+            if (Notification.Select("Are you sure you want to check the weather ?"))
+            {
+                Notification.Message("Weather");
+            }
+  ```
+  
 # ExtensionMethods
 ## string
 - Value conversion
