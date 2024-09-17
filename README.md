@@ -320,8 +320,8 @@
   - StartAngle
   - EndAngle
 - ### ☆ Notification
-  ![Effect](https://pic.imgdb.cn/item/66e96423f21886ccc0090fc6.png)
-  ![Effect](https://pic.imgdb.cn/item/66e96418f21886ccc008fda6.png)
+  ![Effect](https://img.picui.cn/free/2024/09/17/66e96721dbea3.png)
+  ![Effect](https://img.picui.cn/free/2024/09/17/66e96721decad.png)
   ## Method calls
   ```csharp
             if (Notification.Select("Are you sure you want to check the weather ?"))
