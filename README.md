@@ -37,6 +37,12 @@
 
 ---
 
+## Change
+- V1.4.3
+  - The lifecycle of StateMachine already allows the consumer to enrich the behavior by setting the Start, Update, LateUpdate, Completed delegates in [TransferParams](#TransferParams) 
+  - Added a type named [Notification](#Notification) that allows you to expand a Message box by calling its Message() or Select() methods
+---
+
 # StateMachine System
 [![pAu2vOP.md.png](https://s21.ax1x.com/2024/09/15/pAu2vOP.md.png)](https://imgse.com/i/pAu2vOP)
 ## State
