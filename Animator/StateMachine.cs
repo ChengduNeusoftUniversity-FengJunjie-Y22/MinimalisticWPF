@@ -321,16 +321,9 @@ namespace MinimalisticWPF
                 IsRunning = true;
                 Machine.Interpreter = this;
 
-                try
+                if (Application.Current != null && Start != null)
                 {
-                    Start?.Invoke();
-                }
-                catch
-                {
-                    if (Application.Current != null && Start != null)
-                    {
-                        Application.Current.Dispatcher.Invoke(Start);
-                    }
+                    Application.Current.Dispatcher.Invoke(Start);
                 }
 
                 for (int i = 0; i < Machine.FrameCount; i++)
@@ -342,16 +335,9 @@ namespace MinimalisticWPF
                         return;
                     }
 
-                    try
+                    if (Application.Current != null && Update != null)
                     {
-                        Update?.Invoke();
-                    }
-                    catch
-                    {
-                        if (Application.Current != null && Update != null)
-                        {
-                            Application.Current.Dispatcher.Invoke(Update);
-                        }
+                        Application.Current.Dispatcher.Invoke(Update);
                     }
 
                     for (int j = 0; j < Frams.Count; j++)
@@ -388,16 +374,9 @@ namespace MinimalisticWPF
                         }
                     }
 
-                    try
+                    if (Application.Current != null && LateUpdate != null)
                     {
-                        LateUpdate?.Invoke();
-                    }
-                    catch
-                    {
-                        if (Application.Current != null && LateUpdate != null)
-                        {
-                            Application.Current.Dispatcher.Invoke(LateUpdate);
-                        }
+                        Application.Current.Dispatcher.Invoke(LateUpdate);
                     }
 
                     await Task.Delay(DeltaTime);
@@ -419,16 +398,9 @@ namespace MinimalisticWPF
             /// </summary>
             internal void WhileEnded()
             {
-                try
+                if (Application.Current != null && Completed != null)
                 {
-                    Completed?.Invoke();
-                }
-                catch
-                {
-                    if (Application.Current != null && Completed != null)
-                    {
-                        Application.Current.Dispatcher.Invoke(Completed);
-                    }
+                    Application.Current.Dispatcher.Invoke(Completed);
                 }
                 IsRunning = false;
                 IsStop = false;

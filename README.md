@@ -1,4 +1,9 @@
 ﻿# MinimalisticWPF
+- [English](#English)
+- [Chinese](#中文文档)
+
+# English
+
 ## Target
 - [StateMachine System](#StateMachine)
     - [State](#State) Describes the attribute value corresponding to the state
@@ -36,9 +41,9 @@
 [2]: https://www.nuget.org/packages/MinimalisticWPF/
 
 ## Change
-- V1.4.3
-  - The lifecycle of StateMachine already allows the consumer to enrich the behavior by setting the Start, Update, LateUpdate, Completed delegates in [TransferParams](#TransferParams) 
-  - Added a type named [Notification](#Notification) that allows you to expand a Message box by calling its Message() or Select() methods
+- V1.4.4
+  - Fixed some threading issues
+  - Chinese document support
 ---
 
 # StateMachine System
@@ -191,6 +196,10 @@
 (x) =>
 {
     x.Duration = 0.1;
+    x.Update = () =>
+    {
+
+    };
 });
 ```
 
@@ -450,3 +459,461 @@
    //An integer between 0 and 4 is returned to indicate the strength of the password
 ```
 
+---
+---
+---
+---
+---
+---
+
+# 中文文档
+
+## 目标
+- [状态机系统](#StateMachine)
+    - [State](#State) 描述一个对象在某一状态时的部分属性及其具体值
+    - [StateVector](#StateVector) 描述一个对象在达成何种条件时自动切换到何种状态
+    - [StateMachine](#StateMachine) 实现属性值的线性过渡
+    - [StateViewModelBase< T >](#StateViewModelBase) 描述实现IConditionalTransfer接口以支持StateVector条件切换的、最小规格的ViewModel
+    - [TransferParams](#TransferParams) 描述状态机如何加载此次线性过渡
+    - 当前受支持的属性类型
+      - double
+      - Brush
+      - …… 开发中 >>
+- [Web服务](#WebServices)
+  - [ 高德 ] WebApi
+    - IP服务
+    - 天气服务
+- [用户控件](#MinimalisticUserControls)
+    - 统一的深色主题
+    - 所有动画效果都基于状态机系统
+- [扩展方法](#ExtensionMethods)
+    - [string](#string)
+      - 值转换
+      - 模糊匹配
+      - 分析工具（例如提取html中的资源地址）
+      - 密码强度
+	- FrameworkElement
+      - 基于状态机的动画创建
+## 支持框架
+- [.NET6.0-windows] 
+- [.NET8.0-windows]
+## 获取
+- [github][1]
+- [nuget][2]
+
+[1]: https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF
+[2]: https://www.nuget.org/packages/MinimalisticWPF/
+
+## Change
+- V1.4.4
+  - 解决了一些线程问题
+  - 中文文档支持
+---
+
+# 状态机系统
+[![pAu2vOP.md.png](https://s21.ax1x.com/2024/09/15/pAu2vOP.md.png)](https://imgse.com/i/pAu2vOP)
+## State
+```csharp
+   public static State MInsideState = State.FromObject(new Grid())
+            .SetName("mouseinside")
+            .SetProperty(x => x.Height, 300)
+            .SetProperty(x => x.Width, 700)
+            .SetProperty(x => x.Opacity, 0.2)
+            .SetProperty(x => x.Background, Brushes.Lime)
+            .ToState();
+```
+## StateVector ( ★ 推荐 )
+- 参数1.描述这个对象应当满足的条件
+- 参数2.描述当条件满足时,需要切换到哪个状态
+- 参数3.设置一些过渡效果的细节
+```csharp
+   public static StateVector DefaultCondition = StateVector.FromType<Grid>()
+            .AddCondition(x => x.Width>100, 
+                 StateA, 
+                 (x) => 
+                 { 
+                    x.Duration = 0.3; }
+                 );
+```
+- 定义好State与StateVector后,在控件初始化时加载状态机即可
+  - State 和 StateVector 应当是 public static 的
+  - ViewModel 应当实现 IConditionalTransfer接口
+  - 下述示例演示了如何在鼠标进入控件时,令其背景透明度过渡为0.2
+    - Xaml - View
+    ```xml
+    <UserControl.DataContext>
+        <local:MButtonViewModel x:Name="ViewModel"/>
+    </UserControl.DataContext>
+    ```
+    - C# - View
+    ```csharp
+    public partial class MButton : UserControl
+    {
+        public MButton()
+        {
+            InitializeComponent();
+            this.StateMachineLoading(ViewModel);
+        }
+    }
+    ```
+    - C# - ViewModel
+    ```csharp
+    public class MButtonViewModel : ViewModelBase<MButtonViewModel, MButtonModel>
+    {
+        public MButtonViewModel() { }
+
+        public static State Start = State.FromObject(new MButtonViewModel())
+            .SetName("defualt")
+            .SetProperty(x => x.HoverBackgroundOpacity, 0)
+            .ToState();
+        public static State MouseIn = State.FromObject(new MButtonViewModel())
+            .SetName("mouseInside")
+            .SetProperty(x => x.HoverBackgroundOpacity, 0.2)
+            .ToState();
+
+        public static StateVector<MButtonViewModel> ConditionA = StateVector<MButtonViewModel>.Create()
+            .AddCondition(x => x.IsMouseInside, MouseIn, (x) => { x.Duration = 0.2; })
+            .AddCondition(x => !x.IsMouseInside, Start, (x) => { x.Duration = 0.2; });
+
+        public override bool IsMouseInside
+        {
+            get => base.IsMouseInside;
+            set
+            {
+                base.IsMouseInside = value;
+  
+                OnConditionsChecked();
+                //鼠标进出控件时修改IsMouseInside
+                //IsMouseInside被修改时检查是否满足条件,若满足,则切换State
+            }
+        }
+    }
+    ```
+
+## StateMachine
+- FrameworkElement 有更简洁的方法加载状态机支持的动画化 ( ★ 推荐 )
+```csharp
+        private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GD.StateMachineTransfer()
+                .Add(x => x.Width, 700)
+                .Add(x => x.Height, 300)
+                .Add(x => x.Opacity, 0.2)
+                .Add(x => x.Background, Brushes.Lime)
+                .Set((x) =>
+                {
+                    x.Duration = 0.1;
+                })
+                .Start();
+        }
+
+        private void GD_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GD.StateMachineTransfer()
+                .Add(x => x.Width, 70)
+                .Add(x => x.Height, 30)
+                .Add(x => x.Opacity, 1)
+                .Add(x => x.Background, Brushes.Tomato)
+                .Set((x) =>
+                {
+                    x.Duration = 0.1;
+                })
+                .Start();
+        }
+```
+- 最原始的状态机用法 ( ⚠ 不推荐 )
+```csharp
+        public MainWindow()
+        {
+            InitializeComponent();
+
+            State Start = State.FromObject(GD)
+                .SetName("defualt")
+                .ToState();
+
+            GridMachine = StateMachine.Create(GD)
+                .SetStates(Start, MInsideState)
+                .SetConditions(DefaultCondition);
+        }
+
+        private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GridMachine.Transfer("mouseinside",
+                (x) =>
+                {
+                    x.Duration = 0.1;
+                });
+        }
+
+        private void GD_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GridMachine.Transfer("defualt",
+                (x) =>
+                {
+                    x.Duration = 0.1;
+                });
+        }
+```
+
+## TransferParams 
+- 基本不会单独用到这个类型,通常只出现在Set（）内部,且以Lambda书写
+```csharp
+(x) =>
+{
+    x.Duration = 0.1;
+    x.Update = () =>
+    {
+
+    };
+});
+```
+
+|属性|类型|默认|意义|
+|--------|-----|-------|-------|
+|Duration|double|0|动画持续时间 ( 单位: s )|
+|Start|Action|null|在动画开始前执行一次|
+|Update|Action|null|在动画的每一帧开始前执行一次|
+|LateUpdate|Action|null|在动画的每一帧结束后执行一次|
+|Completed|Action|null|在动画结束后执行一次|
+|IsQueue|bool|false|新启用的动画是否排队,不排队就意味着会打断正在执行的动画|
+|IsLast|bool|false|是否为最后一个被执行的动画,如果是则意味着会清空正在排队中的动画|
+|IsUnique|bool|true|如果存在一个指向同一State的过渡动画,是否还要继续执行此动画|
+|FrameRate|int|165|动画帧率|
+|WaitTime|double|0.008|基本用不到,但如果发现有些地方概率无法触发动画或者概率抽搐,则可适当增加这个值|
+
+## StateViewModelBase
+- 一个抽象基类,它是MVVM模式下,使ViewModel支持StateVector条件切换的最小实现单元,算是一种模板
+- 它提供[OnConditionsChecked()]()方法,使得您可在属性值变动时,检查当前ViewModel是否满足StateVector中设置的条件
+```csharp
+        public override bool IsMouseInside
+        {
+            get => base.IsMouseInside;
+            set
+            {
+                base.IsMouseInside = value;
+                OnConditionsChecked();
+            }
+        }
+```
+---
+# WebServices
+- ## 高德
+  - using
+    ```csharp
+    using MinimalisticWPF.GaoDeServices;
+    ```
+  - 前往获取ApiKey https://console.amap.com/dev/key/app
+    ```csharp
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            GaoDeAPISet.Awake(Key: "Your_Api_Key", IsUpdateIP: true);
+            //[ IsUpdateIP ] 描述本次加载是否要重新读取IP信息
+        }
+    ```
+  - IPService
+    - 获取当前IP
+      ```csharp
+      var ip = await IPService.GetIP();
+      MessageBox.Show(ip.GetCombined());
+      ```
+    - 依据地区名称获取行政编码
+      ```csharp
+      var adcode = await IPService.GetAdCode("都江堰");
+      MessageBox.Show(adcode);
+      ```
+  - WeatherService
+    - 依据当前IP获取天气
+      ```csharp
+      var weathers = await WeatherService.GetWeathers();
+      MessageBox.Show(weathers[0].GetCombined());
+      ```
+    - 依据地区名称获取天气
+      ```csharp
+      var weathers = await WeatherService.GetWeathers("都江堰");
+      MessageBox.Show(weathers[0].GetCombined());
+      ```
+    - weather[0] 代表今天的天气
+---
+# MinimalisticUserControls
+- ## ☆ Using
+  - C#
+    ```csharp
+    using MinimalisticWPF;
+    ```
+  - XAML
+    ```xml
+    xmlns:mn="clr-namespace:MinimalisticWPF;assembly=MinimalisticWPF"
+    ```
+  - 不使用Width/Height调整大小,而是带有Wise、Size字样的属性,最后通过Margin调整位置
+  - 需要使用例如"#1e1e1e"的深色背景板,很多控件都是白边透明底的,浅色背景板效果不佳
+- ## ☆ MButton
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLPyQ.png)
+  ## Property
+  - Click
+  - WiseHeight
+  - WiseWidth
+  - Text
+  - TextBrush
+  - FontSizeRatio
+  - EdgeBrush
+  - EdgeThickness
+  - HoverBrush
+  - CornerRadius
+- ## ☆ MTopBar
+  ![pAmMfv8.md.png](https://s21.ax1x.com/2024/09/09/pAmMfv8.md.png)
+  ![pAmQnVH.md.png](https://s21.ax1x.com/2024/09/09/pAmQnVH.md.png)
+  ## Property
+  - WiseHeight
+  - WiseWidth
+  - Title
+  - SizeRatio
+  - EdgeBrush
+  - EdgeThickness
+  - HoverBrush
+  - CornerRadius
+  - Icon
+- ## ☆ MPasswordBox
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLEoq.png)
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLQOJ.png)
+  ## Property
+  - WiseHeight
+  - WiseWidth
+  - FontSizeRatio
+  - Password
+  - Replace
+- ### ☆ MProgressBar
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLkes.png)
+  ## Property
+  - Size
+  - Value
+  - Shape
+  - Thickness
+  - BottomBrush
+  - FillBrush
+  - TextBrush
+  - FontSizeRatio
+  - IsReverse
+  - StartAngle
+  - EndAngle
+- ### ☆ Notification
+  [![pAKM40S.png](https://s21.ax1x.com/2024/09/18/pAKM40S.png)](https://imgse.com/i/pAKM40S)
+  [![pAKMhm8.png](https://s21.ax1x.com/2024/09/18/pAKMhm8.png)](https://imgse.com/i/pAKMhm8)
+  ## 消息框调用示例
+  ```csharp
+            if (Notification.Select("Are you sure you want to check the weather ?"))
+            {
+                Notification.Message("Weather");
+            }
+  ```
+---
+# ExtensionMethods
+## string
+- 值转换
+```csharp
+   string valueA = "-123.7";
+   string valueB = "TrUE";
+   string valueC = "#1e1e1e";
+   //三个待被转换的值
+   
+   var result1 = valueA.ToInt();
+   var result2 = valueA.ToDouble();
+   var result3 = valueA.ToFloat();
+   //转换成数字
+
+   var result4 = valueB.ToBool();
+   //转换成bool
+
+   var result5 = valueC.ToBrush();
+   //转换成Brush
+```
+- 模糊匹配
+```csharp
+   string template = "abcdefg";
+   //这是待匹配的字符串
+
+   string sourceA = "abc";
+   List<string> sourceB = new List<string>()
+   {
+       "abcdegf",
+       "cbdgafe"
+   };
+   //这是匹配源
+
+   var similarity1 = sourceA.LevenshteinDistance(template)
+   //返回最短编辑距离
+
+   var similarity2 = sourceA.JaroWinklerDistance(template)
+   //返回近似度
+
+   var result3 = template.BestMatch(sourceB, 3);
+   //编辑距离小于3且最小的结果
+
+   var result4 = template.BestMatch(sourceB, 0.5);
+   //近似度大于0.5且最大的结果
+```
+- 文件夹生成操作
+```csharp
+   string folderNameA = "FF1";
+   string folderNameB = "FF2";
+   string folderNameC = "FF3";
+   //文件夹的名字
+
+   var result1 = folderNameA.CreatFolder();
+   //从.exe位置开始,创建名为"FF1"的文件夹
+
+   var result2 = folderNameC.CreatFolder(folderNameA,folderNameB);
+   //从.exe位置开始,创建名为"FF1/FF2/FF3"的文件夹
+```
+- Xml 和 Json 序列化
+```csharp
+   string folderName = "Data";
+   //假设文件需要放在Data文件夹内
+
+   string fileName1 = "firstPersondata";
+   string fileName2 = "secondPersondata";
+   //假设这是两份文件的文件名
+
+   var target = new Person();
+   //假设需要将一个Person实例序列化存储
+
+   var result1 = fileName1.CreatXmlFile(folderName.CreatFolder(), target);
+   var result2 = fileName2.CreatJsonFile(folderName.CreatFolder(), target);
+   //分别存储为.xml和.json文件
+```
+- Xml 和 Json 反序列化
+```csharp
+   string folderName = "Data";
+
+   string fileName1 = "firstPersondata";
+   string fileName2 = "secondPersondata";
+
+   string AbsPathA = Path.Combine(folderName.CreatFolder(), $"{fileName1}.xml");
+   string AbsPathB = Path.Combine(folderName.CreatFolder(), $"{fileName2}.json");
+   var dataA = File.ReadAllText(AbsPathA);
+   var dataB = File.ReadAllText(AbsPathB);
+   //拿到原始数据
+
+   var result1 = dataA.XmlParse<Person>();
+   var result2 = dataB.JsonParse<Person>();
+   //反序列化
+```
+- 正则操作
+```csharp
+   string sourceA = "[1]wkhdkjhk[a][F3]https:awijdioj.mp3fwafw";
+   string sourceB = "awdhttps://aiowdjoajfo.comawd&*(&d)*dhttps://tn.comdawd";
+   //原始数据
+   
+   var resultA = sourceA.CaptureBetween("https:", ".mp3");
+   //捕获所有包含在"https:"和".mp3"中间的字符串
+
+   var resultB = sourceB.CaptureLike("https://", "com");
+   //捕获所有符合先出现"https://"再出现"com"特征的字符串,特征可以是多个
+```
+- 密码强度
+```csharp
+   string password = "12345678";
+   int Level = password.CheckPasswordStrength(MinLength=8);
+   //返回0~4的整数代表密码强度
+```
