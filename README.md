@@ -324,6 +324,8 @@
   - StartAngle
   - EndAngle
 - ### ☆ Notification
+  [![pAKM40S.png](https://s21.ax1x.com/2024/09/18/pAKM40S.png)](https://imgse.com/i/pAKM40S)
+  [![pAKMhm8.png](https://s21.ax1x.com/2024/09/18/pAKMhm8.png)](https://imgse.com/i/pAKMhm8)
   ## Method calls
   ```csharp
             if (Notification.Select("Are you sure you want to check the weather ?"))
