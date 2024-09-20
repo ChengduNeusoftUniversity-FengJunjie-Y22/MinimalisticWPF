@@ -14,10 +14,7 @@ using System.Windows.Controls;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows.Automation;
 using System.Windows.Media;
-using static System.TimeZoneInfo;
-using static MinimalisticWPF.StateMachine;
-using System.Security.Cryptography.Xml;
-using System.Reflection.PortableExecutable;
+using System.Security.RightsManagement;
 
 namespace MinimalisticWPF
 {
@@ -42,6 +39,8 @@ namespace MinimalisticWPF
                 .ToArray();//筛选Double属性
             BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
                 .ToArray();//筛选Brush属性
+            TransformProperties = Properties.Where(x => x.PropertyType == typeof(Transform))
+                .ToArray();//筛选Transform属性
 
             foreach (var state in states)
             {
@@ -63,11 +62,15 @@ namespace MinimalisticWPF
         /// </summary>
         public PropertyInfo[] BrushProperties { get; internal set; }
         /// <summary>
+        /// Transform属性
+        /// </summary>
+        public PropertyInfo[] TransformProperties { get; internal set; }
+        /// <summary>
         /// 受状态机控制的对象
         /// </summary>
         public object Target { get; internal set; }
         /// <summary>
-        /// 此状态机可导向的所有非条件驱动状态
+        /// 此状态机可导向的所有状态
         /// </summary>
         public StateCollection States { get; set; } = new StateCollection();
 
@@ -178,7 +181,7 @@ namespace MinimalisticWPF
             }
             Application.Current.Dispatcher.Invoke(() =>
             {
-                animationInterpreter.Frams = ComputingFrames(targetState, TransferParams);
+                animationInterpreter.Frams = ComputingFrames(targetState);
             });
             CurrentState = stateName;
             animationInterpreter.Interpret();
@@ -186,17 +189,18 @@ namespace MinimalisticWPF
         /// <summary>
         /// 计算属性的每个帧状态
         /// </summary>
-        internal List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state, TransferParams transferParams)
+        internal List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state)
         {
             List<List<Tuple<PropertyInfo, List<object?>>>> result = new List<List<Tuple<PropertyInfo, List<object?>>>>();
 
-            result.Add(DoubleComputing(state, transferParams));
-            result.Add(BrushComputing(state, transferParams));
+            result.Add(DoubleComputing(state));
+            result.Add(BrushComputing(state));
+            result.Add(TransformComputing(state));
 
             return result;
         }
 
-        internal List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(State state, TransferParams transferParams)
+        internal List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(State state)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
             //预加载:[ 所有Double属性变化帧序列 ]
@@ -231,7 +235,7 @@ namespace MinimalisticWPF
 
             return allFrames;
         }
-        internal List<Tuple<PropertyInfo, List<object?>>> BrushComputing(State state, TransferParams transferParams)
+        internal List<Tuple<PropertyInfo, List<object?>>> BrushComputing(State state)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
             List<Tuple<PropertyInfo, Brush?>> viewModels = new List<Tuple<PropertyInfo, Brush?>>();
@@ -257,6 +261,25 @@ namespace MinimalisticWPF
 
                 List<object?> deltas = CalculateGradientSteps(startValue ?? Brushes.Transparent, endValue ?? Brushes.Transparent, (int)FrameCount);
                 allFrames.Add(Tuple.Create(viewModels[i].Item1, deltas));
+            }
+
+            return allFrames;
+        }
+        internal List<Tuple<PropertyInfo, List<object?>>> TransformComputing(State state)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
+            //预加载:[ 所有Transform属性变化帧序列 ]
+            for (int i = 0; i < TransformProperties.Length; i++)
+            {
+                if (state.Values.ContainsKey(TransformProperties[i].Name))
+                {
+                    Transform? now = (Transform?)TransformProperties[i].GetValue(Target);
+                    Transform? viewModel = (Transform?)state[TransformProperties[i].Name];
+                    if (now != null && viewModel != null)
+                    {
+                        allFrames.Add(Tuple.Create(TransformProperties[i], InterpolateTransforms(now, viewModel, (int)FrameCount)));
+                    }
+                }
             }
 
             return allFrames;
@@ -291,6 +314,31 @@ namespace MinimalisticWPF
             byte b = (byte)(colorA.B + (colorB.B - colorA.B) * ratio);
             byte a = (byte)(colorA.A + (colorB.A - colorA.A) * ratio);
             return Color.FromArgb(a, r, g, b);
+        }
+        private static List<object?> InterpolateTransforms(Transform t1, Transform t2, double steps)
+        {
+            List<object?> transforms = new List<object?>();
+
+            Matrix matrix1 = t1.Value;
+            Matrix matrix2 = t2.Value;
+
+            for (int i = 0; i <= steps; i++)
+            {
+                var t = (i + 1) / steps;
+
+                double m11 = matrix1.M11 + t * (matrix2.M11 - matrix1.M11);
+                double m12 = matrix1.M12 + t * (matrix2.M12 - matrix1.M12);
+                double m21 = matrix1.M21 + t * (matrix2.M21 - matrix1.M21);
+                double m22 = matrix1.M22 + t * (matrix2.M22 - matrix1.M22);
+                double offsetX = matrix1.OffsetX + t * (matrix2.OffsetX - matrix1.OffsetX);
+                double offsetY = matrix1.OffsetY + t * (matrix2.OffsetY - matrix1.OffsetY);
+
+                var interpolatedMatrixStr = $"{m11},{m12},{m21},{m22},{offsetX},{offsetY}";
+                var transform = Transform.Parse(interpolatedMatrixStr);
+                transforms.Add(transform);
+            }
+
+            return transforms;
         }
 
         /// <summary>

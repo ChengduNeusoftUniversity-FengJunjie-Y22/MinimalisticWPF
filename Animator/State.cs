@@ -8,26 +8,6 @@ namespace MinimalisticWPF
 {
     public class State
     {
-        internal State(object Target)
-        {
-            ActualType = Target.GetType();
-            PropertyInfo[] Properties = ActualType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.CanWrite && x.CanRead)
-                .ToArray();//所有可用属性
-            PropertyInfo[] DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double))
-                .ToArray();//筛选Double属性
-            PropertyInfo[] BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
-                .ToArray();//筛选Brush属性
-
-            foreach (PropertyInfo propertyInfo in DoubleProperties)
-            {
-                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
-            }
-            foreach (PropertyInfo propertyInfo in BrushProperties)
-            {
-                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
-            }
-        }
         internal State(object Target, ICollection<string> WhileList)
         {
             ActualType = Target.GetType();
@@ -38,12 +18,42 @@ namespace MinimalisticWPF
                 .ToArray();//筛选Double属性
             PropertyInfo[] BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush) && WhileList.Contains(x.Name))
                 .ToArray();//筛选Brush属性
+            PropertyInfo[] TransformProperties = Properties.Where(x => x.PropertyType == typeof(Transform) && WhileList.Contains(x.Name))
+                .ToArray();//筛选Transform属性
+            PropertyInfo[] PointProperties = Properties.Where(x => x.PropertyType == typeof(Point) && WhileList.Contains(x.Name))
+                .ToArray();//筛选Point属性
+            PropertyInfo[] CornerRadiusProperties = Properties.Where(x => x.PropertyType == typeof(CornerRadius) && WhileList.Contains(x.Name))
+                .ToArray();//筛选CornerRadius属性
+            PropertyInfo[] ThicknessProperties = Properties.Where(x => x.PropertyType == typeof(Thickness) && WhileList.Contains(x.Name))
+                .ToArray();//筛选Thickness属性
+            PropertyInfo[] ILinearInterpolationProperties = Properties.Where(x => x.PropertyType == typeof(ILinearInterpolation) && WhileList.Contains(x.Name))
+                .ToArray();//筛选ILinearInterpolation接口支持的属性
 
             foreach (PropertyInfo propertyInfo in DoubleProperties)
             {
                 Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
             }
             foreach (PropertyInfo propertyInfo in BrushProperties)
+            {
+                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
+            }
+            foreach (PropertyInfo propertyInfo in TransformProperties)
+            {
+                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
+            }
+            foreach (PropertyInfo propertyInfo in PointProperties)
+            {
+                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
+            }
+            foreach (PropertyInfo propertyInfo in CornerRadiusProperties)
+            {
+                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
+            }
+            foreach (PropertyInfo propertyInfo in ThicknessProperties)
+            {
+                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
+            }
+            foreach (PropertyInfo propertyInfo in ILinearInterpolationProperties)
             {
                 Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
             }
@@ -162,6 +172,147 @@ namespace MinimalisticWPF
 
             return this;
         }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TempState<T> SetProperty(
+            Expression<Func<T, Transform>> propertyLambda,
+            Transform newValue)
+        {
+            var compiledLambda = propertyLambda.Compile();
+            var obj = Value;
+
+            if (obj == null)
+            {
+                return this;
+            }
+
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(Transform))
+                {
+                    return this;
+                }
+                property.SetValue(obj, newValue);
+                WhiteList.Add(property.Name);
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TempState<T> SetProperty(
+            Expression<Func<T, Point>> propertyLambda,
+            Point newValue)
+        {
+            var compiledLambda = propertyLambda.Compile();
+            var obj = Value;
+
+            if (obj == null)
+            {
+                return this;
+            }
+
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(Point))
+                {
+                    return this;
+                }
+                property.SetValue(obj, newValue);
+                WhiteList.Add(property.Name);
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TempState<T> SetProperty(
+            Expression<Func<T, CornerRadius>> propertyLambda,
+            CornerRadius newValue)
+        {
+            var compiledLambda = propertyLambda.Compile();
+            var obj = Value;
+
+            if (obj == null)
+            {
+                return this;
+            }
+
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(CornerRadius))
+                {
+                    return this;
+                }
+                property.SetValue(obj, newValue);
+                WhiteList.Add(property.Name);
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TempState<T> SetProperty(
+            Expression<Func<T, Thickness>> propertyLambda,
+            Thickness newValue)
+        {
+            var compiledLambda = propertyLambda.Compile();
+            var obj = Value;
+
+            if (obj == null)
+            {
+                return this;
+            }
+
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(Thickness))
+                {
+                    return this;
+                }
+                property.SetValue(obj, newValue);
+                WhiteList.Add(property.Name);
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TempState<T> SetProperty(
+            Expression<Func<T, ILinearInterpolation>> propertyLambda,
+            ILinearInterpolation newValue)
+        {
+            var compiledLambda = propertyLambda.Compile();
+            var obj = Value;
+
+            if (obj == null)
+            {
+                return this;
+            }
+
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(ILinearInterpolation))
+                {
+                    return this;
+                }
+                property.SetValue(obj, newValue);
+                WhiteList.Add(property.Name);
+            }
+
+            return this;
+        }
+
 
         /// <summary>
         /// 记录完毕

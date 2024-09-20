@@ -14,7 +14,11 @@
     - Currently supported property types
       - double
       - Brush
-      - …… under development >>
+      - Transform
+      - Point
+      - CornerRadius
+      - Thickness
+      - ILinearInterpolation
 - [WebServices](#WebServices)
   - [ GaoDe ] WebApi
     - IPService
@@ -41,9 +45,16 @@
 [2]: https://www.nuget.org/packages/MinimalisticWPF/
 
 ## Change
-- V1.4.4
-  - Fixed some threading issues
-  - Chinese document support
+- V1.5.0
+  - StateMachineTransfer () changed to support any where T: class,new()
+  - Support for Transform transitions
+    - Translate
+    - Scale
+    - Rotate
+  - Support for Point transitions
+  - CornerRadius transitions are supported
+  - Supports Thickness transitions
+  - The interface ILinearInterpolation allows custom types as transitionable properties
 ---
 
 # StateMachine System
@@ -478,7 +489,11 @@
     - 当前受支持的属性类型
       - double
       - Brush
-      - …… 开发中 >>
+      - Transform
+      - Point
+      - CornerRadius
+      - Thickness
+      - ILinearInterpolation
 - [Web服务](#WebServices)
   - [ 高德 ] WebApi
     - IP服务
@@ -505,9 +520,16 @@
 [2]: https://www.nuget.org/packages/MinimalisticWPF/
 
 ## Change
-- V1.4.4
-  - 解决了一些线程问题
-  - 中文文档支持
+- V1.5.0
+  - StateMachineTransfer() 改为支持任何 where T : class ,new()
+  - 支持Transform过渡
+    - Translate
+    - Scale
+    - Rotate
+  - 支持Point过渡
+  - 支持CornerRadius过渡
+  - 支持Thickness过渡
+  - 接口ILinearInterpolation允许自定义的类型作为可过渡属性
 ---
 
 # 状态机系统

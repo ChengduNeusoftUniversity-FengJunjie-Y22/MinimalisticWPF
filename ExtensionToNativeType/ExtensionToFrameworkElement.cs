@@ -56,7 +56,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 开始创建基于StateMachine的过渡效果
         /// </summary>
-        public static TempStoryBoard<T> StateMachineTransfer<T>(this T element) where T : FrameworkElement, new()
+        public static TempStoryBoard<T> StateMachineTransfer<T>(this T element) where T : class, new()
         {
             TempStoryBoard<T> tempStoryBoard = new TempStoryBoard<T>(element);
             return tempStoryBoard;
@@ -66,7 +66,7 @@ namespace MinimalisticWPF
         /// 尝试为对象的DataContext加载状态机
         /// </summary>
         /// <typeparam name="T">DataContext的真实类型</typeparam>
-        public static StateMachine StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class
+        public static StateMachine StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class, new()
         {
             var vectorInterface = viewModel as IConditionalTransfer<T>;
             //检查datacontext是否是T类型的IConditionalTransfer<T>对象
@@ -107,7 +107,7 @@ namespace MinimalisticWPF
         }
     }
 
-    public class TempStoryBoard<T> where T : FrameworkElement, new()
+    public class TempStoryBoard<T> where T : class, new()
     {
         public static List<Tuple<StateMachine, object>> MachinePool = new List<Tuple<StateMachine, object>>();
 
@@ -165,6 +165,94 @@ namespace MinimalisticWPF
             {
                 var property = propertyExpr.Member as PropertyInfo;
                 if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(Brush))
+                {
+                    return this;
+                }
+                States.Add(Tuple.Create(property, (object?)newValue));
+                WhiteList.Add(property.Name);
+            }
+            return this;
+        }
+        /// <summary>
+        /// 添加新状态值
+        /// </summary>
+        public TempStoryBoard<T> Add(Expression<Func<T, Transform>> propertyLambda, params Transform[] newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(Transform) || newValue.Length == 0)
+                {
+                    return this;
+                }
+                var value = newValue.Select(t => t.Value).Aggregate(Matrix.Identity, (acc, matrix) => acc * matrix);
+                var interpolatedMatrixStr = $"{value.M11},{value.M12},{value.M21},{value.M22},{value.OffsetX},{value.OffsetY}";
+                var result = Transform.Parse(interpolatedMatrixStr);
+                States.Add(Tuple.Create(property, (object?)result));
+                WhiteList.Add(property.Name);
+            }
+            return this;
+        }
+        /// <summary>
+        /// 添加新状态值
+        /// </summary>
+        public TempStoryBoard<T> Add(Expression<Func<T, Point>> propertyLambda, Point newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(Point))
+                {
+                    return this;
+                }
+                States.Add(Tuple.Create(property, (object?)newValue));
+                WhiteList.Add(property.Name);
+            }
+            return this;
+        }
+        /// <summary>
+        /// 添加新状态值
+        /// </summary>
+        public TempStoryBoard<T> Add(Expression<Func<T, CornerRadius>> propertyLambda, CornerRadius newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(CornerRadius))
+                {
+                    return this;
+                }
+                States.Add(Tuple.Create(property, (object?)newValue));
+                WhiteList.Add(property.Name);
+            }
+            return this;
+        }
+        /// <summary>
+        /// 添加新状态值
+        /// </summary>
+        public TempStoryBoard<T> Add(Expression<Func<T, Thickness>> propertyLambda, Thickness newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(Thickness))
+                {
+                    return this;
+                }
+                States.Add(Tuple.Create(property, (object?)newValue));
+                WhiteList.Add(property.Name);
+            }
+            return this;
+        }
+        /// <summary>
+        /// 添加新状态值
+        /// </summary>
+        public TempStoryBoard<T> Add(Expression<Func<T, ILinearInterpolation>> propertyLambda, ILinearInterpolation newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(ILinearInterpolation))
                 {
                     return this;
                 }
