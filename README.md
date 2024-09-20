@@ -1,9 +1,416 @@
 ﻿# MinimalisticWPF
-- [English](#English)
-- [中文](#中文文档)
+- [Documentation-English](#English)
+- [文档-中文](#中文)
+
 ---
 
-# 中文文档
+# English
+
+## Key Features
+- [State Machine System - Create linear transitions to specified properties of specified instances](#StateMachineSystem)
+  - [StateMachine]()
+  - [TransferParams]()
+  - [MVVM]()
+  - Property types that can participate in state machine transitions
+    - double
+    - Brush
+    - Transform
+    - CornerRadius
+    - Thickness
+    - Point
+    - ★ ILinearInterpolation (This interface allows any custom type to support state machine transitions)
+## Accessibility
+- [ExtensionMethods](#ExtensionMethods)
+  - [string]
+    - value conversion
+    - Fuzzy matching
+    - Profiling tools (e.g. extracting resource addresses from html)
+    - Password strength
+  - [UserControls](#UserControls)
+    - A uniform dark theme
+    - Font size ADAPTS to control height
+    - All animation effects are based on state machine systems, which are both directly available and practices of the state machine system
+      - Notification - Glass style notification/select box
+      - MProgressBar - Bar/ring free switching progress bar
+      - mtopbar - Top sidebar of the program
+## Non-core Components
+The MinimalisticWPF namespace does not include the following services, which will be referenced separately
+  - [Web Services](#WebServices)
+    - [ Autonavi ]() WebApi
+      - IP Services
+      - Weather services
+
+## Supporting frameworks
+- [.NET6.0-windows]
+- [.NET8.0-windows]
+## Getting
+- [github][1]
+- [nuget][2]
+
+[1]: https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF
+[2]: https://www.nuget.org/packages/MinimalisticWPF/
+
+## Change
+- V1.5.0
+  - StateMachineTransfer() changed to support any [where T: class,new()] type
+  - State restricts modification. It needs to be a public static field or a public property
+  - StateVector restricts modification and requires writing public properties
+  - Support for Transform transitions
+    - Translate
+    - Scale
+    - Rotate
+  - Support for Point transitions
+  - CornerRadius transitions are supported
+  - Supports Thickness transitions
+  - The interface ILinearInterpolation allows custom types as transitionable properties
+
+# StateMachineSystem
+- State & StateVecotr is built for MVVM and allows for automatic state switching with preset conditions
+- StateMachine theory can make linear transitions for any type of property. Almost all types non-MVVM include an extension method for quickly creating linear transitions for object instances. This is probably the library's most common method
+  - ★ Advantages
+    - Create complex transitions with little code
+    - Update() allows you to decide what you want to do for each frame of the transition, just like in game development engines
+  - ⚠ ️ Disadvantages
+    - Unstable performance (relative to components like StoryBoard and VisualState)
+    - The types of properties that support transitions are very limited, and although an interface is provided to solve this problem, it is not convenient to leave the calculation of linear interpolation to the implementation class of the interface
+[![pAu2vOP.md.png](https://s21.ax1x.com/2024/09/15/pAu2vOP.md.png)](https://imgse.com/i/pAu2vOP)
+
+## StateMachine
+- For any type [where T: class, new()] you can create a linear transition using the following code
+- For example perform the following transition on a 100×100 Grid
+```csharp
+        private RotateTransform rotateTransform = new RotateTransform(-280, 50, 50);
+        private TranslateTransform translateTransform = new TranslateTransform(-100, -50);
+        private ScaleTransform scaleTransform = new ScaleTransform(2, 2, 50, 50);
+
+        private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            GD.StateMachineTransfer()
+                .Add(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
+                .Add(x => x.Opacity, 0.2)
+                .Add(x => x.CornerRadius,new CornerRadius(15))
+                .Set((x) =>
+                {
+                    x.Duration = 0.4;
+                    x.Completed = () =>
+                    {
+                        Notification.Message("Transition complete √");
+                    };
+                })
+                .Start();
+        }
+```
+
+## State & StateVector & IConditionalTransfer
+- State describes the value of an object's property at a moment in time
+- StateVector describes which transitions are created under which conditions
+- IConditionalTransfer allows you to automatically create a transition when a specified condition is met on an instance object
+  - Examples
+    - When the mouse is inside the control, make its background opacity transition to 0.2
+    - Make the background opacity transition to 0 when the mouse leaves the control
+    - Xaml - View
+    ```xml
+    <UserControl.DataContext>
+        <local:MButtonViewModel x:Name="ViewModel"/>
+    </UserControl.DataContext>
+    ```
+    - C# - View
+    ```csharp
+    public partial class MButton : UserControl
+    {
+        public MButton()
+        {
+            InitializeComponent();
+            this.StateMachineLoading(ViewModel);
+        }
+    }
+    ```
+    - C# - ViewModel
+    ```csharp
+    public class MButtonViewModel : ViewModelBase<MButtonViewModel, MButtonModel>
+    {
+        public MButtonViewModel() { }
+
+        public static State Start = State.FromObject(new MButtonViewModel())
+            .SetName("defualt")
+            .SetProperty(x => x.HoverBackgroundOpacity, 0)
+            .ToState();
+        public static State MouseIn = State.FromObject(new MButtonViewModel())
+            .SetName("mouseInside")
+            .SetProperty(x => x.HoverBackgroundOpacity, 0.2)
+            .ToState();
+
+        public StateVector<MButtonViewModel> ConditionA = StateVector<MButtonViewModel>.Create()
+            .AddCondition(x => x.IsMouseInside, MouseIn, (x) => { x.Duration = 0.2; })
+            .AddCondition(x => !x.IsMouseInside, Start, (x) => { x.Duration = 0.2; });
+
+        public override bool IsMouseInside
+        {
+            get => base.IsMouseInside;
+            set
+            {
+                base.IsMouseInside = value;
+  
+                OnConditionsChecked();
+                // Change IsMouseInside when mouse in/out of control
+                //IsMouseInside is modified to check if the condition is true, if so, switch State
+            }
+        }
+    }
+    ```
+
+## TransferParams 
+- Contains a number of parameters for the details of the transition
+  - Transition parameters
+  - Transition creation parameters
+  - Lifecycle related parameters
+
+| property | type | default | meaning |
+|--------|-----|-------|-------|
+|Duration|double|0| Animation duration (in s)|
+|Start|Action|null| is executed once before the animation starts |
+|Update|Action|null| is executed once before each frame of the animation starts |
+|LateUpdate|Action|null| is executed once after each frame of the animation |
+|Completed|Action|null| is executed once after the animation has finished |
+|IsQueue|bool|false| Whether the newly enabled animation will be queued or not, otherwise the animation will be interrupted |
+|IsLast|bool|false| Whether this is the last animation to be executed, if so it will clear the queued animation |
+|IsUnique|bool|true| Should a transition animation that points to the same State continue if one exists |
+|FrameRate|int|165| Animation frame rate |
+|WaitTime|double|0.008| is rarely used, but if you find places where the probability doesn't animate or the probability is twitching, you can increase this value appropriately
+
+- Use cases
+  - Set transition parameters (lambdas) for StateVector
+  - Set a transition parameter (Lambda) for StateMachineTransfer()
+
+```csharp
+Set((x)=>
+{
+    x.Duration = 0.1;
+    x.IsLast = true;
+    x.Update = () =>
+    {
+        Notification.Message("Before the start of a frame");
+    };
+})
+```
+
+---
+
+# ExtensionMethods
+## string
+- Value conversion
+```csharp
+   string valueA = "-123.7";
+   string valueB = "TrUE";
+   string valueC = "#1e1e1e";
+   
+   var result1 = valueA.ToInt();
+   var result2 = valueA.ToDouble();
+   var result3 = valueA.ToFloat();
+
+   var result4 = valueB.ToBool();
+
+   var result5 = valueC.ToBrush();
+```
+- Fuzzy matching
+```csharp
+   string template = "abcdefg";
+
+   string sourceA = "abc";
+   List<string> sourceB = new List<string>()
+   {
+       "abcdegf",
+       "cbdgafe"
+   };
+
+   var similarity1 = sourceA.LevenshteinDistance(template)
+   //Returns the shortest edit distance
+
+   var similarity2 = sourceA.JaroWinklerDistance(template)
+   //Returns approximation
+
+   var result3 = template.BestMatch(sourceB, 3);
+   //Edit the result with a minimum distance of less than 3
+
+   var result4 = template.BestMatch(sourceB, 0.5);
+   //The result with the approximation degree greater than 0.5 and the largest
+```
+- Folder generation operations
+```csharp
+   string folderNameA = "FF1";
+   string folderNameB = "FF2";
+   string folderNameC = "FF3";
+   //The folder name
+
+   var result1 = folderNameA.CreatFolder();
+   //From the.exe location, create a folder named "FF1"
+
+   var result2 = folderNameC.CreatFolder(folderNameA,folderNameB);
+   //From the.exe location, create a folder named "FF1/FF2/FF3"
+```
+- Xml and Json serialization
+```csharp
+   string folderName = "Data";
+
+   string fileName1 = "firstPersondata";
+   string fileName2 = "secondPersondata";
+
+   var target = new Person();
+
+   var result1 = fileName1.CreatXmlFile(folderName.CreatFolder(), target);
+   var result2 = fileName2.CreatJsonFile(folderName.CreatFolder(), target);
+```
+- Xml and Json deserialization
+```csharp
+   string folderName = "Data";
+
+   string fileName1 = "firstPersondata";
+   string fileName2 = "secondPersondata";
+
+   string AbsPathA = Path.Combine(folderName.CreatFolder(), $"{fileName1}.xml");
+   string AbsPathB = Path.Combine(folderName.CreatFolder(), $"{fileName2}.json");
+   var dataA = File.ReadAllText(AbsPathA);
+   var dataB = File.ReadAllText(AbsPathB);
+
+   var result1 = dataA.XmlParse<Person>();
+   var result2 = dataB.JsonParse<Person>();
+```
+- Regular operation
+```csharp
+   string sourceA = "[1]wkhdkjhk[a][F3]https:awijdioj.mp3fwafw";
+   string sourceB = "awdhttps://aiowdjoajfo.comawd&*(&d)*dhttps://tn.comdawd";
+   
+   var resultA = sourceA.CaptureBetween("https:", ".mp3");
+
+   var resultB = sourceB.CaptureLike("https://", "com");
+```
+- Password strength
+```csharp
+   string password = "12345678";
+   int Level = password.CheckPasswordStrength(MinLength=8);
+```
+
+---
+
+# UserControls
+- ## ☆ Using
+  - C#
+    ```csharp
+    using MinimalisticWPF;
+    ```
+  - XAML
+    ```xml
+    xmlns:mn="clr-namespace:MinimalisticWPF;assembly=MinimalisticWPF"
+    ```
+- ## ☆ MButton
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLPyQ.png)
+  ## Property
+  - Click
+  - WiseHeight
+  - WiseWidth
+  - Text
+  - TextBrush
+  - FontSizeRatio
+  - EdgeBrush
+  - EdgeThickness
+  - HoverBrush
+  - CornerRadius
+- ## ☆ MTopBar
+  ![pAmMfv8.md.png](https://s21.ax1x.com/2024/09/09/pAmMfv8.md.png)
+  ![pAmQnVH.md.png](https://s21.ax1x.com/2024/09/09/pAmQnVH.md.png)
+  ## Property
+  - WiseHeight
+  - WiseWidth
+  - Title
+  - SizeRatio
+  - EdgeBrush
+  - EdgeThickness
+  - HoverBrush
+  - CornerRadius
+  - Icon
+- ## ☆ MPasswordBox
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLEoq.png)
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLQOJ.png)
+  ## Property
+  - WiseHeight
+  - WiseWidth
+  - FontSizeRatio
+  - Password
+  - Replace
+- ### ☆ MProgressBar
+  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLkes.png)
+  ## Property
+  - Size
+  - Value
+  - Shape
+  - Thickness
+  - BottomBrush
+  - FillBrush
+  - TextBrush
+  - FontSizeRatio
+  - IsReverse
+  - StartAngle
+  - EndAngle
+- ### ☆ Notification
+  [![pAKM40S.png](https://s21.ax1x.com/2024/09/18/pAKM40S.png)](https://imgse.com/i/pAKM40S)
+  [![pAKMhm8.png](https://s21.ax1x.com/2024/09/18/pAKMhm8.png)](https://imgse.com/i/pAKMhm8)
+  ## 消息框调用示例
+  ```csharp
+            if (Notification.Select("Are you sure you want to check the weather ?"))
+            {
+                Notification.Message("Weather");
+            }
+  ```
+
+---
+
+# WebServices
+- ##  Autonavi
+  - using
+    ```csharp
+    using MinimalisticWPF.GaoDeServices;
+    ```
+  - Get ApiKey https://console.amap.com/dev/key/app
+    ```csharp
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            GaoDeAPISet.Awake(Key: "Your_Api_Key", IsUpdateIP: true);
+        }
+    ```
+  - IPService
+    - Get IP
+      ```csharp
+      var ip = await IPService.GetIP();
+      MessageBox.Show(ip.GetCombined());
+      ```
+    - Get AdCode
+      ```csharp
+      var adcode = await IPService.GetAdCode("都江堰");
+      MessageBox.Show(adcode);
+      ```
+  - WeatherService
+    - Get the weather based on the current IP address
+      ```csharp
+      var weathers = await WeatherService.GetWeathers();
+      MessageBox.Show(weathers[0].GetCombined());
+      ```
+    - Get the weather by region name
+      ```csharp
+      var weathers = await WeatherService.GetWeathers("都江堰");
+      MessageBox.Show(weathers[0].GetCombined());
+      ```
+    - weather[0] Is for today's weather
+
+---
+---
+---
+---
+---
+---
+
+# 中文
 
 ## 核心功能
 - [状态机系统 - 对指定实例的指定属性创建线性过渡](#状态机系统)
