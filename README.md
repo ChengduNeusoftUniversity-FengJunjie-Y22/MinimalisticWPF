@@ -7,9 +7,9 @@
 
 ## 核心功能
 - [状态机系统 - 对指定实例的指定属性创建线性过渡](#状态机系统)
-    - [StateMachine](#StateMachine)    
-    - [TransferParams](#TransferParams)
-    - [MVVM](#State&StateVector&IConditionalTransfer)
+    - [StateMachine]() 
+    - [TransferParams]()
+    - [MVVM]()
     - 可参与状态机过渡的属性类型
       - double
       - Brush
@@ -19,13 +19,13 @@
       - Point
       - ★ ILinearInterpolation ( 该接口使得任意自定义类型支持状态机过渡 )
 ## 辅助功能
-- [扩展方法](#ExtensionMethods)
-    - [string](#string)
+- [扩展方法](#扩展方法)
+    - [string]
       - 值转换
       - 模糊匹配
       - 分析工具（例如提取html中的资源地址）
       - 密码强度
-- [用户控件](#MinimalisticUserControls)
+- [用户控件](#用户控件)
     - 统一的深色主题
     - 字体大小自适应控件高度
     - 所有动画效果都基于状态机系统,它们既是直接可用的,也是状态机系统的实践
@@ -34,7 +34,7 @@
       - MTopBar - 程序顶侧栏
 ## 非核心组件
 ###### MinimalisticWPF命名空间不包括下述服务，另需引用
-- [Web服务](#WebServices)
+- [Web服务](#Web服务)
   - [ 高德 ] WebApi
     - IP服务
     - 天气服务
@@ -196,7 +196,7 @@ Set((x)=>
 
 ---
 
-# ExtensionMethods
+# 扩展方法
 ## string
 - 值转换
 ```csharp
@@ -308,7 +308,7 @@ Set((x)=>
 
 ---
 
-# MinimalisticUserControls
+# 用户控件
 - ## ☆ Using
   - C#
     ```csharp
@@ -382,7 +382,7 @@ Set((x)=>
 
 ---
 
-# WebServices
+# Web服务
 - ## 高德
   - using
     ```csharp
