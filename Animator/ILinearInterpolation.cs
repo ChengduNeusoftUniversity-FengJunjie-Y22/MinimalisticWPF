@@ -25,7 +25,7 @@ namespace MinimalisticWPF
         /// <param name="current">当前状态</param>
         /// <param name="target">最终状态</param>
         /// <param name="steps">插值数量</param>
-        List<object?> Interpolate(object? current, object? target, double steps);
+        List<object?> Interpolate(object? current, object? target, int steps);
 
         /// <summary>
         /// double插值
