@@ -76,6 +76,8 @@ The MinimalisticWPF namespace does not include the following services, which wil
     - The types of properties that support transitions are very limited, and although an interface is provided to solve this problem, it is not convenient to leave the calculation of linear interpolation to the implementation class of the interface
 [![pAu2vOP.md.png](https://s21.ax1x.com/2024/09/15/pAu2vOP.md.png)](https://imgse.com/i/pAu2vOP)
 
+---
+
 ## StateMachine
 - For any type [where T: class, new()] you can create a linear transition using the following code
 - For example perform the following transition on a 100×100 Grid
@@ -172,6 +174,44 @@ The MinimalisticWPF namespace does not include the following services, which wil
            .Start();
     ```
 
+---
+
+## TransferParams 
+- Contains a number of parameters for the details of the transition
+  - Transition parameters
+  - Transition creation parameters
+  - Lifecycle related parameters
+
+| property | type | default | meaning |
+|--------|-----|-------|-------|
+|Duration|double|0| Animation duration (in s)|
+|Start|Action|null| is executed once before the animation starts |
+|Update|Action|null| is executed once before each frame of the animation starts |
+|LateUpdate|Action|null| is executed once after each frame of the animation |
+|Completed|Action|null| is executed once after the animation has finished |
+|IsQueue|bool|false| Whether the newly enabled animation will be queued or not, otherwise the animation will be interrupted |
+|IsLast|bool|false| Whether this is the last animation to be executed, if so it will clear the queued animation |
+|IsUnique|bool|true| Should a transition animation that points to the same State continue if one exists |
+|FrameRate|int|165| Animation frame rate |
+|WaitTime|double|0.008| is rarely used, but if you find places where the probability doesn't animate or the probability is twitching, you can increase this value appropriately
+
+- Use cases
+  - Set transition parameters (lambdas) for StateVector
+  - Set a transition parameter (Lambda) for StateMachineTransfer()
+
+```csharp
+Set((x)=>
+{
+    x.Duration = 0.1;
+    x.IsLast = true;
+    x.Update = () =>
+    {
+        Notification.Message("Before the start of a frame");
+    };
+})
+```
+
+---
 
 ## State & StateVector & IConditionalTransfer
 - State describes the value of an object's property at a moment in time
@@ -231,41 +271,7 @@ The MinimalisticWPF namespace does not include the following services, which wil
     }
     ```
 
-## TransferParams 
-- Contains a number of parameters for the details of the transition
-  - Transition parameters
-  - Transition creation parameters
-  - Lifecycle related parameters
-
-| property | type | default | meaning |
-|--------|-----|-------|-------|
-|Duration|double|0| Animation duration (in s)|
-|Start|Action|null| is executed once before the animation starts |
-|Update|Action|null| is executed once before each frame of the animation starts |
-|LateUpdate|Action|null| is executed once after each frame of the animation |
-|Completed|Action|null| is executed once after the animation has finished |
-|IsQueue|bool|false| Whether the newly enabled animation will be queued or not, otherwise the animation will be interrupted |
-|IsLast|bool|false| Whether this is the last animation to be executed, if so it will clear the queued animation |
-|IsUnique|bool|true| Should a transition animation that points to the same State continue if one exists |
-|FrameRate|int|165| Animation frame rate |
-|WaitTime|double|0.008| is rarely used, but if you find places where the probability doesn't animate or the probability is twitching, you can increase this value appropriately
-
-- Use cases
-  - Set transition parameters (lambdas) for StateVector
-  - Set a transition parameter (Lambda) for StateMachineTransfer()
-
-```csharp
-Set((x)=>
-{
-    x.Duration = 0.1;
-    x.IsLast = true;
-    x.Update = () =>
-    {
-        Notification.Message("Before the start of a frame");
-    };
-})
-```
-
+---
 ---
 
 # ExtensionMethods
@@ -363,6 +369,7 @@ Set((x)=>
 ```
 
 ---
+---
 
 # UserControls
 - ## ☆ Using
@@ -387,6 +394,7 @@ Set((x)=>
   - EdgeThickness
   - HoverBrush
   - CornerRadius
+---
 - ## ☆ MTopBar
   ![pAmMfv8.md.png](https://s21.ax1x.com/2024/09/09/pAmMfv8.md.png)
   ![pAmQnVH.md.png](https://s21.ax1x.com/2024/09/09/pAmQnVH.md.png)
@@ -400,6 +408,7 @@ Set((x)=>
   - HoverBrush
   - CornerRadius
   - Icon
+---
 - ## ☆ MPasswordBox
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLEoq.png)
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLQOJ.png)
@@ -409,6 +418,7 @@ Set((x)=>
   - FontSizeRatio
   - Password
   - Replace
+---
 - ### ☆ MProgressBar
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLkes.png)
   ## Property
@@ -423,6 +433,7 @@ Set((x)=>
   - IsReverse
   - StartAngle
   - EndAngle
+---
 - ### ☆ Notification
   [![pAKM40S.png](https://s21.ax1x.com/2024/09/18/pAKM40S.png)](https://imgse.com/i/pAKM40S)
   [![pAKMhm8.png](https://s21.ax1x.com/2024/09/18/pAKMhm8.png)](https://imgse.com/i/pAKMhm8)
@@ -434,6 +445,7 @@ Set((x)=>
             }
   ```
 
+---
 ---
 
 # WebServices
@@ -650,7 +662,42 @@ Set((x)=>
            })
            .Start();
     ```
+---
+## TransferParams 
+- 包含系列参数用于修饰此次过渡效果的细节
+  - 过渡效果相关的参数
+  - 过渡创建相关的参数
+  - 生命周期相关的参数
 
+|属性|类型|默认|意义|
+|--------|-----|-------|-------|
+|Duration|double|0|动画持续时间 ( 单位: s )|
+|Start|Action|null|在动画开始前执行一次|
+|Update|Action|null|在动画的每一帧开始前执行一次|
+|LateUpdate|Action|null|在动画的每一帧结束后执行一次|
+|Completed|Action|null|在动画结束后执行一次|
+|IsQueue|bool|false|新启用的动画是否排队,不排队就意味着会打断正在执行的动画|
+|IsLast|bool|false|是否为最后一个被执行的动画,如果是则意味着会清空正在排队中的动画|
+|IsUnique|bool|true|如果存在一个指向同一State的过渡动画,是否还要继续执行此动画|
+|FrameRate|int|165|动画帧率|
+|WaitTime|double|0.008|基本用不到,但如果发现有些地方概率无法触发动画或者概率抽搐,则可适当增加这个值|
+
+- 应用场景
+  - 为StateVector设置过渡参数 ( Lambda )
+  - 为StateMachineTransfer()设置过渡参数 ( Lambda )
+
+```csharp
+Set((x)=>
+{
+    x.Duration = 0.1;
+    x.IsLast = true;
+    x.Update = () =>
+    {
+        Notification.Message("一帧开始前");
+    };
+})
+```
+---
 ## State & StateVector & IConditionalTransfer
 - State描述某一时刻对象的属性值
 - StateVector描述在何种条件下创建何种过渡
@@ -709,41 +756,7 @@ Set((x)=>
     }
     ```
 
-## TransferParams 
-- 包含系列参数用于修饰此次过渡效果的细节
-  - 过渡效果相关的参数
-  - 过渡创建相关的参数
-  - 生命周期相关的参数
-
-|属性|类型|默认|意义|
-|--------|-----|-------|-------|
-|Duration|double|0|动画持续时间 ( 单位: s )|
-|Start|Action|null|在动画开始前执行一次|
-|Update|Action|null|在动画的每一帧开始前执行一次|
-|LateUpdate|Action|null|在动画的每一帧结束后执行一次|
-|Completed|Action|null|在动画结束后执行一次|
-|IsQueue|bool|false|新启用的动画是否排队,不排队就意味着会打断正在执行的动画|
-|IsLast|bool|false|是否为最后一个被执行的动画,如果是则意味着会清空正在排队中的动画|
-|IsUnique|bool|true|如果存在一个指向同一State的过渡动画,是否还要继续执行此动画|
-|FrameRate|int|165|动画帧率|
-|WaitTime|double|0.008|基本用不到,但如果发现有些地方概率无法触发动画或者概率抽搐,则可适当增加这个值|
-
-- 应用场景
-  - 为StateVector设置过渡参数 ( Lambda )
-  - 为StateMachineTransfer()设置过渡参数 ( Lambda )
-
-```csharp
-Set((x)=>
-{
-    x.Duration = 0.1;
-    x.IsLast = true;
-    x.Update = () =>
-    {
-        Notification.Message("一帧开始前");
-    };
-})
-```
-
+---
 ---
 
 # 扩展方法
@@ -857,6 +870,7 @@ Set((x)=>
 ```
 
 ---
+---
 
 # 用户控件
 - ## ☆ Using
@@ -883,6 +897,7 @@ Set((x)=>
   - EdgeThickness
   - HoverBrush
   - CornerRadius
+---
 - ## ☆ MTopBar
   ![pAmMfv8.md.png](https://s21.ax1x.com/2024/09/09/pAmMfv8.md.png)
   ![pAmQnVH.md.png](https://s21.ax1x.com/2024/09/09/pAmQnVH.md.png)
@@ -896,6 +911,7 @@ Set((x)=>
   - HoverBrush
   - CornerRadius
   - Icon
+---
 - ## ☆ MPasswordBox
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLEoq.png)
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLQOJ.png)
@@ -905,6 +921,7 @@ Set((x)=>
   - FontSizeRatio
   - Password
   - Replace
+---
 - ### ☆ MProgressBar
   ![Effect](https://s21.ax1x.com/2024/09/09/pAeLkes.png)
   ## Property
@@ -919,6 +936,7 @@ Set((x)=>
   - IsReverse
   - StartAngle
   - EndAngle
+---
 - ### ☆ Notification
   [![pAKM40S.png](https://s21.ax1x.com/2024/09/18/pAKM40S.png)](https://imgse.com/i/pAKM40S)
   [![pAKMhm8.png](https://s21.ax1x.com/2024/09/18/pAKMhm8.png)](https://imgse.com/i/pAKMhm8)
@@ -930,6 +948,7 @@ Set((x)=>
             }
   ```
 
+---
 ---
 
 # Web服务
