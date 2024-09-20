@@ -70,6 +70,7 @@ The MinimalisticWPF namespace does not include the following services, which wil
   - ★ Advantages
     - Create complex transitions with little code
     - Update() allows you to decide what you want to do for each frame of the transition, just like in game development engines
+    - The functionality is not limited to animations, it modifies any possible type, any possible property, for example testing the program with simulated data is one of the uses the authors tried
   - ⚠ ️ Disadvantages
     - Unstable performance (relative to components like StoryBoard and VisualState)
     - The types of properties that support transitions are very limited, and although an interface is provided to solve this problem, it is not convenient to leave the calculation of linear interpolation to the implementation class of the interface
@@ -100,6 +101,77 @@ The MinimalisticWPF namespace does not include the following services, which wil
                 .Start();
         }
 ```
+- But the default properties available for state machine transitions are finite types, so how do you make custom types work with state machines?
+  - Step 1. Implement a Class1, which is a custom type that supports state machine transitions
+    - Here Class1 is the composition of Thickness and CornerRadius
+    - Need to implement the interface method Interpolate (), steps is the number of interpolations, you need to customize how to split the two Class1 into steps to evenly interpolate
+    ```csharp
+    public class Class1 : ILinearInterpolation
+    {
+        public object Current { get; set; }
+        public List<object?> Interpolate(object? current, object? target, int steps)
+        {
+            List<object?> result = new List<object?>();
+
+            var v1 = current as Class1 ?? new Class1();
+            var v2 = target as Class1 ?? new Class1();
+            var itemsA = ILinearInterpolation.CornerRadiusComputing(v1.CornerRadius, v2.CornerRadius, steps);
+            var itemsB = ILinearInterpolation.ThicknessComputing(v1.Thickness, v2.Thickness, steps);
+            for (var i = 0; i < itemsA.Count; i++)
+            {
+                var temp = new Class1();
+                temp.CornerRadius = itemsA[i] as CornerRadius? ?? new CornerRadius();
+                temp.Thickness = itemsB[i] as Thickness? ?? new Thickness();
+                result.Add(temp);
+            }
+
+            return result;
+        }
+
+
+        public Class1() { Current = this; }
+        public Class1(CornerRadius cornerRadius, Thickness thickness) { Current = this; CornerRadius = cornerRadius; Thickness = thickness; }
+        public CornerRadius CornerRadius { get; set; } = new CornerRadius();
+        public Thickness Thickness { get; set; } = new Thickness();
+    }
+    ```
+  - Step 2. Implement a Class2, which is the type that contains the Class1 property, is the type that actually needs to use the state machine
+    ```csharp
+    public class Class2
+    {
+        public Class2() { }
+       
+        public Class1 Class1 { get; set; } = new Class1();
+
+        //…… other properties
+    }
+    ```
+  - Step 3. At this point, you are ready to apply state machine transitions to Class2.Class1
+    ```csharp
+       Class1 T1 = new Class1();
+       Class1 T2 = new Class1(new CornerRadius(10), new Thickness(2, 3, 1, 0));
+  
+       Class2 TargetClass2 = new Class2();
+  
+       TargetClass2.StateMachineTransfer()
+           .Add(x => x.Class1, T2)
+           .Set((x) =>
+           {
+               x.Duration = 2;
+               x.Start = () =>
+               {
+                    Notification.Message($"old Thickness {TargetClass2.Class1.Thickness}\n" +
+                            $"old CornerRadius {TargetClass2.Class1.CornerRadius}");
+               };
+               x.Completed = () =>
+               {
+                    Notification.Message($"new Thickness {TargetClass2.Class1.Thickness}\n" +
+                            $"new CornerRadius {TargetClass2.Class1.CornerRadius}");
+               };
+           })
+           .Start();
+    ```
+
 
 ## State & StateVector & IConditionalTransfer
 - State describes the value of an object's property at a moment in time
@@ -477,6 +549,7 @@ Set((x)=>
 - ★ 优势
   - 以少量代码创建复杂过渡效果
   - 像游戏开发引擎那样,可在Update()中决定过渡效果的每一帧你要做出的行为
+  - 功能并不局限于动画,它修改任何可能的类型、任何可能的属性,例如使用模拟数据对程序进行测试正是作者在尝试中的用法之一
 - ⚠ 劣势
   - 性能不稳定 ( 相对于StoryBoard与VisualState等组件而言 )
   - 支持过渡的属性类型受限较大，虽然提供了接口以解决这个问题，但将线性插值的计算交由接口的实现类仍然不是方便的做法
@@ -507,6 +580,76 @@ Set((x)=>
                 .Start();
         }
 ```
+- 但默认可用状态机过渡的属性终究是有限类型,如何让自定义的类型也能支持状态机呢?
+  - 步骤1.实现一个Class1，它是支持状态机过渡的自定义类型
+    - 这里Class1是Thickness和CornerRadius的复合
+    - 需要实现接口方法Interpolate（）, steps是插值数量 , 你需要自定义如何将两个 Class1 拆成steps份均匀的插值
+    ```csharp
+    public class Class1 : ILinearInterpolation
+    {
+        public object Current { get; set; }
+        public List<object?> Interpolate(object? current, object? target, int steps)
+        {
+            List<object?> result = new List<object?>();
+
+            var v1 = current as Class1 ?? new Class1();
+            var v2 = target as Class1 ?? new Class1();
+            var itemsA = ILinearInterpolation.CornerRadiusComputing(v1.CornerRadius, v2.CornerRadius, steps);
+            var itemsB = ILinearInterpolation.ThicknessComputing(v1.Thickness, v2.Thickness, steps);
+            for (var i = 0; i < itemsA.Count; i++)
+            {
+                var temp = new Class1();
+                temp.CornerRadius = itemsA[i] as CornerRadius? ?? new CornerRadius();
+                temp.Thickness = itemsB[i] as Thickness? ?? new Thickness();
+                result.Add(temp);
+            }
+
+            return result;
+        }
+
+
+        public Class1() { Current = this; }
+        public Class1(CornerRadius cornerRadius, Thickness thickness) { Current = this; CornerRadius = cornerRadius; Thickness = thickness; }
+        public CornerRadius CornerRadius { get; set; } = new CornerRadius();
+        public Thickness Thickness { get; set; } = new Thickness();
+    }
+    ```
+  - 步骤2.实现一个Class2，它是包含Class1属性的类型,是实际需要使用状态机的类型
+    ```csharp
+    public class Class2
+    {
+        public Class2() { }
+       
+        public Class1 Class1 { get; set; } = new Class1();
+
+        //…… 其它属性
+    }
+    ```
+  - 步骤3.到这一步，你已可以对Class2.Class1应用状态机的过渡功能
+    ```csharp
+       Class1 T1 = new Class1();
+       Class1 T2 = new Class1(new CornerRadius(10), new Thickness(2, 3, 1, 0));
+  
+       Class2 TargetClass2 = new Class2();
+  
+       TargetClass2.StateMachineTransfer()
+           .Add(x => x.Class1, T2)
+           .Set((x) =>
+           {
+               x.Duration = 2;
+               x.Start = () =>
+               {
+                    Notification.Message($"旧的 Thickness {TargetClass2.Class1.Thickness}\n" +
+                            $"旧的 CornerRadius {TargetClass2.Class1.CornerRadius}");
+               };
+               x.Completed = () =>
+               {
+                    Notification.Message($"新的 Thickness {TargetClass2.Class1.Thickness}\n" +
+                            $"新的 CornerRadius {TargetClass2.Class1.CornerRadius}");
+               };
+           })
+           .Start();
+    ```
 
 ## State & StateVector & IConditionalTransfer
 - State描述某一时刻对象的属性值

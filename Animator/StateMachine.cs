@@ -47,9 +47,9 @@ namespace MinimalisticWPF
                 .ToArray();
             ThicknessProperties = Properties.Where(x => x.PropertyType == typeof(Thickness))
                 .ToArray();
-            ILinearInterpolationProperties = Properties.Where(x => x.PropertyType == typeof(ILinearInterpolation))
+            ILinearInterpolationProperties = Properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType))
                 .ToArray();
-
+          
             foreach (var state in states)
             {
                 var temp = States.FirstOrDefault(x => x.StateName == state.StateName);
@@ -296,9 +296,9 @@ namespace MinimalisticWPF
                 {
                     var currentValue = (ILinearInterpolation?)ILinearInterpolationProperties[i].GetValue(Target);
                     var newValue = (ILinearInterpolation?)state[ILinearInterpolationProperties[i].Name];
-                    if (currentValue != newValue && currentValue != null && newValue != null)
+                    if (currentValue != newValue)
                     {
-                        allFrames.Add(Tuple.Create(ILinearInterpolationProperties[i], currentValue.Interpolate(currentValue.Current, newValue.Current, (int)FrameCount)));
+                        allFrames.Add(Tuple.Create(ILinearInterpolationProperties[i], newValue.Interpolate(currentValue?.Current, newValue.Current, (int)FrameCount)));
                     }
                 }
             }

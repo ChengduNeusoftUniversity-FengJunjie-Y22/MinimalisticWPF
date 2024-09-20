@@ -26,7 +26,7 @@ namespace MinimalisticWPF
                 .ToArray();//筛选CornerRadius属性
             PropertyInfo[] ThicknessProperties = Properties.Where(x => x.PropertyType == typeof(Thickness) && WhileList.Contains(x.Name))
                 .ToArray();//筛选Thickness属性
-            PropertyInfo[] ILinearInterpolationProperties = Properties.Where(x => x.PropertyType == typeof(ILinearInterpolation) && WhileList.Contains(x.Name))
+            PropertyInfo[] ILinearInterpolationProperties = Properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType) && WhileList.Contains(x.Name))
                 .ToArray();//筛选ILinearInterpolation接口支持的属性
 
             foreach (PropertyInfo propertyInfo in DoubleProperties)

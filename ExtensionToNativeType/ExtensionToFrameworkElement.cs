@@ -256,7 +256,7 @@ namespace MinimalisticWPF
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
                 var property = propertyExpr.Member as PropertyInfo;
-                if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(ILinearInterpolation))
+                if (property == null || !property.CanRead || !property.CanWrite || !typeof(ILinearInterpolation).IsAssignableFrom(property.PropertyType))
                 {
                     return this;
                 }
