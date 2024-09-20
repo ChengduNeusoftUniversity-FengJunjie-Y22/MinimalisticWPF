@@ -118,7 +118,7 @@ namespace MinimalisticWPF
             {
                 element.StateMachineTransfer()
                     .Add(x => x.Foreground, TextBrush)
-                    .Set((x) => { x.Duration = 0.1; })
+                    .Set((x) => { x.Duration = 0.4; })
                     .Start();
             }
         }

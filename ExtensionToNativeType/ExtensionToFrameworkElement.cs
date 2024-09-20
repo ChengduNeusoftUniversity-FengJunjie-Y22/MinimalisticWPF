@@ -75,12 +75,16 @@ namespace MinimalisticWPF
 
             var StateFields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Static)
                 .Where(x => x.FieldType == typeof(State)).ToArray();
-            //反射ViewModel中所有定义的静态State对象
-            var StateVectorField = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(x => x.FieldType == typeof(StateVector<T>));
-            //反射ViewModel中首个定义的静态StateVector<T>对象
+            var StateProperties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(x => x.PropertyType == typeof(State)).ToArray();
+            //反射ViewModel中所有定义的State对象
+            var StateVectorField = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .FirstOrDefault(x => x.PropertyType == typeof(StateVector<T>));
+            //反射ViewModel中首个定义的StateVector<T>对象
 
-            var States = StateFields.Select(x => (State?)x.GetValue(viewModel)).ToArray();
+            var FieldStates = StateFields.Select(x => (State?)x.GetValue(viewModel)).ToArray();
+            var PropertyStates = StateProperties.Select(x => (State?)x.GetValue(viewModel)).ToArray();
+            var States = PropertyStates.Concat(FieldStates);
             //尝试从ViewModel获取具体的State
             var StateVector = (StateVector<T>?)StateVectorField?.GetValue(viewModel);
             //尝试从ViewModel获取具体的StateVector<T>

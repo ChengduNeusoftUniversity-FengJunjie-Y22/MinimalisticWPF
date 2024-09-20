@@ -47,6 +47,8 @@
 ## Change
 - V1.5.0
   - StateMachineTransfer () changed to support any where T: class,new()
+  - State is reduced to [public] and can be either a static field or a property
+  - StateVector restricts changes to [public properties] instead of public static fields
   - Support for Transform transitions
     - Translate
     - Scale
@@ -522,6 +524,8 @@
 ## Change
 - V1.5.0
   - StateMachineTransfer() 改为支持任何 where T : class ,new()
+  - State限制降低为[公开]，可以是静态字段，也可以是属性
+  - StateVector限制修改为[公开属性]，而不再是公开静态字段
   - 支持Transform过渡
     - Translate
     - Scale

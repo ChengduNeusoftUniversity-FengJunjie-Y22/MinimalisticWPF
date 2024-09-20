@@ -22,7 +22,7 @@ namespace MinimalisticWPF
             .SetProperty(x => x.HoverBackgroundOpacity, 0.2)
             .ToState();
 
-        public static StateVector<MButtonViewModel> ConditionA = StateVector<MButtonViewModel>.Create()
+        public StateVector<MButtonViewModel> ConditionA { get; set; } = StateVector<MButtonViewModel>.Create()
             .AddCondition(x => x.IsMouseInside, MouseIn, (x) => { x.Duration = 0.2; })
             .AddCondition(x => !x.IsMouseInside, Start, (x) => { x.Duration = 0.2; });
 
