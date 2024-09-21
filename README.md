@@ -8,7 +8,7 @@
 
 ## Change
 <details>
-<summary>V1.5.0</summary>
+<summary>V1.5.0 Soon to be deprecated</summary>
 
   - StateMachineTransfer() changed to support any [where T: class,new()] type
   - State restricts modification. It needs to be a public static field or a public property
@@ -24,12 +24,13 @@
 </details>
 
 <details>
-<summary>V1.5.1</summary>
+<summary>V1.5.1 Soon to be deprecated</summary>
 
   - Acceleration support
   - Remove some unnecessary object generation operations when the state machine is running
 </details>
 
+<details>
 <summary>V1.5.2</summary>
 
   - Fixed the problem of abnormal animation effect in NET6.0 framework
@@ -514,7 +515,7 @@ Set((x)=>
 
 ## 修改 
 <details>
-<summary>V1.5.0</summary>
+<summary>V1.5.0 即将弃用</summary>
 
   - StateMachineTransfer() 改为支持任何 [ where T : class ,new() ] 类型
   - State限制修改，需要是公开静态字段或公开属性
@@ -530,12 +531,13 @@ Set((x)=>
 </details>
 
 <details>
-<summary>V1.5.1</summary>
+<summary>V1.5.1 即将弃用</summary>
 
   - Acceleration 加速度支持
   - 删除状态机运作时,部分不必要的对象生成操作 
 </details>
 
+<details>
 <summary>V1.5.2</summary>
 
   - 修复了NET6.0框架下动画效果异常的问题
