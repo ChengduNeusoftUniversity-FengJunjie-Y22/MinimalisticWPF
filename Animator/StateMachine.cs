@@ -330,7 +330,7 @@ namespace MinimalisticWPF
             /// <summary>
             /// 执行动画
             /// </summary>
-            internal async void Interpret()
+            internal void Interpret()
             {
                 if (IsStop || IsRunning) { WhileEnded(); return; }
                 IsRunning = true;
@@ -383,7 +383,7 @@ namespace MinimalisticWPF
                         Application.Current.Dispatcher.Invoke(LateUpdate);
                     }
 
-                    await Task.Delay(Acceleration == 0 ? DeltaTime : i < Times.Count & Times.Count > 0 ? Times[i] : DeltaTime);
+                    Thread.Sleep(Acceleration == 0 ? DeltaTime : i < Times.Count & Times.Count > 0 ? Times[i] : DeltaTime);
                 }
 
                 WhileEnded();

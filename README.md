@@ -30,6 +30,11 @@
   - Remove some unnecessary object generation operations when the state machine is running
 </details>
 
+<summary>V1.5.2</summary>
+
+  - Fixed the problem of abnormal animation effect in NET6.0 framework
+</details>
+
 ## Key Features
 - [State Machine System - Create linear transitions to specified properties of specified instances](#StateMachineSystem)
   - [StateMachine]()
@@ -529,6 +534,11 @@ Set((x)=>
 
   - Acceleration 加速度支持
   - 删除状态机运作时,部分不必要的对象生成操作 
+</details>
+
+<summary>V1.5.2</summary>
+
+  - 修复了NET6.0框架下动画效果异常的问题
 </details>
 
 ## 核心功能
