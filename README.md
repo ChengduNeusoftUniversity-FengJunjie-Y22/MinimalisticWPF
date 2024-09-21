@@ -19,7 +19,7 @@
     - Thickness
     - Point
     - ★ ILinearInterpolation (This interface allows any custom type to support state machine transitions)
-## Accessibility
+## Auxiliary Features
 - [ExtensionMethods](#ExtensionMethods)
   - [string]
     - value conversion
