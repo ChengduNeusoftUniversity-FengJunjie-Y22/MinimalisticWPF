@@ -107,7 +107,7 @@ namespace MinimalisticWPF
             {
                 element.StateMachineTransfer()
                     .Add(x => x.Foreground, HoverBrush)
-                    .Set((x) => { x.Duration = 0.27; })
+                    .Set((x) => { x.Duration = 0.4; })
                     .Start();
             }
         }
@@ -118,7 +118,7 @@ namespace MinimalisticWPF
             {
                 element.StateMachineTransfer()
                     .Add(x => x.Foreground, TextBrush)
-                    .Set((x) => { x.Duration = 0.27; })
+                    .Set((x) => { x.Duration = 0.4; })
                     .Start();
             }
         }
