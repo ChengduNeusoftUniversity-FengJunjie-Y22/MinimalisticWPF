@@ -56,6 +56,7 @@ namespace MinimalisticWPF
                             x.Update = Conditions[i].Item3.Update;
                             x.LateUpdate = Conditions[i].Item3.LateUpdate;
                             x.Completed = Conditions[i].Item3.Completed;
+                            x.Acceleration = Conditions[i].Item3.Acceleration;
                         });
                     return;
                 }

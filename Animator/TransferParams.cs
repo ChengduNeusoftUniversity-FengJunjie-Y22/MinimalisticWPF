@@ -55,5 +55,9 @@ namespace MinimalisticWPF
         /// [ 测试参数 ] 若无法响应例如MouseLeave事件,可适当增加此参数(默认:0.008)
         /// </summary>
         public double WaitTime { get; set; } = 0.008;
+        /// <summary>
+        /// 加速度(默认:0)
+        /// </summary>
+        public double Acceleration { get; set; } = 0;
     }
 }

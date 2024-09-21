@@ -6,6 +6,30 @@
 
 # English
 
+## Change
+<details>
+<summary>V1.5.0</summary>
+
+  - StateMachineTransfer() changed to support any [where T: class,new()] type
+  - State restricts modification. It needs to be a public static field or a public property
+  - StateVector restricts modification and requires writing public properties
+  - Support for Transform transitions
+    - Translate
+    - Scale
+    - Rotate
+  - Support for Point transitions
+  - CornerRadius transitions are supported
+  - Supports Thickness transitions
+  - The interface ILinearInterpolation allows custom types as transitionable properties
+</details>
+
+<details>
+<summary>V1.5.1</summary>
+
+  - Acceleration support
+  - Remove some unnecessary object generation operations when the state machine is running
+</details>
+
 ## Key Features
 - [State Machine System - Create linear transitions to specified properties of specified instances](#StateMachineSystem)
   - [StateMachine]()
@@ -49,20 +73,6 @@ The MinimalisticWPF namespace does not include the following services, which wil
 
 [1]: https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF
 [2]: https://www.nuget.org/packages/MinimalisticWPF/
-
-## Change
-- V1.5.0
-  - StateMachineTransfer() changed to support any [where T: class,new()] type
-  - State restricts modification. It needs to be a public static field or a public property
-  - StateVector restricts modification and requires writing public properties
-  - Support for Transform transitions
-    - Translate
-    - Scale
-    - Rotate
-  - Support for Point transitions
-  - CornerRadius transitions are supported
-  - Supports Thickness transitions
-  - The interface ILinearInterpolation allows custom types as transitionable properties
 
 # StateMachineSystem
 - State & StateVecotr is built for MVVM and allows for automatic state switching with preset conditions
@@ -193,7 +203,8 @@ The MinimalisticWPF namespace does not include the following services, which wil
 |IsLast|bool|false| Whether this is the last animation to be executed, if so it will clear the queued animation |
 |IsUnique|bool|true| Should a transition animation that points to the same State continue if one exists |
 |FrameRate|int|165| Animation frame rate |
-|WaitTime|double|0.008| is rarely used, but if you find places where the probability doesn't animate or the probability is twitching, you can increase this value appropriately
+|WaitTime|double|0.008| is rarely used, but if you find places where the probability doesn't animate or the probability is twitching, you can increase this value appropriately|
+|Acceleration|double|0|The waiting time of each frame is shown as a straight line with slope [Acceleration] in the floor plan|
 
 - Use cases
   - Set transition parameters (lambdas) for StateVector
@@ -496,6 +507,30 @@ Set((x)=>
 
 # 中文
 
+## 修改 
+<details>
+<summary>V1.5.0</summary>
+
+  - StateMachineTransfer() 改为支持任何 [ where T : class ,new() ] 类型
+  - State限制修改，需要是公开静态字段或公开属性
+  - StateVector限制修改，需要写作公开属性
+  - 支持Transform过渡
+    - Translate
+    - Scale
+    - Rotate
+  - 支持Point过渡
+  - 支持CornerRadius过渡
+  - 支持Thickness过渡
+  - 接口ILinearInterpolation允许自定义的类型作为可过渡属性
+</details>
+
+<details>
+<summary>V1.5.1</summary>
+
+  - Acceleration 加速度支持
+  - 删除状态机运作时,部分不必要的对象生成操作 
+</details>
+
 ## 核心功能
 - [状态机系统 - 对指定实例的指定属性创建线性过渡](#状态机系统)
     - [StateMachine]() 
@@ -540,19 +575,6 @@ Set((x)=>
 [1]: https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF
 [2]: https://www.nuget.org/packages/MinimalisticWPF/
 
-## Change
-- V1.5.0
-  - StateMachineTransfer() 改为支持任何 [ where T : class ,new() ] 类型
-  - State限制修改，需要是公开静态字段或公开属性
-  - StateVector限制修改，需要写作公开属性
-  - 支持Transform过渡
-    - Translate
-    - Scale
-    - Rotate
-  - 支持Point过渡
-  - 支持CornerRadius过渡
-  - 支持Thickness过渡
-  - 接口ILinearInterpolation允许自定义的类型作为可过渡属性
 ---
 
 # 状态机系统
@@ -681,6 +703,7 @@ Set((x)=>
 |IsUnique|bool|true|如果存在一个指向同一State的过渡动画,是否还要继续执行此动画|
 |FrameRate|int|165|动画帧率|
 |WaitTime|double|0.008|基本用不到,但如果发现有些地方概率无法触发动画或者概率抽搐,则可适当增加这个值|
+|Acceleration|double|0|加速度,使得每一帧的等待时间在平面图中呈现出斜率为Acceleration的直线|
 
 - 应用场景
   - 为StateVector设置过渡参数 ( Lambda )

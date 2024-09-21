@@ -123,10 +123,7 @@ namespace MinimalisticWPF
             Expression<Func<T, double>> propertyLambda,
             double newValue)
         {
-            var compiledLambda = propertyLambda.Compile();
-            var obj = Value;
-
-            if (obj == null)
+            if (Value == null)
             {
                 return this;
             }
@@ -138,7 +135,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                property.SetValue(obj, newValue);
+                property.SetValue(Value, newValue);
                 WhiteList.Add(property.Name);
             }
 
@@ -151,10 +148,7 @@ namespace MinimalisticWPF
             Expression<Func<T, Brush>> propertyLambda,
             Brush newValue)
         {
-            var compiledLambda = propertyLambda.Compile();
-            var obj = Value;
-
-            if (obj == null)
+            if (Value == null)
             {
                 return this;
             }
@@ -166,7 +160,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                property.SetValue(obj, newValue);
+                property.SetValue(Value, newValue);
                 WhiteList.Add(property.Name);
             }
 
@@ -179,10 +173,9 @@ namespace MinimalisticWPF
             Expression<Func<T, Transform>> propertyLambda,
             Transform newValue)
         {
-            var compiledLambda = propertyLambda.Compile();
-            var obj = Value;
+            
 
-            if (obj == null)
+            if(Value==null)
             {
                 return this;
             }
@@ -194,7 +187,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                property.SetValue(obj, newValue);
+                property.SetValue(Value, newValue);
                 WhiteList.Add(property.Name);
             }
 
@@ -206,11 +199,8 @@ namespace MinimalisticWPF
         public TempState<T> SetProperty(
             Expression<Func<T, Point>> propertyLambda,
             Point newValue)
-        {
-            var compiledLambda = propertyLambda.Compile();
-            var obj = Value;
-
-            if (obj == null)
+        {          
+            if(Value==null)
             {
                 return this;
             }
@@ -222,7 +212,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                property.SetValue(obj, newValue);
+                property.SetValue(Value, newValue);
                 WhiteList.Add(property.Name);
             }
 
@@ -235,10 +225,7 @@ namespace MinimalisticWPF
             Expression<Func<T, CornerRadius>> propertyLambda,
             CornerRadius newValue)
         {
-            var compiledLambda = propertyLambda.Compile();
-            var obj = Value;
-
-            if (obj == null)
+            if(Value==null)
             {
                 return this;
             }
@@ -250,7 +237,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                property.SetValue(obj, newValue);
+                property.SetValue(Value, newValue);
                 WhiteList.Add(property.Name);
             }
 
@@ -263,10 +250,7 @@ namespace MinimalisticWPF
             Expression<Func<T, Thickness>> propertyLambda,
             Thickness newValue)
         {
-            var compiledLambda = propertyLambda.Compile();
-            var obj = Value;
-
-            if (obj == null)
+            if(Value==null)
             {
                 return this;
             }
@@ -278,7 +262,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                property.SetValue(obj, newValue);
+                property.SetValue(Value, newValue);
                 WhiteList.Add(property.Name);
             }
 
@@ -291,10 +275,7 @@ namespace MinimalisticWPF
             Expression<Func<T, ILinearInterpolation>> propertyLambda,
             ILinearInterpolation newValue)
         {
-            var compiledLambda = propertyLambda.Compile();
-            var obj = Value;
-
-            if (obj == null)
+            if(Value==null)
             {
                 return this;
             }
@@ -306,7 +287,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                property.SetValue(obj, newValue);
+                property.SetValue(Value, newValue);
                 WhiteList.Add(property.Name);
             }
 

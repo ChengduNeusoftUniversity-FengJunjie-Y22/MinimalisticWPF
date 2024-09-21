@@ -49,7 +49,7 @@ namespace MinimalisticWPF
                 .ToArray();
             ILinearInterpolationProperties = Properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType))
                 .ToArray();
-          
+
             foreach (var state in states)
             {
                 var temp = States.FirstOrDefault(x => x.StateName == state.StateName);
@@ -152,6 +152,7 @@ namespace MinimalisticWPF
             animationInterpreter.Update = TransferParams.Update;
             animationInterpreter.Completed = TransferParams.Completed;
             animationInterpreter.LateUpdate = TransferParams.LateUpdate;
+            animationInterpreter.Acceleration = TransferParams.Acceleration;
 
             if (Application.Current == null)
             {
@@ -324,6 +325,7 @@ namespace MinimalisticWPF
             internal Action? Update { get; set; }
             internal Action? Completed { get; set; }
             internal Action? LateUpdate { get; set; }
+            internal double Acceleration { get; set; } = 0;
 
             /// <summary>
             /// 执行动画
@@ -333,6 +335,8 @@ namespace MinimalisticWPF
                 if (IsStop || IsRunning) { WhileEnded(); return; }
                 IsRunning = true;
                 Machine.Interpreter = this;
+
+                var Times = GetAccDeltaTime((int)Machine.FrameCount);
 
                 if (Application.Current != null && Start != null)
                 {
@@ -359,31 +363,18 @@ namespace MinimalisticWPF
                         for (int k = 0; k < Frams[j].Count; k++)
                         //按同类属性不同名遍历
                         {
-                            Application.Current.Dispatcher.Invoke(() =>
+                            if (IsFrameIndexRight(i, j, k) && Application.Current != null)
                             {
-                                if (Frams.Count > 0 && j >= 0 && j < Frams.Count)
+                                Application.Current.Dispatcher.Invoke(() =>
                                 {
-                                    if (Frams[j].Count > 0 && k >= 0 && k < Frams[j].Count)
-                                    {
-                                        if (Frams[j][k].Item2.Count > 0 && i >= 0 && i < Frams[j][k].Item2.Count)
-                                        {
-                                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
-                                        }
-                                        else
-                                        {
-                                            WhileEnded();
-                                        }
-                                    }
-                                    else
-                                    {
-                                        WhileEnded();
-                                    }
-                                }
-                                else
-                                {
-                                    WhileEnded();
-                                }
-                            });
+                                    Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                });
+                            }
+                            else
+                            {
+                                WhileEnded();
+                            }
+
                         }
                     }
 
@@ -392,7 +383,7 @@ namespace MinimalisticWPF
                         Application.Current.Dispatcher.Invoke(LateUpdate);
                     }
 
-                    await Task.Delay(DeltaTime);
+                    await Task.Delay(Acceleration == 0 ? DeltaTime : i < Times.Count & Times.Count > 0 ? Times[i] : DeltaTime);
                 }
 
                 WhileEnded();
@@ -428,6 +419,56 @@ namespace MinimalisticWPF
                     Machine.InterpreterScheduler(newAni.Item1, newAni.Item2);
                 }
                 Machine.CurrentState = null;
+            }
+
+            /// <summary>
+            /// 计算应用加速度后的时间间隔
+            /// </summary>
+            internal List<int> GetAccDeltaTime(int Steps)
+            {
+                List<int> result = new List<int>();
+                if (Acceleration == 0) return result;
+
+                var acc = Math.Clamp(Acceleration, -1, 1);
+                var start = DeltaTime * (1 + acc);
+                var end = DeltaTime * (1 - acc);
+                var delta = end - start;
+                for (int i = 0; i < Steps; i++)
+                {
+                    var t = (double)i / (Steps - 1);
+                    result.Add((int)(start + t * delta));
+                }
+
+                return result;
+            }
+
+            /// <summary>
+            /// 判断当前循环步骤是否可以正确访问帧序列
+            /// </summary>
+            internal bool IsFrameIndexRight(int i, int j, int k)
+            {
+                if (Frams.Count > 0 && j >= 0 && j < Frams.Count)
+                {
+                    if (Frams[j].Count > 0 && k >= 0 && k < Frams[j].Count)
+                    {
+                        if (Frams[j][k].Item2.Count > 0 && i >= 0 && i < Frams[j][k].Item2.Count)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
     }
