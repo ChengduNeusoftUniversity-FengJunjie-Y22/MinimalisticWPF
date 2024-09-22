@@ -269,7 +269,7 @@ Set((x)=>
             .SetProperty(x => x.HoverBackgroundOpacity, 0.2)
             .ToState();
 
-        public StateVector<MButtonViewModel> ConditionA = StateVector<MButtonViewModel>.Create()
+        public StateVector<MButtonViewModel> Condition { get; set; } = StateVector<MButtonViewModel>.Create()
             .AddCondition(x => x.IsMouseInside, MouseIn, (x) => { x.Duration = 0.2; })
             .AddCondition(x => !x.IsMouseInside, Start, (x) => { x.Duration = 0.2; });
 
@@ -772,7 +772,7 @@ Set((x)=>
             .SetProperty(x => x.HoverBackgroundOpacity, 0.2)
             .ToState();
 
-        public StateVector<MButtonViewModel> ConditionA = StateVector<MButtonViewModel>.Create()
+        public StateVector<MButtonViewModel> Condition { get; set; } = StateVector<MButtonViewModel>.Create()
             .AddCondition(x => x.IsMouseInside, MouseIn, (x) => { x.Duration = 0.2; })
             .AddCondition(x => !x.IsMouseInside, Start, (x) => { x.Duration = 0.2; });
 
