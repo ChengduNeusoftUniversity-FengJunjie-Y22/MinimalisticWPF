@@ -14,10 +14,10 @@ namespace MinimalisticWPF
         public MButtonViewModel() { }
 
         public static State Start = State.FromObject(new MButtonViewModel())
-            .SetName("defualt")
+            .SetName("default")
             .SetProperty(x => x.HoverBackgroundOpacity, 0)
             .ToState();
-        public static State MouseIn = State.FromObject(new MButtonViewModel())
+        public static State MouseIn = State.FromType<MButtonViewModel>()
             .SetName("mouseInside")
             .SetProperty(x => x.HoverBackgroundOpacity, 0.2)
             .ToState();

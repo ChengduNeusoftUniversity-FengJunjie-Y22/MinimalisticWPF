@@ -17,6 +17,7 @@
                                 TextBrush="White"
                                 EdgeBrush="White"
                                 HoverBackground="White"
+                                BackBrush="White"
                                 CornerRadius="0"/>
     </UserControl.DataContext>
 

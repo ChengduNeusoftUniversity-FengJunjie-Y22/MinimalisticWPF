@@ -346,7 +346,7 @@ namespace MinimalisticWPF
                 for (int i = 0; i < Machine.FrameCount; i++)
                 //按帧遍历
                 {
-                    if (IsStop || Application.Current == null)
+                    if (IsStop || Application.Current == null || Machine.Interpreter != this)
                     {
                         WhileEnded();
                         return;

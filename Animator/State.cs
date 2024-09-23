@@ -8,6 +8,7 @@ namespace MinimalisticWPF
 {
     public class State
     {
+        internal State() { }
         internal State(object Target, ICollection<string> WhileList)
         {
             ActualType = Target.GetType();
@@ -66,7 +67,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录状态对象的真实类型
         /// </summary>
-        public Type ActualType { get; internal set; }
+        public Type? ActualType { get; internal set; } = default;
         /// <summary>
         /// 记录的状态值
         /// </summary>
@@ -90,18 +91,26 @@ namespace MinimalisticWPF
             }
         }
         /// <summary>
-        /// 开始记录指定对象的状态
+        /// 具备额外的反射开销,可自动记录对象当前所有满足条件的属性及其值到Values中
         /// </summary>
-        public static TempState<T> FromObject<T>(T Target) where T : class
+        public static ObjectTempState<T> FromObject<T>(T Target) where T : class
         {
-            TempState<T> result = new TempState<T>(Target);
+            ObjectTempState<T> result = new ObjectTempState<T>(Target);
             return result;
+        }
+        /// <summary>
+        /// 不具备额外的反射开销,直接为Values添加键值对
+        /// </summary>
+        public static TypeTempState<T> FromType<T>() where T : class
+        {
+            TypeTempState<T> state = new TypeTempState<T>();
+            return state;
         }
     }
 
-    public class TempState<T>
+    public class ObjectTempState<T>
     {
-        internal TempState(T target) { Value = target; }
+        internal ObjectTempState(T target) { Value = target; }
 
         internal T Value { get; set; }
         internal string Name { get; set; } = string.Empty;
@@ -110,7 +119,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录该状态的名称
         /// </summary>
-        public TempState<T> SetName(string stateName)
+        public ObjectTempState<T> SetName(string stateName)
         {
             Name = stateName;
             return this;
@@ -119,7 +128,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录新状态对应的属性值
         /// </summary>
-        public TempState<T> SetProperty(
+        public ObjectTempState<T> SetProperty(
             Expression<Func<T, double>> propertyLambda,
             double newValue)
         {
@@ -144,7 +153,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录新状态对应的属性值
         /// </summary>
-        public TempState<T> SetProperty(
+        public ObjectTempState<T> SetProperty(
             Expression<Func<T, Brush>> propertyLambda,
             Brush newValue)
         {
@@ -169,13 +178,13 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录新状态对应的属性值
         /// </summary>
-        public TempState<T> SetProperty(
+        public ObjectTempState<T> SetProperty(
             Expression<Func<T, Transform>> propertyLambda,
             Transform newValue)
         {
-            
 
-            if(Value==null)
+
+            if (Value == null)
             {
                 return this;
             }
@@ -196,11 +205,11 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录新状态对应的属性值
         /// </summary>
-        public TempState<T> SetProperty(
+        public ObjectTempState<T> SetProperty(
             Expression<Func<T, Point>> propertyLambda,
             Point newValue)
-        {          
-            if(Value==null)
+        {
+            if (Value == null)
             {
                 return this;
             }
@@ -221,11 +230,11 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录新状态对应的属性值
         /// </summary>
-        public TempState<T> SetProperty(
+        public ObjectTempState<T> SetProperty(
             Expression<Func<T, CornerRadius>> propertyLambda,
             CornerRadius newValue)
         {
-            if(Value==null)
+            if (Value == null)
             {
                 return this;
             }
@@ -246,11 +255,11 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录新状态对应的属性值
         /// </summary>
-        public TempState<T> SetProperty(
+        public ObjectTempState<T> SetProperty(
             Expression<Func<T, Thickness>> propertyLambda,
             Thickness newValue)
         {
-            if(Value==null)
+            if (Value == null)
             {
                 return this;
             }
@@ -271,11 +280,11 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录新状态对应的属性值
         /// </summary>
-        public TempState<T> SetProperty(
+        public ObjectTempState<T> SetProperty(
             Expression<Func<T, ILinearInterpolation>> propertyLambda,
             ILinearInterpolation newValue)
         {
-            if(Value==null)
+            if (Value == null)
             {
                 return this;
             }
@@ -296,10 +305,14 @@ namespace MinimalisticWPF
 
 
         /// <summary>
-        /// 记录完毕
+        /// 完成记录
         /// </summary>
-        public State ToState()
+        /// <param name="IsWhiteList">是否启用白名单</param>
+        /// <returns>State</returns>
+        public State ToState(bool IsWhiteList = true)
         {
+            if (!IsWhiteList) WhiteList.Clear();
+
             State result = new State(Value, WhiteList);
             result.StateName = Name;
             return result;
@@ -309,6 +322,183 @@ namespace MinimalisticWPF
             State result = new State(Value, whiteList);
             result.StateName = Name;
             return result;
+        }
+    }
+
+    public class TypeTempState<T>
+    {
+        internal TypeTempState() { Target = new State(); }
+
+        internal State Target { get; set; }
+
+        public TypeTempState<T> SetName(string name)
+        {
+            Target.StateName = name;
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TypeTempState<T> SetProperty(
+            Expression<Func<T, double>> propertyLambda,
+            double newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(double))
+                {
+                    return this;
+                }
+                if (Target.Values.ContainsKey(property.Name))
+                {
+                    Target.Values[property.Name] = newValue;
+                }
+                else
+                {
+                    Target.Values.Add(property.Name, newValue);
+                }
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TypeTempState<T> SetProperty(
+            Expression<Func<T, Brush>> propertyLambda,
+            Brush newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(Brush))
+                {
+                    return this;
+                }
+                if (Target.Values.ContainsKey(property.Name))
+                {
+                    Target.Values[property.Name] = newValue;
+                }
+                else
+                {
+                    Target.Values.Add(property.Name, newValue);
+                }
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TypeTempState<T> SetProperty(
+            Expression<Func<T, CornerRadius>> propertyLambda,
+            CornerRadius newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(CornerRadius))
+                {
+                    return this;
+                }
+                if (Target.Values.ContainsKey(property.Name))
+                {
+                    Target.Values[property.Name] = newValue;
+                }
+                else
+                {
+                    Target.Values.Add(property.Name, newValue);
+                }
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TypeTempState<T> SetProperty(
+            Expression<Func<T, Thickness>> propertyLambda,
+            Thickness newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(Thickness))
+                {
+                    return this;
+                }
+                if (Target.Values.ContainsKey(property.Name))
+                {
+                    Target.Values[property.Name] = newValue;
+                }
+                else
+                {
+                    Target.Values.Add(property.Name, newValue);
+                }
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TypeTempState<T> SetProperty(
+            Expression<Func<T, Transform>> propertyLambda,
+            Transform newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(Transform))
+                {
+                    return this;
+                }
+                if (Target.Values.ContainsKey(property.Name))
+                {
+                    Target.Values[property.Name] = newValue;
+                }
+                else
+                {
+                    Target.Values.Add(property.Name, newValue);
+                }
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TypeTempState<T> SetProperty(
+            Expression<Func<T, ILinearInterpolation>> propertyLambda,
+            ILinearInterpolation newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(ILinearInterpolation))
+                {
+                    return this;
+                }
+                if (Target.Values.ContainsKey(property.Name))
+                {
+                    Target.Values[property.Name] = newValue;
+                }
+                else
+                {
+                    Target.Values.Add(property.Name, newValue);
+                }
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// 记录完成
+        /// </summary>
+        public State ToState()
+        {
+            return Target;
         }
     }
 }

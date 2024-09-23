@@ -36,6 +36,23 @@
   - Fixed the problem of abnormal animation effect in NET6.0 framework
 </details>
 
+<details>
+<summary>V1.5.3</summary>
+
+  - State performance optimization
+    - Object-based
+      - A lot of reflection/LINQ during State initialization
+      - Allows automatic logging of all supported properties of an object
+    - Type-based
+      - Do not perform any reflection/LINQ operations during State initialization
+      - You can only manually specify the properties that need to be modified
+    - Use
+      - State.FromType<>() / StateMachineTransfer( StateRecordModes.Type )
+      - State.FromObject() / StateMachineTransfer( StateRecordModes.Object )
+   - AnimationInterpreter logic optimization
+     - Addressed twitching issues that could be caused by frequent State switching
+</details>
+
 ## Key Features
 - [State Machine System - Create linear transitions to specified properties of specified instances](#StateMachineSystem)
   - [StateMachine]()
@@ -541,6 +558,23 @@ Set((x)=>
 <summary>V1.5.2</summary>
 
   - 修复了NET6.0框架下动画效果异常的问题
+</details>
+
+<details>
+<summary>V1.5.3</summary>
+
+  - State 性能优化
+    - 基于 Object
+      - 在State初始化时执行了大量反射、LINQ操作
+      - 允许自动化地记录一个object所有受支持的属性
+    - 基于 Type
+      - 在State初始化时不执行任何反射、LINQ操作
+      - 只能手动指定需要修改的属性
+    - 使用
+      - State.FromType<>() / StateMachineTransfer( StateRecordModes.Type )
+      - State.FromObject() / StateMachineTransfer( StateRecordModes.Object )
+  - AnimationInterpreter 逻辑优化
+    - 解决了频繁切换State可能导致的抽搐问题
 </details>
 
 ## 核心功能

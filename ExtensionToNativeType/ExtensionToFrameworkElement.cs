@@ -11,6 +11,12 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
+public enum StateRecordModes
+{
+    Object,
+    Type
+}
+
 namespace MinimalisticWPF
 {
     public static class ExtensionToFrameworkElement
@@ -56,9 +62,10 @@ namespace MinimalisticWPF
         /// <summary>
         /// 开始创建基于StateMachine的过渡效果
         /// </summary>
-        public static TempStoryBoard<T> StateMachineTransfer<T>(this T element) where T : class, new()
+        /// <param name="mode">记录状态值的过程是否具备额外的反射开销</param>
+        public static TempTransfer<T> StateMachineTransfer<T>(this T element, StateRecordModes mode = StateRecordModes.Type) where T : class, new()
         {
-            TempStoryBoard<T> tempStoryBoard = new TempStoryBoard<T>(element);
+            TempTransfer<T> tempStoryBoard = new TempTransfer<T>(element, mode);
             return tempStoryBoard;
         }
 
@@ -68,28 +75,21 @@ namespace MinimalisticWPF
         /// <typeparam name="T">DataContext的真实类型</typeparam>
         public static StateMachine StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class, new()
         {
-            var vectorInterface = viewModel as IConditionalTransfer<T>;
-            //检查datacontext是否是T类型的IConditionalTransfer<T>对象
-            if (viewModel == null) throw new Exception($"The [ DataContext ] Is Not A [ {nameof(T)} ]");
-            if (vectorInterface == null) throw new Exception($"The [ {nameof(T)} ] Is Not A [ {nameof(IConditionalTransfer<T>)} ]");
+            var vectorInterface = viewModel as IConditionalTransfer<T> ?? throw new ArgumentException($"The [ {nameof(T)} ] Is Not A [ {nameof(IConditionalTransfer<T>)} ]");
+            if (viewModel == null) throw new ArgumentException($"The [ DataContext ] Is Not A [ {nameof(T)} ]");
 
             var StateFields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Static)
                 .Where(x => x.FieldType == typeof(State)).ToArray();
             var StateProperties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(x => x.PropertyType == typeof(State)).ToArray();
-            //反射ViewModel中所有定义的State对象
             var StateVectorField = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .FirstOrDefault(x => x.PropertyType == typeof(StateVector<T>));
-            //反射ViewModel中首个定义的StateVector<T>对象
 
             var FieldStates = StateFields.Select(x => (State?)x.GetValue(viewModel)).ToArray();
             var PropertyStates = StateProperties.Select(x => (State?)x.GetValue(viewModel)).ToArray();
             var States = PropertyStates.Concat(FieldStates);
-            //尝试从ViewModel获取具体的State
             var StateVector = (StateVector<T>?)StateVectorField?.GetValue(viewModel);
-            //尝试从ViewModel获取具体的StateVector<T>
 
-            //尝试激活状态机系统与条件切换系统
             var machine = StateMachine.Create(viewModel);
             vectorInterface.StateMachine = machine;
             if (States != null)
@@ -111,13 +111,14 @@ namespace MinimalisticWPF
         }
     }
 
-    public class TempStoryBoard<T> where T : class, new()
+    public class TempTransfer<T> where T : class, new()
     {
-        public static List<Tuple<StateMachine, object>> MachinePool = new List<Tuple<StateMachine, object>>();
+        public static List<Tuple<StateMachine, object>> MachinePool { get; internal set; } = new List<Tuple<StateMachine, object>>();
 
-        internal TempStoryBoard(T target)
+        internal TempTransfer(T target, StateRecordModes mode)
         {
             Target = target;
+            Mode = mode;
 
             var temp = MachinePool.FirstOrDefault(x => x.Item2 == target);
             if (temp != null)
@@ -135,6 +136,8 @@ namespace MinimalisticWPF
 
         internal T Target { get; set; }
 
+        StateRecordModes Mode { get; set; } = StateRecordModes.Type;
+
         List<string> WhiteList { get; set; } = new List<string>();
 
         internal StateMachine Machine { get; set; }
@@ -146,7 +149,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 添加新状态值
         /// </summary>
-        public TempStoryBoard<T> Add(Expression<Func<T, double>> propertyLambda, double newValue)
+        public TempTransfer<T> Add(Expression<Func<T, double>> propertyLambda, double newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -163,7 +166,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 添加新状态值
         /// </summary>
-        public TempStoryBoard<T> Add(Expression<Func<T, Brush>> propertyLambda, Brush newValue)
+        public TempTransfer<T> Add(Expression<Func<T, Brush>> propertyLambda, Brush newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -180,7 +183,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 添加新状态值
         /// </summary>
-        public TempStoryBoard<T> Add(Expression<Func<T, Transform>> propertyLambda, params Transform[] newValue)
+        public TempTransfer<T> Add(Expression<Func<T, Transform>> propertyLambda, params Transform[] newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -200,7 +203,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 添加新状态值
         /// </summary>
-        public TempStoryBoard<T> Add(Expression<Func<T, Point>> propertyLambda, Point newValue)
+        public TempTransfer<T> Add(Expression<Func<T, Point>> propertyLambda, Point newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -217,7 +220,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 添加新状态值
         /// </summary>
-        public TempStoryBoard<T> Add(Expression<Func<T, CornerRadius>> propertyLambda, CornerRadius newValue)
+        public TempTransfer<T> Add(Expression<Func<T, CornerRadius>> propertyLambda, CornerRadius newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -234,7 +237,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 添加新状态值
         /// </summary>
-        public TempStoryBoard<T> Add(Expression<Func<T, Thickness>> propertyLambda, Thickness newValue)
+        public TempTransfer<T> Add(Expression<Func<T, Thickness>> propertyLambda, Thickness newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -251,7 +254,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 添加新状态值
         /// </summary>
-        public TempStoryBoard<T> Add(Expression<Func<T, ILinearInterpolation>> propertyLambda, ILinearInterpolation newValue)
+        public TempTransfer<T> Add(Expression<Func<T, ILinearInterpolation>> propertyLambda, ILinearInterpolation newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -268,7 +271,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 设置本次过渡的参数
         /// </summary>
-        public TempStoryBoard<T> Set(Action<TransferParams>? modifyParams = null)
+        public TempTransfer<T> Set(Action<TransferParams>? modifyParams = null)
         {
             modifyParams?.Invoke(TransferParams);
             return this;
@@ -276,17 +279,54 @@ namespace MinimalisticWPF
         /// <summary>
         /// 启动过渡
         /// </summary>
-        public T Start()
+        /// <param name="IsWhiteList">反射过程是否启用白名单</param>
+        public T Start(bool IsWhiteList = true)
         {
-            T sta = new T();
-            foreach (var item in States)
+            if (Mode == StateRecordModes.Type)
             {
-                item.Item1.SetValue(sta, item.Item2);
+                State temp = new State();
+                temp.StateName = "temp";
+                temp.ActualType = typeof(T);
+                foreach (var item in States)
+                {
+                    if (temp.Values.ContainsKey(item.Item1.Name))
+                    {
+                        temp.Values[item.Item1.Name] = item.Item2;
+                    }
+                    else
+                    {
+                        temp.Values.Add(item.Item1.Name, item.Item2);
+                    }
+                }
+
+                Machine.States.Add(temp);
+
+                SendMessageToMachine();
+
+                return Target;
             }
-            State temp = State.FromObject(sta)
-                .SetName("temp")
-                .ToState(WhiteList);
-            Machine.States.Add(temp);
+            else
+            {
+                if (!IsWhiteList) WhiteList.Clear();
+
+                T sta = new T();
+                foreach (var item in States)
+                {
+                    item.Item1.SetValue(sta, item.Item2);
+                }
+                State temp = State.FromObject(sta)
+                    .SetName("temp")
+                    .ToState(WhiteList);
+
+                Machine.States.Add(temp);
+
+                SendMessageToMachine();
+
+                return Target;
+            }
+        }
+        void SendMessageToMachine()
+        {
             if (TransferParams == null)
             {
                 Machine.Transfer("temp", (x) => x.Duration = 0);
@@ -309,7 +349,6 @@ namespace MinimalisticWPF
                             x.Acceleration = TransferParams.Acceleration;
                         });
             }
-            return Target;
         }
     }
 }
