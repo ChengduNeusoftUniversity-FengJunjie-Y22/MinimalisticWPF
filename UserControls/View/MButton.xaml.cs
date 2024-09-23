@@ -14,6 +14,23 @@ namespace MinimalisticWPF
             this.StateMachineLoading(ViewModel);
         }
 
+        private bool _iseol = false;
+        public bool IsEdgeOpacityLocked
+        {
+            get => _iseol;
+            set
+            {
+                if (_iseol != value)
+                {
+                    _iseol = value;
+                    if (value)
+                    {
+                        FixedBorder.Opacity = 1;
+                    }
+                }
+            }
+        }
+
         public double WiseHeight
         {
             get => ViewModel.Height;
@@ -83,11 +100,21 @@ namespace MinimalisticWPF
         private void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
             ViewModel.IsMouseInside = true;
+            if (IsEdgeOpacityLocked) return;
+            this.FixedBorder.StateMachineTransfer()
+                .Add(x => x.Opacity, 1)
+                .Set((x) => { x.Duration = 0.5; })
+                .Start();
         }
 
         private void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
             ViewModel.IsMouseInside = false;
+            if (IsEdgeOpacityLocked) return;
+            this.FixedBorder.StateMachineTransfer()
+                .Add(x => x.Opacity, 0)
+                .Set((x) => { x.Duration = 0.5; })
+                .Start();
         }
     }
 }

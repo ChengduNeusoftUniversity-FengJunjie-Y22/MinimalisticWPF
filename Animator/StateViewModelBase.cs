@@ -20,13 +20,18 @@ namespace MinimalisticWPF
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+        public T? Target { get; set; }
         public StateMachine? StateMachine { get; set; }
         public StateVector<T>? StateVector { get; set; }
         public void OnConditionsChecked()
         {
-            if (StateVector != null && StateMachine != null)
+            if (Target == null)
             {
-                StateVector?.Check(this as T, StateMachine);
+                Target = this as T;
+            }
+            if (StateVector != null && StateMachine != null && Target != null)
+            {
+                StateVector?.Check(Target, StateMachine);
             }
         }
     }

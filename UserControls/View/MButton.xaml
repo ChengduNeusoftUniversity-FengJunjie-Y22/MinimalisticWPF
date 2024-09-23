@@ -17,7 +17,7 @@
                                 TextBrush="White"
                                 EdgeBrush="White"
                                 HoverBackground="White"
-                                CornerRadius="10"/>
+                                CornerRadius="0"/>
     </UserControl.DataContext>
 
     <Grid>
@@ -26,6 +26,7 @@
                 CornerRadius="{Binding CornerRadius}"
                 BorderThickness="{Binding EdgeThickness}"
                 BorderBrush="{Binding EdgeBrush}"
+                Opacity="0"
                 ClipToBounds="True"/>
         <Border x:Name="BackgroundBorder"
                 Opacity="{Binding HoverBackgroundOpacity}"

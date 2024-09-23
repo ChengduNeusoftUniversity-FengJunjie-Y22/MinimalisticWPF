@@ -16,8 +16,8 @@ namespace MinimalisticWPF.ExtensionToNativeType
         /// </summary>
         public static RotateTransform CenterTo(this RotateTransform source, FrameworkElement target)
         {
-            var x = target.ActualWidth / 2;
-            var y = target.ActualHeight / 2;
+            var x = target.Width / 2;
+            var y = target.Height / 2;
             source.CenterX = x;
             source.CenterY = y;
 
@@ -29,8 +29,8 @@ namespace MinimalisticWPF.ExtensionToNativeType
         /// </summary>
         public static ScaleTransform CenterTo(this ScaleTransform source, FrameworkElement target)
         {
-            var x = target.ActualWidth / 2;
-            var y = target.ActualHeight / 2;
+            var x = target.Width / 2;
+            var y = target.Height / 2;
             source.CenterX = x;
             source.CenterY = y;
 
