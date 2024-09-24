@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -63,7 +64,7 @@ namespace MinimalisticWPF
         /// 开始创建基于StateMachine的过渡效果
         /// </summary>
         /// <param name="mode">记录状态值的过程是否具备额外的反射开销</param>
-        public static TempTransfer<T> StateMachineTransfer<T>(this T element, StateRecordModes mode = StateRecordModes.Type) where T : class, new()
+        public static TempTransfer<T> StateMachineTransfer<T>(this T element, StateRecordModes mode = StateRecordModes.Type) where T : class
         {
             TempTransfer<T> tempStoryBoard = new TempTransfer<T>(element, mode);
             return tempStoryBoard;
@@ -73,7 +74,7 @@ namespace MinimalisticWPF
         /// 尝试为对象的DataContext加载状态机
         /// </summary>
         /// <typeparam name="T">DataContext的真实类型</typeparam>
-        public static StateMachine StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class, new()
+        public static StateMachine StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class
         {
             var vectorInterface = viewModel as IConditionalTransfer<T> ?? throw new ArgumentException($"The [ {nameof(T)} ] Is Not A [ {nameof(IConditionalTransfer<T>)} ]");
             if (viewModel == null) throw new ArgumentException($"The [ DataContext ] Is Not A [ {nameof(T)} ]");
@@ -109,9 +110,38 @@ namespace MinimalisticWPF
 
             return machine;
         }
+
+        /// <summary>
+        /// 对特定对象判断单个条件并自动执行过渡效果
+        /// </summary>
+        /// <param name="target">目标实例</param>
+        /// <param name="condition">条件语句</param>
+        /// <param name="targetState">满足条件时自动切换到的状态</param>
+        /// <param name="set">参数设置</param>
+        public static void Check<T>(this T target, Expression<Func<T, bool>> condition, State targetState, Action<TransferParams>? set = default) where T : class
+        {
+            var checker = condition.Compile();
+            if (checker == null) return;
+
+            var stateMachine = TempTransfer<T>.MachinePool.Where(x => x.Item2 == target).Select(x => x.Item1).FirstOrDefault();
+            if (stateMachine == null) return;
+
+            if (checker(target))
+            {
+                stateMachine.Transfer(targetState.StateName, set);
+            }
+        }
+
+        /// <summary>
+        /// 深拷贝
+        /// </summary>
+        public static T? DeepClone<T>(this T obj) where T : class
+        {
+            return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(obj));
+        }
     }
 
-    public class TempTransfer<T> where T : class, new()
+    public class TempTransfer<T> where T : class
     {
         public static List<Tuple<StateMachine, object>> MachinePool { get; internal set; } = new List<Tuple<StateMachine, object>>();
 
@@ -309,7 +339,8 @@ namespace MinimalisticWPF
             {
                 if (!IsWhiteList) WhiteList.Clear();
 
-                T sta = new T();
+                var sta = Target.DeepClone() ?? throw new ArgumentException("When using the Object-based record mode, there is no way to make a deep copy of the target Object");
+
                 foreach (var item in States)
                 {
                     item.Item1.SetValue(sta, item.Item2);
