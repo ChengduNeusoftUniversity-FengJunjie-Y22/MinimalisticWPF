@@ -137,7 +137,15 @@ namespace MinimalisticWPF
         /// </summary>
         public static T? DeepClone<T>(this T obj) where T : class
         {
-            return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(obj));
+            try
+            {
+                string jsonString = JsonSerializer.Serialize(obj);
+                return JsonSerializer.Deserialize<T>(jsonString);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 
