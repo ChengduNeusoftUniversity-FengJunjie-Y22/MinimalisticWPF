@@ -64,7 +64,7 @@ namespace MinimalisticWPF
         /// 开始创建基于StateMachine的过渡效果
         /// </summary>
         /// <param name="mode">记录状态值的过程是否具备额外的反射开销</param>
-        public static TempTransfer<T> StateMachineTransfer<T>(this T element, StateRecordModes mode = StateRecordModes.Type) where T : class
+        public static TempTransfer<T> StateMachineTransfer<T>(this T element, StateRecordModes mode = StateRecordModes.Type) where T : class, new()
         {
             TempTransfer<T> tempStoryBoard = new TempTransfer<T>(element, mode);
             return tempStoryBoard;
@@ -116,40 +116,15 @@ namespace MinimalisticWPF
         /// </summary>
         /// <param name="target">目标实例</param>
         /// <param name="condition">条件语句</param>
-        /// <param name="targetState">满足条件时自动切换到的状态</param>
-        /// <param name="set">参数设置</param>
-        public static void Check<T>(this T target, Expression<Func<T, bool>> condition, State targetState, Action<TransferParams>? set = default) where T : class
+        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition)
         {
             var checker = condition.Compile();
-            if (checker == null) return;
-
-            var stateMachine = TempTransfer<T>.MachinePool.Where(x => x.Item2 == target).Select(x => x.Item1).FirstOrDefault();
-            if (stateMachine == null) return;
-
-            if (checker(target))
-            {
-                stateMachine.Transfer(targetState.StateName, set);
-            }
-        }
-
-        /// <summary>
-        /// 深拷贝
-        /// </summary>
-        public static T? DeepClone<T>(this T obj) where T : class
-        {
-            try
-            {
-                string jsonString = JsonSerializer.Serialize(obj);
-                return JsonSerializer.Deserialize<T>(jsonString);
-            }
-            catch
-            {
-                return null;
-            }
+            if (checker == null) return false;
+            return checker(target);
         }
     }
 
-    public class TempTransfer<T> where T : class
+    public class TempTransfer<T> where T : class, new()
     {
         public static List<Tuple<StateMachine, object>> MachinePool { get; internal set; } = new List<Tuple<StateMachine, object>>();
 
@@ -347,7 +322,7 @@ namespace MinimalisticWPF
             {
                 if (!IsWhiteList) WhiteList.Clear();
 
-                var sta = Target.DeepClone() ?? throw new ArgumentException("When using the Object-based record mode, there is no way to make a deep copy of the target Object");
+                var sta = new T();
 
                 foreach (var item in States)
                 {

@@ -31,13 +31,13 @@
 </details>
 
 <details>
-<summary>V1.5.2</summary>
+<summary>V1.5.2 Soon to be deprecated</summary>
 
   - Fixed the problem of abnormal animation effect in NET6.0 framework
 </details>
 
 <details>
-<summary>V1.5.3</summary>
+<summary>V1.5.3 Soon to be deprecated</summary>
 
   - State performance optimization
     - Object-based
@@ -51,6 +51,13 @@
       - State.FromObject() / StateMachineTransfer( StateRecordModes.Object )
    - AnimationInterpreter logic optimization
      - Addressed twitching issues that could be caused by frequent State switching
+</details>
+
+<details>
+<summary>V1.5.4</summary>
+
+  - Fixed interpolation algorithm provided by ILinearInterpolation
+    - Gradient results may be distorted when the frame rate is between 57 and 61
 </details>
 
 ## Key Features
@@ -555,13 +562,13 @@ Set((x)=>
 </details>
 
 <details>
-<summary>V1.5.2</summary>
+<summary>V1.5.2即将弃用</summary>
 
   - 修复了NET6.0框架下动画效果异常的问题
 </details>
 
 <details>
-<summary>V1.5.3</summary>
+<summary>V1.5.3即将弃用</summary>
 
   - State 性能优化
     - 基于 Object
@@ -575,6 +582,13 @@ Set((x)=>
       - State.FromObject() / StateMachineTransfer( StateRecordModes.Object )
   - AnimationInterpreter 逻辑优化
     - 解决了频繁切换State可能导致的抽搐问题
+</details>
+
+<details>
+<summary>V1.5.4</summary>
+
+  - 修正 ILinearInterpolation 提供的插值算法
+    - 帧率处于 57~61 时，渐变结果可能失真
 </details>
 
 ## 核心功能

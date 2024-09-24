@@ -40,7 +40,7 @@ namespace MinimalisticWPF
             d2 = d2 == null || d2 == double.NaN ? 0 : d2;
             var delta = d2 - d1;
 
-            for (var i = 0; i <= steps; i++)
+            for (var i = 0; i < steps; i++)
             {
                 var t = (double)(i + 1) / steps;
                 result.Add(d1 + t * delta);
@@ -61,7 +61,7 @@ namespace MinimalisticWPF
             color1 = color1 ?? new Color();
             color2 = color2 ?? new Color();
 
-            for (var i = 0; i <= steps; i++)
+            for (var i = 0; i < steps; i++)
             {
                 var t = (double)(i + 1) / steps;
                 var r = (byte)(color1.Value.R + t * (color2.Value.R - color1.Value.R));
@@ -83,7 +83,7 @@ namespace MinimalisticWPF
             Matrix matrix1 = ((Transform)(start ?? new TransformGroup())).Value;
             Matrix matrix2 = ((Transform)(end ?? new TransformGroup())).Value;
 
-            for (int i = 0; i <= steps; i++)
+            for (int i = 0; i < steps; i++)
             {
                 var t = (double)(i + 1) / steps;
 
@@ -112,7 +112,7 @@ namespace MinimalisticWPF
             var point1 = start as Point? ?? new Point(0, 0);
             var point2 = end as Point? ?? new Point(0, 0);
 
-            for (var i = 0; i <= steps; i++)
+            for (var i = 0; i < steps; i++)
             {
                 var t = (double)(i + 1) / steps;
                 var x = point1.X + t * (point2.X - point1.X);
@@ -133,7 +133,7 @@ namespace MinimalisticWPF
             var thickness1 = start as Thickness? ?? new Thickness(0);
             var thickness2 = end as Thickness? ?? new Thickness(0);
 
-            for (var i = 0; i <= steps; i++)
+            for (var i = 0; i < steps; i++)
             {
                 var t = (double)(i + 1) / steps;
                 var left = thickness1.Left + t * (thickness2.Left - thickness1.Left);
@@ -156,7 +156,7 @@ namespace MinimalisticWPF
             var radius1 = start as CornerRadius? ?? new CornerRadius(0);
             var radius2 = end as CornerRadius? ?? new CornerRadius(0);
 
-            for (var i = 0; i <= steps; i++)
+            for (var i = 0; i < steps; i++)
             {
                 var t = (double)(i + 1) / steps;
                 var topLeft = radius1.TopLeft + t * (radius2.TopLeft - radius1.TopLeft);

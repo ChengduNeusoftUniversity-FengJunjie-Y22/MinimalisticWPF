@@ -18,7 +18,7 @@
 		<IncludeSymbols>False</IncludeSymbols>
 		<Description>The library implements a state machine system that smoothly modifies the properties of an instance object. This means that you can create complex animations with a small amount of code, and if you are using the MVVM design pattern, the system also allows you to set some conditions in advance, and when the ViewModel meets the conditions you set, the property values are automatically changed to translate to the state of the object corresponding to this condition</Description>
 		<RepositoryType>git</RepositoryType>
-		<Version>1.5.3</Version>
+		<Version>1.5.4</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
