@@ -72,11 +72,11 @@ namespace MinimalisticWPF
         /// <summary>
         /// 一帧持续的时间(单位: ms )
         /// </summary>
-        public double DeltaTime { get => 1000.0 / TransferParams.FrameRate; }
+        public double DeltaTime { get => 1000.0 / Math.Clamp(TransferParams.FrameRate, 1, 240); }
         /// <summary>
         /// 总计需要的帧数
         /// </summary>
-        public double FrameCount { get => (TransferParams.Duration == 0 ? 0.01 : TransferParams.Duration) * 1000 / DeltaTime; }
+        public double FrameCount { get => Math.Clamp(TransferParams.Duration * Math.Clamp(TransferParams.FrameRate, 1, 240), 1, int.MaxValue); }
 
         public static StateMachine Create(object targetObj)
         {
@@ -123,14 +123,10 @@ namespace MinimalisticWPF
                     return;
                 }
 
+                Interpreters.Enqueue(Tuple.Create(stateName, actionSet));
                 if (!temp.IsQueue)
                 {
                     Interpreter?.Interrupt();
-                    var task = Task.Run(() => InterpreterScheduler(stateName, actionSet));
-                }
-                else
-                {
-                    Interpreters.Enqueue(Tuple.Create(stateName, actionSet));
                 }
             }
         }
@@ -163,7 +159,8 @@ namespace MinimalisticWPF
                 animationInterpreter.Frams = ComputingFrames(targetState);
             });
             CurrentState = stateName;
-            animationInterpreter.Interpret();
+            Interpreter = animationInterpreter;
+            var task = Task.Run(() => { animationInterpreter.Interpret(); });
         }
         internal List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state)
         {
@@ -435,7 +432,7 @@ namespace MinimalisticWPF
                 var delta = end - start;
                 for (int i = 0; i < Steps; i++)
                 {
-                    var t = (double)i / (Steps - 1);
+                    var t = (double)(i + 1) / Steps;
                     result.Add((int)(start + t * delta));
                 }
 

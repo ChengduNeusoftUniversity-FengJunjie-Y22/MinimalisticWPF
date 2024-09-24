@@ -54,10 +54,39 @@
 </details>
 
 <details>
-<summary>V1.5.4</summary>
+<summary>V1.5.6</summary>
 
-  - Fixed interpolation algorithm provided by ILinearInterpolation
+  - Repair it.
     - Gradient results may be distorted when the frame rate is between 57 and 61
+    - When the frame rate is lower than 100, high-speed State switching may cause startup failure of the state machine
+    - When the frame rate is 0, an error occurs
+    - An error occurs when the duration is 0
+  - Adjust
+    - The default frame rate is set to 120Hz
+    - Frame rate is limited from 1 to 240, out of range will be corrected automatically
+  - New
+    - class.IsSatisfy() allows you to decide whether to initiate a pre-described transition based on whether the instance object meets a specified condition
+    ```csharp
+            var board = GD.StateMachineTransfer()
+                .Add(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
+                .Set((x) =>
+                {
+                    x.Duration = 3;
+                    x.Acceleration = 1;
+                });
+
+            var result = GD.IsSatisfy(x => x.Width < 1000, board, true);
+            // Parameter 1. Condition (required)
+            // Parameter 2. Perform this transition if the conditions are met (optional)
+            // Parameter 3. If the transition effect is object-based, whether to enable the whitelist mechanism (optional)
+    ```
+  - 2.0.0 version preview
+    - ★ Greatly optimize the document
+    - ★ Open up more functions that can only operate inside the state machine system
+    - Fix more potential issues
+    - Try to optimize performance further
+    - Add more common extension methods
+    - ⚠ Remove all non-core components
 </details>
 
 ## Key Features
@@ -562,13 +591,13 @@ Set((x)=>
 </details>
 
 <details>
-<summary>V1.5.2即将弃用</summary>
+<summary>V1.5.2 即将弃用</summary>
 
   - 修复了NET6.0框架下动画效果异常的问题
 </details>
 
 <details>
-<summary>V1.5.3即将弃用</summary>
+<summary>V1.5.3 即将弃用</summary>
 
   - State 性能优化
     - 基于 Object
@@ -585,17 +614,46 @@ Set((x)=>
 </details>
 
 <details>
-<summary>V1.5.4</summary>
+<summary>V1.5.6</summary>
 
-  - 修正 ILinearInterpolation 提供的插值算法
+  - 修复
     - 帧率处于 57~61 时，渐变结果可能失真
+    - 帧率低于 100 时，高速切换State可能导致启动状态机失败
+    - 帧率为 0 时，出现错误
+    - 持续时间为 0 时，出现错误
+  - 调整
+    - 帧率默认值已调整为 120Hz
+    - 帧率限制为 1~240 ,超出范围将被自动矫正
+  - 新增
+    - class.IsSatisfy() 允许你基于实例对象是否满足指定的条件,决定是否启动预先描述的过渡
+    ```csharp
+            var board = GD.StateMachineTransfer()
+                .Add(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
+                .Set((x) =>
+                {
+                    x.Duration = 3;
+                    x.Acceleration = 1;
+                });
+
+            var result = GD.IsSatisfy(x => x.Width < 1000, board, true);
+            //参数1.条件(必须)
+            //参数2.若满足条件,则执行此过渡(非必须)
+            //参数3.过渡效果若为基于对象的,是否启用白名单机制(非必须)
+    ```
+  - 2.0.0 版本预告
+    - ★ 对文档进行大幅优化
+    - ★ 开放更多原本只可以在状态机系统内部运作的功能
+    - 修复更多潜在问题
+    - 尝试进一步优化性能   
+    - 增加更多常用的扩展方法
+    - ⚠ 移除所有非核心组件
 </details>
 
 ## 核心功能
 - [状态机系统 - 对指定实例的指定属性创建线性过渡](#状态机系统)
-    - [StateMachine]() 
-    - [TransferParams]()
-    - [MVVM]()
+    - [StateMachine 执行过渡功能的核心组件]() 
+    - [TransferParams 调整过渡效果细节]()
+    - [MVVM 使用State与StateVector]()
     - 可参与状态机过渡的属性类型
       - double
       - Brush

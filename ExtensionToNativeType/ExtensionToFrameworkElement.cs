@@ -116,11 +116,15 @@ namespace MinimalisticWPF
         /// </summary>
         /// <param name="target">目标实例</param>
         /// <param name="condition">条件语句</param>
-        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition)
+        /// <param name="transfer">满足条件时执行的过渡语句</param>
+        /// <param name="IsWhiteList">过渡语句若为 Object-based ，其是否启用白名单机制</param>
+        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, TempTransfer<T>? transfer = default, bool IsWhiteList = true) where T : class, new()
         {
             var checker = condition.Compile();
             if (checker == null) return false;
-            return checker(target);
+            var result = checker(target);
+            if (result) transfer?.Start(IsWhiteList);
+            return result;
         }
     }
 

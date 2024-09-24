@@ -40,6 +40,12 @@ namespace MinimalisticWPF
             d2 = d2 == null || d2 == double.NaN ? 0 : d2;
             var delta = d2 - d1;
 
+            if (steps == 0)
+            {
+                result.Add(end);
+                return result;
+            }
+
             for (var i = 0; i < steps; i++)
             {
                 var t = (double)(i + 1) / steps;
@@ -60,6 +66,12 @@ namespace MinimalisticWPF
             var color2 = (end as SolidColorBrush)?.Color;
             color1 = color1 ?? new Color();
             color2 = color2 ?? new Color();
+
+            if (steps == 0)
+            {
+                result.Add(end);
+                return result;
+            }
 
             for (var i = 0; i < steps; i++)
             {
@@ -82,6 +94,12 @@ namespace MinimalisticWPF
 
             Matrix matrix1 = ((Transform)(start ?? new TransformGroup())).Value;
             Matrix matrix2 = ((Transform)(end ?? new TransformGroup())).Value;
+
+            if (steps == 0)
+            {
+                result.Add(end);
+                return result;
+            }
 
             for (int i = 0; i < steps; i++)
             {
@@ -112,6 +130,12 @@ namespace MinimalisticWPF
             var point1 = start as Point? ?? new Point(0, 0);
             var point2 = end as Point? ?? new Point(0, 0);
 
+            if (steps == 0)
+            {
+                result.Add(end);
+                return result;
+            }
+
             for (var i = 0; i < steps; i++)
             {
                 var t = (double)(i + 1) / steps;
@@ -132,6 +156,12 @@ namespace MinimalisticWPF
 
             var thickness1 = start as Thickness? ?? new Thickness(0);
             var thickness2 = end as Thickness? ?? new Thickness(0);
+
+            if (steps == 0)
+            {
+                result.Add(end);
+                return result;
+            }
 
             for (var i = 0; i < steps; i++)
             {
@@ -155,6 +185,12 @@ namespace MinimalisticWPF
 
             var radius1 = start as CornerRadius? ?? new CornerRadius(0);
             var radius2 = end as CornerRadius? ?? new CornerRadius(0);
+
+            if (steps == 0)
+            {
+                result.Add(end);
+                return result;
+            }
 
             for (var i = 0; i < steps; i++)
             {
