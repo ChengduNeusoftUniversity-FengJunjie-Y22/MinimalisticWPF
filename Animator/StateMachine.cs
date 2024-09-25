@@ -68,15 +68,15 @@ namespace MinimalisticWPF
         public object Target { get; internal set; }
         public StateCollection States { get; set; } = new StateCollection();
 
-        internal TransferParams TransferParams { get; set; } = new TransferParams();
+        internal TransitionParams TransitionParams { get; set; } = new TransitionParams();
         /// <summary>
         /// 一帧持续的时间(单位: ms )
         /// </summary>
-        public double DeltaTime { get => 1000.0 / Math.Clamp(TransferParams.FrameRate, 1, 240); }
+        public double DeltaTime { get => 1000.0 / Math.Clamp(TransitionParams.FrameRate, 1, 240); }
         /// <summary>
         /// 总计需要的帧数
         /// </summary>
-        public double FrameCount { get => Math.Clamp(TransferParams.Duration * Math.Clamp(TransferParams.FrameRate, 1, 240), 1, int.MaxValue); }
+        public double FrameCount { get => Math.Clamp(TransitionParams.Duration * Math.Clamp(TransitionParams.FrameRate, 1, 240), 1, int.MaxValue); }
 
         public static StateMachine Create(object targetObj)
         {
@@ -89,9 +89,7 @@ namespace MinimalisticWPF
 
             foreach (var state in states)
             {
-                var temp = States.FirstOrDefault(x => x.StateName == state.StateName);
-                if (temp == null) States.Add(state);
-                else throw new ArgumentException($"A state named [ {state.StateName} ] already exists in the collection.Modify the collection to ensure that the state name is unique");
+                States.Add(state);
             }
 
             return this;
@@ -99,7 +97,7 @@ namespace MinimalisticWPF
 
         public string? CurrentState { get; internal set; }
         internal AnimationInterpreter? Interpreter { get; set; }
-        internal Queue<Tuple<string, Action<TransferParams>?>> Interpreters { get; set; } = new Queue<Tuple<string, Action<TransferParams>?>>();
+        internal Queue<Tuple<string, Action<TransitionParams>?>> Interpreters { get; set; } = new Queue<Tuple<string, Action<TransitionParams>?>>();
 
         /// <summary>
         /// 转移至目标状态
@@ -107,9 +105,9 @@ namespace MinimalisticWPF
         /// <param name="stateName">状态名称</param>
         /// <param name="actionSet">设置过渡参数</param>
         /// <exception cref="ArgumentException"></exception>
-        public void Transfer(string stateName, Action<TransferParams>? actionSet)
+        public void Transition(string stateName, Action<TransitionParams>? actionSet)
         {
-            TransferParams temp = new TransferParams();
+            TransitionParams temp = new TransitionParams();
             actionSet?.Invoke(temp);
             if (Interpreter == null)
             {
@@ -130,25 +128,25 @@ namespace MinimalisticWPF
                 }
             }
         }
-        private async void InterpreterScheduler(string stateName, Action<TransferParams>? actionSet)
+        private async void InterpreterScheduler(string stateName, Action<TransitionParams>? actionSet)
         {
             var targetState = States.FirstOrDefault(x => x.StateName == stateName);
             if (targetState == null) throw new ArgumentException($"The State Named [ {stateName} ] Cannot Be Found");
 
-            TransferParams transferParams = new TransferParams();
+            TransitionParams transferParams = new TransitionParams();
             actionSet?.Invoke(transferParams);
-            TransferParams = transferParams;
+            TransitionParams = transferParams;
 
-            await Task.Delay((int)(TransferParams.WaitTime * 1000));
+            await Task.Delay((int)(TransitionParams.WaitTime * 1000));
 
             AnimationInterpreter animationInterpreter = new AnimationInterpreter(this);
-            animationInterpreter.IsLast = TransferParams.IsLast;
+            animationInterpreter.IsLast = TransitionParams.IsLast;
             animationInterpreter.DeltaTime = (int)DeltaTime;
-            animationInterpreter.Start = TransferParams.Start;
-            animationInterpreter.Update = TransferParams.Update;
-            animationInterpreter.Completed = TransferParams.Completed;
-            animationInterpreter.LateUpdate = TransferParams.LateUpdate;
-            animationInterpreter.Acceleration = TransferParams.Acceleration;
+            animationInterpreter.Start = TransitionParams.Start;
+            animationInterpreter.Update = TransitionParams.Update;
+            animationInterpreter.Completed = TransitionParams.Completed;
+            animationInterpreter.LateUpdate = TransitionParams.LateUpdate;
+            animationInterpreter.Acceleration = TransitionParams.Acceleration;
 
             if (Application.Current == null)
             {

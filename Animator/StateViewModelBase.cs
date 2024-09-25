@@ -13,7 +13,7 @@ namespace MinimalisticWPF
     /// MVVM下,使ViewModel支持状态机的示例写法
     /// </summary>
     /// <typeparam name="T">ViewModel的真实类型</typeparam>
-    public abstract class StateViewModelBase<T> : INotifyPropertyChanged, IConditionalTransfer<T> where T : class
+    public abstract class StateViewModelBase<T> : INotifyPropertyChanged, IConditionalTransition<T> where T : class
     {
         public event PropertyChangedEventHandler? PropertyChanged;
         public void OnPropertyChanged(string propertyName)

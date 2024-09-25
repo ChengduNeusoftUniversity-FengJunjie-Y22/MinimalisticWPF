@@ -12,7 +12,7 @@ namespace MinimalisticWPF
     /// 为ViewModel的设计提供一个模板
     /// <para>特性:</para>
     /// <para>1.已接入INotifyPropertyChanged,使用OnPropertyChanged(nameof(Property))通知UI更新</para>
-    /// <para>2.已接入IConditionalTransfer,可使用状态机系统提供的条件切换</para>
+    /// <para>2.已接入IConditionalTransition,可使用状态机系统提供的条件切换</para>
     /// <para>3.已实现ModelBase的所有属性,你只需在此基础上扩展更多属性</para>
     /// </summary>
     /// <typeparam name="T1">ViewModel具体类型</typeparam>

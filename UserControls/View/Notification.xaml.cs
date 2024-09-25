@@ -99,18 +99,18 @@ namespace MinimalisticWPF
 
         private void Window_MouseEnter(object sender, MouseEventArgs e)
         {
-            AnimationC.StateMachineTransfer()
-                .Add(x => x.Width, 350)
-                .Add(x => x.Opacity, 0.9)
-                .Set((x) =>
+            AnimationC.Transition()
+                .SetProperty(x => x.Width, 350)
+                .SetProperty(x => x.Opacity, 0.9)
+                .SetParams((x) =>
                 {
                     x.Duration = 0.4;
                 })
                 .Start();
-            AnimationD.StateMachineTransfer()
-                .Add(x => x.Width, 350)
-                .Add(x => x.Opacity, 0.9)
-                .Set((x) =>
+            AnimationD.Transition()
+                .SetProperty(x => x.Width, 350)
+                .SetProperty(x => x.Opacity, 0.9)
+                .SetParams((x) =>
                 {
                     x.Duration = 0.4;
                 })
@@ -119,18 +119,18 @@ namespace MinimalisticWPF
 
         private void Window_MouseLeave(object sender, MouseEventArgs e)
         {
-            AnimationC.StateMachineTransfer()
-                .Add(x => x.Width, 1)
-                .Add(x => x.Opacity, 0)
-                .Set((x) =>
+            AnimationC.Transition()
+                .SetProperty(x => x.Width, 1)
+                .SetProperty(x => x.Opacity, 0)
+                .SetParams((x) =>
                 {
                     x.Duration = 0.4;
                 })
                 .Start();
-            AnimationD.StateMachineTransfer()
-                .Add(x => x.Width, 1)
-                .Add(x => x.Opacity, 0)
-                .Set((x) =>
+            AnimationD.Transition()
+                .SetProperty(x => x.Width, 1)
+                .SetProperty(x => x.Opacity, 0)
+                .SetParams((x) =>
                 {
                     x.Duration = 0.4;
                 })

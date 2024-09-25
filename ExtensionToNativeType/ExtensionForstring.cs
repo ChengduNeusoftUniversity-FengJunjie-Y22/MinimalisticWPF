@@ -8,7 +8,7 @@ using System.Xml.Serialization;
 
 namespace MinimalisticWPF
 {
-    public static class ExtensionTostring
+    public static class ExtensionForstring
     {
         /// <summary>
         /// 简易检查密码强度

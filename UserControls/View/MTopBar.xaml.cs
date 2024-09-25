@@ -105,9 +105,9 @@ namespace MinimalisticWPF
         {
             if (sender is Button element)
             {
-                element.StateMachineTransfer()
-                    .Add(x => x.Foreground, HoverBrush)
-                    .Set((x) => { x.Duration = 0.4; })
+                element.Transition()
+                    .SetProperty(x => x.Foreground, HoverBrush)
+                    .SetParams((x) => { x.Duration = 0.4; })
                     .Start();
             }
         }
@@ -116,9 +116,9 @@ namespace MinimalisticWPF
         {
             if (sender is Button element)
             {
-                element.StateMachineTransfer()
-                    .Add(x => x.Foreground, TextBrush)
-                    .Set((x) => { x.Duration = 0.4; })
+                element.Transition()
+                    .SetProperty(x => x.Foreground, TextBrush)
+                    .SetParams((x) => { x.Duration = 0.4; })
                     .Start();
             }
         }

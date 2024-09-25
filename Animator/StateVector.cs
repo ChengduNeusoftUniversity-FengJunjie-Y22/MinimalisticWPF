@@ -17,19 +17,19 @@ namespace MinimalisticWPF
         /// <para>Item2 满足条件时自动切换到的状态</para>
         /// <para>Item3 此次切换状态的过渡参数</para>
         /// </summary>
-        public List<Tuple<Func<T, bool>, State, TransferParams>> Conditions { get; internal set; } = new List<Tuple<Func<T, bool>, State, TransferParams>>();
+        public List<Tuple<Func<T, bool>, State, TransitionParams>> Conditions { get; internal set; } = new List<Tuple<Func<T, bool>, State, TransitionParams>>();
 
         /// <summary>
-        /// 添加[Condition=>State+TransferParams]的条件切换关系映射
+        /// 添加[Condition=>State+TransitionParams]的条件切换关系映射
         /// </summary>
-        public StateVector<T> AddCondition(Expression<Func<T, bool>> condition, State targetState, Action<TransferParams>? setTransferParams)
+        public StateVector<T> AddCondition(Expression<Func<T, bool>> condition, State targetState, Action<TransitionParams>? setTransitionParams)
         {
             var checker = condition.Compile();
 
             if (checker != null)
             {
-                TransferParams tempParams = new TransferParams();
-                setTransferParams?.Invoke(tempParams);
+                TransitionParams tempParams = new TransitionParams();
+                setTransitionParams?.Invoke(tempParams);
                 Conditions.Add(Tuple.Create(checker, targetState, tempParams));
             }
 
@@ -44,7 +44,7 @@ namespace MinimalisticWPF
             {
                 if (Conditions[i].Item1(target))
                 {
-                    stateMachine.Transfer(Conditions[i].Item2.StateName,
+                    stateMachine.Transition(Conditions[i].Item2.StateName,
                         (x) =>
                         {
                             x.Duration = Conditions[i].Item3.Duration;

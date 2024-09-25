@@ -11,11 +11,18 @@ namespace MinimalisticWPF
 {
     /// <summary>
     /// 使得自定义类型支持状态机过渡
+    /// <para>提供的基础插值计算 :</para>
+    /// <para>Double</para>
+    /// <para>Brush</para>
+    /// <para>Transform</para>
+    /// <para>Point</para>
+    /// <para>Thickness</para>
+    /// <para>CornerRadius</para>
     /// </summary>
     public interface ILinearInterpolation
     {
         /// <summary>
-        /// 当前具体实现类实例
+        /// 具体实现类的实例
         /// </summary>
         object Current { get; set; }
 

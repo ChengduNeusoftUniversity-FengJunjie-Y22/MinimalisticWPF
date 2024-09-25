@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace MinimalisticWPF
 {
-    public class TransferParams
+    public class TransitionParams
     {
-        internal TransferParams() { }
+        internal TransitionParams() { }
 
-        internal TransferParams(Action<TransferParams>? action)
+        internal TransitionParams(Action<TransitionParams>? action)
         {
             action?.Invoke(this);
         }
@@ -59,5 +59,12 @@ namespace MinimalisticWPF
         /// 加速度(默认:0)
         /// </summary>
         public double Acceleration { get; set; } = 0;
+        /// <summary>
+        /// ⚠ 是否为不安全的过渡操作
+        /// <para>1.不打断当前过渡</para>
+        /// <para>2.立即创建一个Task开始执行此次过渡</para>
+        /// <para></para>
+        /// </summary>
+        public bool IsUnSafe {  get; set; } = false;
     }
 }

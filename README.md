@@ -10,7 +10,7 @@
 <details>
 <summary>V1.5.0 Soon to be deprecated</summary>
 
-  - StateMachineTransfer() changed to support any [where T: class,new()] type
+  - Transition() changed to support any [where T: class,new()] type
   - State restricts modification. It needs to be a public static field or a public property
   - StateVector restricts modification and requires writing public properties
   - Support for Transform transitions
@@ -47,8 +47,8 @@
       - Do not perform any reflection/LINQ operations during State initialization
       - You can only manually specify the properties that need to be modified
     - Use
-      - State.FromType<>() / StateMachineTransfer( StateRecordModes.Type )
-      - State.FromObject() / StateMachineTransfer( StateRecordModes.Object )
+      - State.FromType<>() / StateMachineTransition( StateRecordModes.Type )
+      - State.FromObject() / StateMachineTransition( StateRecordModes.Object )
    - AnimationInterpreter logic optimization
      - Addressed twitching issues that could be caused by frequent State switching
 </details>
@@ -67,9 +67,9 @@
   - New
     - class.IsSatisfy() allows you to decide whether to initiate a pre-described transition based on whether the instance object meets a specified condition
     ```csharp
-            var board = GD.StateMachineTransfer()
-                .Add(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
-                .Set((x) =>
+            var board = GD.Transition()
+                .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
+                .SetParams((x) =>
                 {
                     x.Duration = 3;
                     x.Acceleration = 1;
@@ -92,7 +92,7 @@
 ## Key Features
 - [State Machine System - Create linear transitions to specified properties of specified instances](#StateMachineSystem)
   - [StateMachine]()
-  - [TransferParams]()
+  - [TransitionParams]()
   - [MVVM]()
   - Property types that can participate in state machine transitions
     - double
@@ -157,11 +157,11 @@ The MinimalisticWPF namespace does not include the following services, which wil
 
         private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            GD.StateMachineTransfer()
-                .Add(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
-                .Add(x => x.Opacity, 0.2)
-                .Add(x => x.CornerRadius,new CornerRadius(15))
-                .Set((x) =>
+            GD.Transition()
+                .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
+                .SetProperty(x => x.Opacity, 0.2)
+                .SetProperty(x => x.CornerRadius,new CornerRadius(15))
+                .SetParams((x) =>
                 {
                     x.Duration = 0.4;
                     x.Completed = () =>
@@ -224,9 +224,9 @@ The MinimalisticWPF namespace does not include the following services, which wil
   
        Class2 TargetClass2 = new Class2();
   
-       TargetClass2.StateMachineTransfer()
-           .Add(x => x.Class1, T2)
-           .Set((x) =>
+       TargetClass2.Transition()
+           .SetProperty(x => x.Class1, T2)
+           .SetParams((x) =>
            {
                x.Duration = 2;
                x.Start = () =>
@@ -245,7 +245,7 @@ The MinimalisticWPF namespace does not include the following services, which wil
 
 ---
 
-## TransferParams 
+## TransitionParams 
 - Contains a number of parameters for the details of the transition
   - Transition parameters
   - Transition creation parameters
@@ -267,7 +267,7 @@ The MinimalisticWPF namespace does not include the following services, which wil
 
 - Use cases
   - Set transition parameters (lambdas) for StateVector
-  - Set a transition parameter (Lambda) for StateMachineTransfer()
+  - Set a transition parameter (Lambda) for Transition()
 
 ```csharp
 Set((x)=>
@@ -283,10 +283,10 @@ Set((x)=>
 
 ---
 
-## State & StateVector & IConditionalTransfer
+## State & StateVector & IConditionalTransition
 - State describes the value of an object's property at a moment in time
 - StateVector describes which transitions are created under which conditions
-- IConditionalTransfer allows you to automatically create a transition when a specified condition is met on an instance object
+- IConditionalTransition allows you to automatically create a transition when a specified condition is met on an instance object
   - Examples
     - When the mouse is inside the control, make its background opacity transition to 0.2
     - Make the background opacity transition to 0 when the mouse leaves the control
@@ -570,7 +570,7 @@ Set((x)=>
 <details>
 <summary>V1.5.0 即将弃用</summary>
 
-  - StateMachineTransfer() 改为支持任何 [ where T : class ,new() ] 类型
+  - Transition() 改为支持任何 [ where T : class ,new() ] 类型
   - State限制修改，需要是公开静态字段或公开属性
   - StateVector限制修改，需要写作公开属性
   - 支持Transform过渡
@@ -607,8 +607,8 @@ Set((x)=>
       - 在State初始化时不执行任何反射、LINQ操作
       - 只能手动指定需要修改的属性
     - 使用
-      - State.FromType<>() / StateMachineTransfer( StateRecordModes.Type )
-      - State.FromObject() / StateMachineTransfer( StateRecordModes.Object )
+      - State.FromType<>() / StateMachineTransition( StateRecordModes.Type )
+      - State.FromObject() / StateMachineTransition( StateRecordModes.Object )
   - AnimationInterpreter 逻辑优化
     - 解决了频繁切换State可能导致的抽搐问题
 </details>
@@ -627,9 +627,9 @@ Set((x)=>
   - 新增
     - class.IsSatisfy() 允许你基于实例对象是否满足指定的条件,决定是否启动预先描述的过渡
     ```csharp
-            var board = GD.StateMachineTransfer()
-                .Add(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
-                .Set((x) =>
+            var board = GD.Transition()
+                .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
+                .SetParams((x) =>
                 {
                     x.Duration = 3;
                     x.Acceleration = 1;
@@ -652,7 +652,7 @@ Set((x)=>
 ## 核心功能
 - [状态机系统 - 对指定实例的指定属性创建线性过渡](#状态机系统)
     - [StateMachine 执行过渡功能的核心组件]() 
-    - [TransferParams 调整过渡效果细节]()
+    - [TransitionParams 调整过渡效果细节]()
     - [MVVM 使用State与StateVector]()
     - 可参与状态机过渡的属性类型
       - double
@@ -717,11 +717,11 @@ Set((x)=>
 
         private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            GD.StateMachineTransfer()
-                .Add(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
-                .Add(x => x.Opacity, 0.2)
-                .Add(x => x.CornerRadius,new CornerRadius(15))
-                .Set((x) =>
+            GD.Transition()
+                .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
+                .SetProperty(x => x.Opacity, 0.2)
+                .SetProperty(x => x.CornerRadius,new CornerRadius(15))
+                .SetParams((x) =>
                 {
                     x.Duration = 0.4;
                     x.Completed = () =>
@@ -784,9 +784,9 @@ Set((x)=>
   
        Class2 TargetClass2 = new Class2();
   
-       TargetClass2.StateMachineTransfer()
-           .Add(x => x.Class1, T2)
-           .Set((x) =>
+       TargetClass2.Transition()
+           .SetProperty(x => x.Class1, T2)
+           .SetParams((x) =>
            {
                x.Duration = 2;
                x.Start = () =>
@@ -803,7 +803,7 @@ Set((x)=>
            .Start();
     ```
 ---
-## TransferParams 
+## TransitionParams 
 - 包含系列参数用于修饰此次过渡效果的细节
   - 过渡效果相关的参数
   - 过渡创建相关的参数
@@ -825,7 +825,7 @@ Set((x)=>
 
 - 应用场景
   - 为StateVector设置过渡参数 ( Lambda )
-  - 为StateMachineTransfer()设置过渡参数 ( Lambda )
+  - 为Transition()设置过渡参数 ( Lambda )
 
 ```csharp
 Set((x)=>
@@ -839,10 +839,10 @@ Set((x)=>
 })
 ```
 ---
-## State & StateVector & IConditionalTransfer
+## State & StateVector & IConditionalTransition
 - State描述某一时刻对象的属性值
 - StateVector描述在何种条件下创建何种过渡
-- IConditionalTransfer接口允许在实例对象达成指定条件时自动创建过渡
+- IConditionalTransition接口允许在实例对象达成指定条件时自动创建过渡
   - 示例
     - 鼠标进入控件时,令其背景透明度过渡为0.2
     - 鼠标离开控件时,令其背景透明度过渡为0

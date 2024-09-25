@@ -10,7 +10,10 @@ using System.Xml.Linq;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 状态合集
+    /// 状态的合集
+    /// <para>特性 :</para>
+    /// <para>1.可将StateName作为索引,查询集合中指定的State</para>
+    /// <para>2.Add()方法会替换同名State以确保唯一性</para>
     /// </summary>
     public class StateCollection : ICollection<State>
     {
@@ -45,6 +48,7 @@ namespace MinimalisticWPF
 
         public void Add(State item)
         {
+            _nodes.RemoveAll(x => x.StateName == item.StateName);
             _nodes.Add(item);
         }
 

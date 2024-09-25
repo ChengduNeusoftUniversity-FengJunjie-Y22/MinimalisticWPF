@@ -9,25 +9,27 @@ namespace MinimalisticWPF
     public class State
     {
         internal State() { }
-        internal State(object Target, ICollection<string> WhileList)
+        internal State(object Target, ICollection<string> WhileList, ICollection<string> BlackList)
         {
             ActualType = Target.GetType();
             PropertyInfo[] Properties = ActualType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.CanWrite && x.CanRead)
+                .Where(x => x.CanWrite && x.CanRead &&
+                WhileList.Count > 0 ? WhileList.Contains(x.Name) : true &&
+                BlackList.Count > 0 ? !BlackList.Contains(x.Name) : true)
                 .ToArray();//所有可用属性
-            PropertyInfo[] DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double) && WhileList.Contains(x.Name))
+            PropertyInfo[] DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double))
                 .ToArray();//筛选Double属性
-            PropertyInfo[] BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush) && WhileList.Contains(x.Name))
+            PropertyInfo[] BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
                 .ToArray();//筛选Brush属性
-            PropertyInfo[] TransformProperties = Properties.Where(x => x.PropertyType == typeof(Transform) && WhileList.Contains(x.Name))
+            PropertyInfo[] TransformProperties = Properties.Where(x => x.PropertyType == typeof(Transform))
                 .ToArray();//筛选Transform属性
-            PropertyInfo[] PointProperties = Properties.Where(x => x.PropertyType == typeof(Point) && WhileList.Contains(x.Name))
+            PropertyInfo[] PointProperties = Properties.Where(x => x.PropertyType == typeof(Point))
                 .ToArray();//筛选Point属性
-            PropertyInfo[] CornerRadiusProperties = Properties.Where(x => x.PropertyType == typeof(CornerRadius) && WhileList.Contains(x.Name))
+            PropertyInfo[] CornerRadiusProperties = Properties.Where(x => x.PropertyType == typeof(CornerRadius))
                 .ToArray();//筛选CornerRadius属性
-            PropertyInfo[] ThicknessProperties = Properties.Where(x => x.PropertyType == typeof(Thickness) && WhileList.Contains(x.Name))
+            PropertyInfo[] ThicknessProperties = Properties.Where(x => x.PropertyType == typeof(Thickness))
                 .ToArray();//筛选Thickness属性
-            PropertyInfo[] ILinearInterpolationProperties = Properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType) && WhileList.Contains(x.Name))
+            PropertyInfo[] ILinearInterpolationProperties = Properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType))
                 .ToArray();//筛选ILinearInterpolation接口支持的属性
 
             foreach (PropertyInfo propertyInfo in DoubleProperties)
@@ -115,6 +117,7 @@ namespace MinimalisticWPF
         internal T Value { get; set; }
         internal string Name { get; set; } = string.Empty;
         internal List<string> WhiteList { get; set; } = new List<string>();
+        internal string[] BlackList { get; set; } = Array.Empty<string>();
 
         /// <summary>
         /// 记录该状态的名称
@@ -182,8 +185,6 @@ namespace MinimalisticWPF
             Expression<Func<T, Transform>> propertyLambda,
             Transform newValue)
         {
-
-
             if (Value == null)
             {
                 return this;
@@ -303,23 +304,22 @@ namespace MinimalisticWPF
             return this;
         }
 
+        public ObjectTempState<T> Except(params Expression<Func<T, string>>[] properties)
+        {
+            BlackList = properties.Select(p => ((MemberExpression)p.Body).Member.Name).ToArray();
+            return this;
+        }
 
         /// <summary>
         /// 完成记录
         /// </summary>
         /// <param name="IsWhiteList">是否启用白名单</param>
         /// <returns>State</returns>
-        public State ToState(bool IsWhiteList = true)
+        public State ToState()
         {
-            if (!IsWhiteList) WhiteList.Clear();
-
-            State result = new State(Value, WhiteList);
-            result.StateName = Name;
-            return result;
-        }
-        internal State ToState(ICollection<string> whiteList)
-        {
-            State result = new State(Value, whiteList);
+            if (Value == null) throw new ArgumentNullException("Target object loss");
+            if (string.IsNullOrEmpty(Name)) throw new ArgumentException("The State name cannot be empty");
+            State result = new State(Value, WhiteList, BlackList);
             result.StateName = Name;
             return result;
         }

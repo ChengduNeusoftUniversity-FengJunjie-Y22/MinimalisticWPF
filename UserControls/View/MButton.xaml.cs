@@ -101,9 +101,9 @@ namespace MinimalisticWPF
         {
             ViewModel.IsMouseInside = true;
             if (IsEdgeOpacityLocked) return;
-            this.FixedBorder.StateMachineTransfer()
-                .Add(x => x.Opacity, 1)
-                .Set((x) => { x.Duration = 0.5; })
+            this.FixedBorder.Transition()
+                .SetProperty(x => x.Opacity, 1)
+                .SetParams((x) => { x.Duration = 0.5; })
                 .Start();
         }
 
@@ -111,9 +111,9 @@ namespace MinimalisticWPF
         {
             ViewModel.IsMouseInside = false;
             if (IsEdgeOpacityLocked) return;
-            this.FixedBorder.StateMachineTransfer()
-                .Add(x => x.Opacity, 0)
-                .Set((x) => { x.Duration = 0.5; })
+            this.FixedBorder.Transition()
+                .SetProperty(x => x.Opacity, 0)
+                .SetParams((x) => { x.Duration = 0.5; })
                 .Start();
         }
     }
