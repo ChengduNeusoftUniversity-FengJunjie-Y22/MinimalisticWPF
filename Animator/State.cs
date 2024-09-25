@@ -112,9 +112,10 @@ namespace MinimalisticWPF
 
     public class ObjectTempState<T>
     {
-        internal ObjectTempState(T target) { Value = target; }
+        internal ObjectTempState(T target) { Value = target; ActualType = typeof(T); }
 
         internal T Value { get; set; }
+        internal Type ActualType { get; set; }
         internal string Name { get; set; } = string.Empty;
         internal List<string> WhiteList { get; set; } = new List<string>();
         internal string[] BlackList { get; set; } = Array.Empty<string>();
@@ -321,13 +322,14 @@ namespace MinimalisticWPF
             if (string.IsNullOrEmpty(Name)) throw new ArgumentException("The State name cannot be empty");
             State result = new State(Value, WhiteList, BlackList);
             result.StateName = Name;
+            result.ActualType = ActualType;
             return result;
         }
     }
 
     public class TypeTempState<T>
     {
-        internal TypeTempState() { Target = new State(); }
+        internal TypeTempState() { Target = new State(); Target.ActualType = typeof(T); }
 
         internal State Target { get; set; }
 
@@ -445,7 +447,7 @@ namespace MinimalisticWPF
         /// </summary>
         public TypeTempState<T> SetProperty(
             Expression<Func<T, Transform>> propertyLambda,
-            Transform newValue)
+            params Transform[] newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -454,13 +456,18 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
+
+                var value = newValue.Select(t => t.Value).Aggregate(Matrix.Identity, (acc, matrix) => acc * matrix);
+                var interpolatedMatrixStr = $"{value.M11},{value.M12},{value.M21},{value.M22},{value.OffsetX},{value.OffsetY}";
+                var result = Transform.Parse(interpolatedMatrixStr);
+
                 if (Target.Values.ContainsKey(property.Name))
                 {
-                    Target.Values[property.Name] = newValue;
+                    Target.Values[property.Name] = result;
                 }
                 else
                 {
-                    Target.Values.Add(property.Name, newValue);
+                    Target.Values.Add(property.Name, result);
                 }
             }
 

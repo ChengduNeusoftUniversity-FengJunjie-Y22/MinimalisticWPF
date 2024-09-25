@@ -52,15 +52,11 @@ namespace MinimalisticWPF
         /// </summary>
         public bool IsUnique { get; set; } = true;
         /// <summary>
-        /// [ 测试参数 ] 若无法响应例如MouseLeave事件,可适当增加此参数(默认:0.008)
-        /// </summary>
-        public double WaitTime { get; set; } = 0.008;
-        /// <summary>
         /// 加速度(默认:0)
         /// </summary>
         public double Acceleration { get; set; } = 0;
         /// <summary>
-        /// ⚠ 是否为不安全的过渡操作
+        /// ⚠ 不安全操作，启用它，代表这次过渡是无条件、无相关、立刻启动的(默认: false)
         /// <para>1.不打断当前过渡</para>
         /// <para>2.立即创建一个Task开始执行此次过渡</para>
         /// <para></para>

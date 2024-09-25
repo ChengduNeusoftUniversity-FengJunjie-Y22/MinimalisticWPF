@@ -48,8 +48,20 @@ namespace MinimalisticWPF
 
         public void Add(State item)
         {
-            _nodes.RemoveAll(x => x.StateName == item.StateName);
-            _nodes.Add(item);
+            var existingNode = _nodes.FirstOrDefault(x => x.StateName == item.StateName);
+
+            if (existingNode != null)
+            {
+                if (!ReferenceEquals(existingNode, item))
+                {
+                    _nodes.Remove(existingNode);
+                    _nodes.Add(item);
+                }
+            }
+            else
+            {
+                _nodes.Add(item);
+            }
         }
 
         public void Clear()

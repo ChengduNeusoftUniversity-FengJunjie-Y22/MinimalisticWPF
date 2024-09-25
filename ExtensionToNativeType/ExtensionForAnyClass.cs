@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -16,9 +17,9 @@ namespace MinimalisticWPF
         /// 开始创建基于StateMachine的过渡效果
         /// </summary>
         /// <param name="element"></param>
-        public static TempTransition<T> Transition<T>(this T element) where T : class
+        public static TransitionBoard<T> Transition<T>(this T element) where T : class
         {
-            TempTransition<T> tempStoryBoard = new TempTransition<T>(element);
+            TransitionBoard<T> tempStoryBoard = new TransitionBoard<T>(element);
             return tempStoryBoard;
         }
 
@@ -69,7 +70,7 @@ namespace MinimalisticWPF
         /// <param name="target"></param>
         /// <param name="condition">条件语句</param>
         /// <param name="transfer">满足条件时执行的过渡语句</param>
-        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, TempTransition<T>? transfer = default) where T : class
+        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, TransitionBoard<T>? transfer = default) where T : class
         {
             var checker = condition.Compile();
             if (checker == null) return false;
@@ -81,9 +82,23 @@ namespace MinimalisticWPF
         /// <summary>
         /// 启动过渡
         /// </summary>
-        public static void BeginTransition<T>(this T source, TempTransition<T>? transfer = default) where T : class
+        public static void BeginTransition<T>(this T source, TransitionBoard<T>? transfer, Action<TransitionParams>? set = default) where T : class
         {
-            transfer?.Start();
+            if (transfer != null)
+            {
+                if (set != null)
+                {
+                    transfer.TransitionParams = set;
+                }
+                if (transfer.IsStatic)
+                {
+                    transfer.Start(source);
+                }
+                else
+                {
+                    transfer.Start();
+                }
+            }
         }
 
         /// <summary>
@@ -100,25 +115,26 @@ namespace MinimalisticWPF
             if (machine == null)
             {
                 var newMachine = StateMachine.Create(source).SetStates();
-                TempTransition<T>.MachinePool.Add(source, newMachine);
+                TransitionBoard<T>.MachinePool.Add(source, newMachine);
                 newMachine.States.Add(state);
                 newMachine.Transition(state.StateName, set);
             }
             else
             {
+                machine.States.Add(state);
                 machine.Transition(state.StateName, set);
             }
         }
 
         /// <summary>
         /// 尝试找出系统中管理该对象过渡效果的状态机实例
-        /// <para>第一优先级 : TempTransition 对象池（字典）内存储的状态机</para>
+        /// <para>第一优先级 : TransitionBoard 对象池（字典）内存储的状态机</para>
         /// <para>第二优先级 : 实例对象自身包含的属性</para>
         /// <para>第三优先级 : 若为一个FrameworkElement，尝试从其DataContext中获取状态机</para>
         /// </summary>
         public static StateMachine? FindStateMachine<T>(this T source) where T : class
         {
-            TempTransition<T>.MachinePool.TryGetValue(source, out var machineA);
+            TransitionBoard<T>.MachinePool.TryGetValue(source, out var machineA);
             if (machineA != null) return machineA;
 
 
@@ -144,11 +160,24 @@ namespace MinimalisticWPF
         }
     }
 
-    public class TempTransition<T> where T : class
+    public static class Transition
+    {
+        public static TransitionBoard<T> CreateBoardFromObject<T>(T target) where T : class
+        {
+            return new TransitionBoard<T>(target);
+        }
+        public static TransitionBoard<T> CreateBoardFromType<T>() where T : class
+        {
+            return new TransitionBoard<T>() { IsStatic = true };
+        }
+    }
+
+    public class TransitionBoard<T> where T : class
     {
         internal static Dictionary<object, StateMachine> MachinePool { get; set; } = new Dictionary<object, StateMachine>();
 
-        internal TempTransition(T target)
+        internal TransitionBoard() { }
+        internal TransitionBoard(T target)
         {
             Target = target;
 
@@ -165,15 +194,16 @@ namespace MinimalisticWPF
             Machine = StateMachine.Create(target).SetStates();
             MachinePool.Add(Target, Machine);
         }
-        internal T Target { get; set; }
-        internal StateMachine Machine { get; set; }
+        internal bool IsStatic { get; set; } = false;
+        internal T? Target { get; set; }
+        internal StateMachine? Machine { get; set; }
         public State TempState { get; internal set; } = new State() { StateName = "temp" };
         public Action<TransitionParams>? TransitionParams { get; internal set; }
 
         /// <summary>
         /// 设置指定属性过渡后的最终值
         /// </summary>
-        public TempTransition<T> SetProperty(Expression<Func<T, double>> propertyLambda, double newValue)
+        public TransitionBoard<T> SetProperty(Expression<Func<T, double>> propertyLambda, double newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -189,7 +219,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 设置指定属性过渡后的最终值
         /// </summary>
-        public TempTransition<T> SetProperty(Expression<Func<T, Brush>> propertyLambda, Brush newValue)
+        public TransitionBoard<T> SetProperty(Expression<Func<T, Brush>> propertyLambda, Brush newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -205,7 +235,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 设置指定属性过渡后的最终值
         /// </summary>
-        public TempTransition<T> SetProperty(Expression<Func<T, Transform>> propertyLambda, params Transform[] newValue)
+        public TransitionBoard<T> SetProperty(Expression<Func<T, Transform>> propertyLambda, params Transform[] newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -224,7 +254,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 设置指定属性过渡后的最终值
         /// </summary>
-        public TempTransition<T> SetProperty(Expression<Func<T, Point>> propertyLambda, Point newValue)
+        public TransitionBoard<T> SetProperty(Expression<Func<T, Point>> propertyLambda, Point newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -240,7 +270,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 设置指定属性过渡后的最终值
         /// </summary>
-        public TempTransition<T> SetProperty(Expression<Func<T, CornerRadius>> propertyLambda, CornerRadius newValue)
+        public TransitionBoard<T> SetProperty(Expression<Func<T, CornerRadius>> propertyLambda, CornerRadius newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -256,7 +286,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 设置指定属性过渡后的最终值
         /// </summary>
-        public TempTransition<T> SetProperty(Expression<Func<T, Thickness>> propertyLambda, Thickness newValue)
+        public TransitionBoard<T> SetProperty(Expression<Func<T, Thickness>> propertyLambda, Thickness newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -272,7 +302,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 设置指定属性过渡后的最终值
         /// </summary>
-        public TempTransition<T> SetProperty(Expression<Func<T, ILinearInterpolation>> propertyLambda, ILinearInterpolation newValue)
+        public TransitionBoard<T> SetProperty(Expression<Func<T, ILinearInterpolation>> propertyLambda, ILinearInterpolation newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
@@ -288,7 +318,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 设置本次过渡的参数
         /// </summary>
-        public TempTransition<T> SetParams(Action<TransitionParams>? modifyParams = null)
+        public TransitionBoard<T> SetParams(Action<TransitionParams>? modifyParams = null)
         {
             TransitionParams = modifyParams;
             return this;
@@ -297,9 +327,10 @@ namespace MinimalisticWPF
         /// 反射特定对象[全部]受支持的属性，注意会覆盖SetProperty步骤（反之则不会）
         /// </summary>
         /// <param name="reflected">被反射的对象实例</param>
-        public TempTransition<T> ReflectAny(T reflected)
+        public TransitionBoard<T> ReflectAny(T reflected)
         {
             TempState = new State(reflected, Array.Empty<string>(), Array.Empty<string>());
+            TempState.StateName = "temp";
             return this;
         }
         /// <summary>
@@ -307,20 +338,47 @@ namespace MinimalisticWPF
         /// </summary>
         /// <param name="reflected">被反射的对象实例</param>
         /// <param name="blackList">黑名单,不参与反射记录的属性</param>
-        public TempTransition<T> ReflectExcept(T reflected, params Expression<Func<T, string>>[] blackList)
+        public TransitionBoard<T> ReflectExcept(T reflected, params Expression<Func<T, string>>[] blackList)
         {
             var propertyNames = blackList.Select(p => ((MemberExpression)p.Body).Member.Name).ToArray();
             TempState = new State(reflected, Array.Empty<string>(), propertyNames);
+            TempState.StateName = "temp";
             return this;
         }
         /// <summary>
         /// 启动过渡
         /// </summary>
-        public T Start()
+        public void Start()
         {
+            if (IsStatic) throw new InvalidOperationException("This method cannot be used under Type-based creation, instead use an overloaded version of the Start () method");
+            if (Machine == null) throw new ArgumentException("StateMachine instance lost");
+            if (Target == null) throw new ArgumentException("Target object instance lost");
             Machine.States.Add(TempState);
             Machine.Transition("temp", TransitionParams ?? ((x) => { x.Duration = 0; }));
-            return Target;
+        }
+        /// <summary>
+        /// 启动过渡
+        /// </summary>
+        public void Start(T target)
+        {
+            if (!IsStatic) throw new InvalidOperationException("This method cannot be used under Object-based creation, instead use an overloaded version of the Start () method");
+            Target = target;
+            MachinePool.TryGetValue(target, out var temp);
+            var tp = new TransitionParams();
+            TransitionParams?.Invoke(tp);
+            if (temp != null)
+            {
+                if (!tp.IsQueue) temp.Interpreter?.Interrupt();
+
+                Machine = temp;
+                Machine.States.Add(TempState);
+            }
+            else
+            {
+                Machine = StateMachine.Create(target).SetStates(TempState);
+                MachinePool.Add(Target, Machine);
+            }
+            Machine.Transition("temp", TransitionParams ?? ((x) => { x.Duration = 0; }));
         }
     }
 }

@@ -23,6 +23,8 @@ namespace MinimalisticWPF
     /// </summary>
     public class StateMachine
     {
+        private int _maxFR = 240;
+
         /// <param name="viewModel">受状态机控制的实例对象</param>
         /// <param name="states">所有该对象可能具备的状态</param>
         /// <exception cref="ArgumentException"></exception>
@@ -66,23 +68,40 @@ namespace MinimalisticWPF
         public PropertyInfo[] ThicknessProperties { get; internal set; }
         public PropertyInfo[] ILinearInterpolationProperties { get; internal set; }
         public object Target { get; internal set; }
-        public StateCollection States { get; set; } = new StateCollection();
+        public StateCollection States { get; internal set; } = new StateCollection();
+        /// <summary>
+        /// 最大帧率限制
+        /// </summary>
+        public int MaxFrameRate
+        {
+            get => _maxFR;
+            set
+            {
+                _maxFR = Math.Clamp(value, 1, int.MaxValue);
+            }
+        }
 
         internal TransitionParams TransitionParams { get; set; } = new TransitionParams();
         /// <summary>
         /// 一帧持续的时间(单位: ms )
         /// </summary>
-        public double DeltaTime { get => 1000.0 / Math.Clamp(TransitionParams.FrameRate, 1, 240); }
+        public double DeltaTime { get => 1000.0 / Math.Clamp(TransitionParams.FrameRate, 1, MaxFrameRate); }
         /// <summary>
         /// 总计需要的帧数
         /// </summary>
-        public double FrameCount { get => Math.Clamp(TransitionParams.Duration * Math.Clamp(TransitionParams.FrameRate, 1, 240), 1, int.MaxValue); }
+        public double FrameCount { get => Math.Clamp(TransitionParams.Duration * Math.Clamp(TransitionParams.FrameRate, 1, MaxFrameRate), 1, int.MaxValue); }
 
+        /// <summary>
+        /// 创建一个用于管理指定对象过渡行为的状态机实例
+        /// </summary>
         public static StateMachine Create(object targetObj)
         {
             StateMachine result = new StateMachine(targetObj);
             return result;
         }
+        /// <summary>
+        /// 手动添加State用于过渡
+        /// </summary>
         public StateMachine SetStates(params State[] states)
         {
             if (states.Length == 0) States.Clear();
@@ -96,8 +115,8 @@ namespace MinimalisticWPF
         }
 
         public string? CurrentState { get; internal set; }
-        internal AnimationInterpreter? Interpreter { get; set; }
-        internal Queue<Tuple<string, Action<TransitionParams>?>> Interpreters { get; set; } = new Queue<Tuple<string, Action<TransitionParams>?>>();
+        public TransitionInterpreter? Interpreter { get; internal set; }
+        public Queue<Tuple<string, TransitionParams>> Interpreters { get; internal set; } = new Queue<Tuple<string, TransitionParams>>();
 
         /// <summary>
         /// 转移至目标状态
@@ -109,9 +128,16 @@ namespace MinimalisticWPF
         {
             TransitionParams temp = new TransitionParams();
             actionSet?.Invoke(temp);
+
+            if (temp.IsUnSafe)
+            {
+                var task = Task.Run(() => InterpreterScheduler(stateName, temp));
+                return;
+            }
+
             if (Interpreter == null)
             {
-                var task = Task.Run(() => InterpreterScheduler(stateName, actionSet));
+                var task = Task.Run(() => InterpreterScheduler(stateName, temp));
             }
             else
             {
@@ -121,25 +147,21 @@ namespace MinimalisticWPF
                     return;
                 }
 
-                Interpreters.Enqueue(Tuple.Create(stateName, actionSet));
+                Interpreters.Enqueue(Tuple.Create(stateName, temp));
                 if (!temp.IsQueue)
                 {
                     Interpreter?.Interrupt();
                 }
             }
         }
-        private async void InterpreterScheduler(string stateName, Action<TransitionParams>? actionSet)
+        private void InterpreterScheduler(string stateName, TransitionParams actionSet)
         {
             var targetState = States.FirstOrDefault(x => x.StateName == stateName);
             if (targetState == null) throw new ArgumentException($"The State Named [ {stateName} ] Cannot Be Found");
 
-            TransitionParams transferParams = new TransitionParams();
-            actionSet?.Invoke(transferParams);
-            TransitionParams = transferParams;
+            TransitionParams = actionSet;
 
-            await Task.Delay((int)(TransitionParams.WaitTime * 1000));
-
-            AnimationInterpreter animationInterpreter = new AnimationInterpreter(this);
+            TransitionInterpreter animationInterpreter = new TransitionInterpreter(this);
             animationInterpreter.IsLast = TransitionParams.IsLast;
             animationInterpreter.DeltaTime = (int)DeltaTime;
             animationInterpreter.Start = TransitionParams.Start;
@@ -147,6 +169,7 @@ namespace MinimalisticWPF
             animationInterpreter.Completed = TransitionParams.Completed;
             animationInterpreter.LateUpdate = TransitionParams.LateUpdate;
             animationInterpreter.Acceleration = TransitionParams.Acceleration;
+            animationInterpreter.IsUnSafe = TransitionParams.IsUnSafe;
 
             if (Application.Current == null)
             {
@@ -174,7 +197,6 @@ namespace MinimalisticWPF
 
             return result;
         }
-
         internal List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(State state)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
@@ -305,27 +327,35 @@ namespace MinimalisticWPF
         /// <summary>
         /// 动画解释器
         /// </summary>
-        internal class AnimationInterpreter
+        public class TransitionInterpreter
         {
-            internal AnimationInterpreter(StateMachine machine) { Machine = machine; }
+            internal TransitionInterpreter(StateMachine machine) { Machine = machine; }
 
             internal StateMachine Machine { get; set; }
             internal List<List<Tuple<PropertyInfo, List<object?>>>> Frams { get; set; } = new List<List<Tuple<PropertyInfo, List<object?>>>>();
-            internal string StateName { get; set; } = string.Empty;
+            /// <summary>
+            /// 解释器描述对象指向的State的名称
+            /// </summary>
+            public string StateName { get; internal set; } = string.Empty;
             internal int DeltaTime { get; set; } = 0;
             internal bool IsLast { get; set; } = true;
-            internal bool IsRunning { get; set; } = false;
+            /// <summary>
+            /// 解释器是否处于运行中
+            /// </summary>
+            public bool IsRunning { get; internal set; } = false;
             internal bool IsStop { get; set; } = false;
             internal Action? Start { get; set; }
             internal Action? Update { get; set; }
             internal Action? Completed { get; set; }
             internal Action? LateUpdate { get; set; }
             internal double Acceleration { get; set; } = 0;
+            internal bool IsUnSafe { get; set; } = false;
+            internal bool IsDestroy { get; set; } = false;
 
             /// <summary>
             /// 执行动画
             /// </summary>
-            internal void Interpret()
+            public void Interpret()
             {
                 if (IsStop || IsRunning) { WhileEnded(); return; }
                 IsRunning = true;
@@ -341,7 +371,7 @@ namespace MinimalisticWPF
                 for (int i = 0; i < Machine.FrameCount; i++)
                 //按帧遍历
                 {
-                    if (IsStop || Application.Current == null || Machine.Interpreter != this)
+                    if (IsStop || Application.Current == null || (IsUnSafe ? false : (Machine.Interpreter != this)))
                     {
                         WhileEnded();
                         return;
@@ -387,7 +417,7 @@ namespace MinimalisticWPF
             /// <summary>
             /// 打断动画
             /// </summary>
-            internal void Interrupt()
+            public void Interrupt()
             {
                 IsStop = IsRunning ? true : false;
             }
@@ -397,6 +427,8 @@ namespace MinimalisticWPF
             /// </summary>
             internal void WhileEnded()
             {
+                if (IsDestroy) return;
+
                 if (Application.Current != null && Completed != null)
                 {
                     Application.Current.Dispatcher.Invoke(Completed);

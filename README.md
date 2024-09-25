@@ -49,7 +49,7 @@
     - Use
       - State.FromType<>() / StateMachineTransition( StateRecordModes.Type )
       - State.FromObject() / StateMachineTransition( StateRecordModes.Object )
-   - AnimationInterpreter logic optimization
+   - TransitionInterpreter logic optimization
      - Addressed twitching issues that could be caused by frequent State switching
 </details>
 
@@ -609,7 +609,7 @@ Set((x)=>
     - 使用
       - State.FromType<>() / StateMachineTransition( StateRecordModes.Type )
       - State.FromObject() / StateMachineTransition( StateRecordModes.Object )
-  - AnimationInterpreter 逻辑优化
+  - TransitionInterpreter 逻辑优化
     - 解决了频繁切换State可能导致的抽搐问题
 </details>
 
