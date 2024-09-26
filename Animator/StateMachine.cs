@@ -132,10 +132,10 @@ namespace MinimalisticWPF
             Interpreters.Clear();
         }
         /// <summary>
-        /// 转移至目标状态
+        /// 过渡至目标状态
         /// </summary>
         /// <param name="stateName">状态名称</param>
-        /// <param name="actionSet">设置过渡参数</param>
+        /// <param name="actionSet">细节参数</param>
         /// <exception cref="ArgumentException"></exception>
         public void Transition(string stateName, Action<TransitionParams>? actionSet)
         {

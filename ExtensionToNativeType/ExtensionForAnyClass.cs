@@ -65,22 +65,54 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 判断对象是否符合指定条件(必填),若符合条件则执行过渡(选填)
+        /// 条件语句 ( 必填 )
         /// </summary>
         /// <param name="target"></param>
         /// <param name="condition">条件语句</param>
-        /// <param name="transfer">满足条件时执行的过渡语句</param>
-        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, TransitionBoard<T>? transfer = default) where T : class
+        /// <returns></returns>
+        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition) where T : class
+        {
+            var checker = condition.Compile();
+            if (checker == null) return false;
+            return checker(target);
+        }
+        /// <summary>
+        /// 条件语句 ( 必填 )
+        /// <para>若符合条件则执行TransitionBoard过渡 ( 可空 ) </para>
+        /// <para>TransitionBoard过渡效果参数 ( 可空 ) </para>
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="condition">条件语句</param>
+        /// <param name="transfer">TransitionBoard过渡</param>
+        /// <param name="set">细节参数</param>
+        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, TransitionBoard<T>? transfer, Action<TransitionParams>? set) where T : class
         {
             var checker = condition.Compile();
             if (checker == null) return false;
             var result = checker(target);
-            if (result) transfer?.Start();
+            if (result) target.BeginTransition(transfer, set);
+            return result;
+        }
+        /// <summary>
+        /// 条件语句 ( 必填 )
+        /// <para>若符合条件则执行State过渡 ( 可空 ) </para>
+        /// <para>State过渡效果参数 ( 可空 ) </para>
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="condition">条件语句</param>
+        /// <param name="state">State过渡</param>
+        /// <param name="set">细节参数</param>
+        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, State? state, Action<TransitionParams>? set = default) where T : class
+        {
+            var checker = condition.Compile();
+            if (checker == null) return false;
+            var result = checker(target);
+            if (result) target.BeginTransition(state, set);
             return result;
         }
 
         /// <summary>
-        /// 启动过渡
+        /// 启动TransitionBoard过渡
         /// <para>注意 : 由此方法启动的动画必定截断正在执行的过渡</para>
         /// </summary>
         public static void BeginTransition<T>(this T source, TransitionBoard<T>? transfer, Action<TransitionParams>? set = default) where T : class
@@ -102,9 +134,8 @@ namespace MinimalisticWPF
                 }
             }
         }
-
         /// <summary>
-        /// 启动过渡
+        /// 启动State过渡
         /// <para>注意 : 由此方法启动的动画必定截断正在执行的过渡</para>
         /// </summary>
         /// <param name="source"></param>
@@ -168,7 +199,7 @@ namespace MinimalisticWPF
     {
         private static string _tempName = "temp";
         /// <summary>
-        /// 临时绘板中,State的临时名称
+        /// TransitionBoard中,State的临时名称,默认TransitionBoard使用名为"temp"的临时State
         /// </summary>
         public static string TempName
         {
@@ -365,7 +396,7 @@ namespace MinimalisticWPF
             return this;
         }
         /// <summary>
-        /// 启动过渡
+        /// 启动过渡,内置目标对象
         /// </summary>
         public void Start()
         {
@@ -377,8 +408,9 @@ namespace MinimalisticWPF
             Machine.Transition(Transition.TempName, TransitionParams);
         }
         /// <summary>
-        /// 启动过渡,但不再是绘板
+        /// 启动过渡,不是内置目标对象
         /// </summary>
+        /// <param name="target">新的目标对象</param>
         public void Start(T target)
         {
             MachinePool.TryGetValue(target, out var temp);
