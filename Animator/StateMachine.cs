@@ -82,6 +82,8 @@ namespace MinimalisticWPF
         }
 
         internal TransitionParams TransitionParams { get; set; } = new TransitionParams();
+        internal bool IsReSet { get; set; } = false;
+
         /// <summary>
         /// 一帧持续的时间(单位: ms )
         /// </summary>
@@ -119,6 +121,17 @@ namespace MinimalisticWPF
         public Queue<Tuple<string, TransitionParams>> Interpreters { get; internal set; } = new Queue<Tuple<string, TransitionParams>>();
 
         /// <summary>
+        /// 重置状态机
+        /// </summary>
+        public void ReSet()
+        {
+            IsReSet = true;
+            CurrentState = null;
+            Interpreter?.Interrupt();
+            Interpreter = null;
+            Interpreters.Clear();
+        }
+        /// <summary>
         /// 转移至目标状态
         /// </summary>
         /// <param name="stateName">状态名称</param>
@@ -126,6 +139,8 @@ namespace MinimalisticWPF
         /// <exception cref="ArgumentException"></exception>
         public void Transition(string stateName, Action<TransitionParams>? actionSet)
         {
+            IsReSet = false;
+
             TransitionParams temp = new TransitionParams();
             actionSet?.Invoke(temp);
 
@@ -154,7 +169,7 @@ namespace MinimalisticWPF
                 }
             }
         }
-        private void InterpreterScheduler(string stateName, TransitionParams actionSet)
+        internal void InterpreterScheduler(string stateName, TransitionParams actionSet)
         {
             var targetState = States.FirstOrDefault(x => x.StateName == stateName);
             if (targetState == null) throw new ArgumentException($"The State Named [ {stateName} ] Cannot Be Found");
@@ -179,8 +194,12 @@ namespace MinimalisticWPF
             {
                 animationInterpreter.Frams = ComputingFrames(targetState);
             });
-            CurrentState = stateName;
-            Interpreter = animationInterpreter;
+
+            if (!TransitionParams.IsUnSafe)
+            {
+                CurrentState = stateName;
+                Interpreter = animationInterpreter;
+            }
             var task = Task.Run(() => { animationInterpreter.Interpret(); });
         }
         internal List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state)
@@ -350,7 +369,6 @@ namespace MinimalisticWPF
             internal Action? LateUpdate { get; set; }
             internal double Acceleration { get; set; } = 0;
             internal bool IsUnSafe { get; set; } = false;
-            internal bool IsDestroy { get; set; } = false;
 
             /// <summary>
             /// 执行动画
@@ -359,7 +377,7 @@ namespace MinimalisticWPF
             {
                 if (IsStop || IsRunning) { WhileEnded(); return; }
                 IsRunning = true;
-                Machine.Interpreter = this;
+                if (!IsUnSafe) Machine.Interpreter = this;
 
                 var Times = GetAccDeltaTime((int)Machine.FrameCount);
 
@@ -371,7 +389,7 @@ namespace MinimalisticWPF
                 for (int i = 0; i < Machine.FrameCount; i++)
                 //按帧遍历
                 {
-                    if (IsStop || Application.Current == null || (IsUnSafe ? false : (Machine.Interpreter != this)))
+                    if (IsStop || Application.Current == null || Machine.IsReSet || (IsUnSafe ? false : (Machine.Interpreter != this)))
                     {
                         WhileEnded();
                         return;
@@ -427,7 +445,7 @@ namespace MinimalisticWPF
             /// </summary>
             internal void WhileEnded()
             {
-                if (IsDestroy) return;
+                if (IsUnSafe || Machine.IsReSet) return;
 
                 if (Application.Current != null && Completed != null)
                 {
@@ -435,17 +453,21 @@ namespace MinimalisticWPF
                 }
                 IsRunning = false;
                 IsStop = false;
-                Machine.Interpreter = null;
-                if (IsLast)
+
+                if (Machine.Interpreter == this)
                 {
-                    Machine.Interpreters.Clear();
+                    Machine.Interpreter = null;
+                    if (IsLast)
+                    {
+                        Machine.Interpreters.Clear();
+                    }
+                    if (Machine.Interpreters.Count > 0)
+                    {
+                        var newAni = Machine.Interpreters.Dequeue();
+                        Machine.InterpreterScheduler(newAni.Item1, newAni.Item2);
+                    }
+                    Machine.CurrentState = null;
                 }
-                if (Machine.Interpreters.Count > 0)
-                {
-                    var newAni = Machine.Interpreters.Dequeue();
-                    Machine.InterpreterScheduler(newAni.Item1, newAni.Item2);
-                }
-                Machine.CurrentState = null;
             }
 
             /// <summary>

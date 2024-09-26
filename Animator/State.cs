@@ -184,7 +184,7 @@ namespace MinimalisticWPF
         /// </summary>
         public ObjectTempState<T> SetProperty(
             Expression<Func<T, Transform>> propertyLambda,
-            Transform newValue)
+            params Transform[] newValue)
         {
             if (Value == null)
             {
@@ -198,7 +198,12 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                property.SetValue(Value, newValue);
+
+                var value = newValue.Select(t => t.Value).Aggregate(Matrix.Identity, (acc, matrix) => acc * matrix);
+                var interpolatedMatrixStr = $"{value.M11},{value.M12},{value.M21},{value.M22},{value.OffsetX},{value.OffsetY}";
+                var result = Transform.Parse(interpolatedMatrixStr);
+
+                property.SetValue(Value, result);
                 WhiteList.Add(property.Name);
             }
 

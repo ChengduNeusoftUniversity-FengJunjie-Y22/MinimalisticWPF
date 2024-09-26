@@ -81,6 +81,7 @@ namespace MinimalisticWPF
 
         /// <summary>
         /// 启动过渡
+        /// <para>注意 : 由此方法启动的动画必定截断正在执行的过渡</para>
         /// </summary>
         public static void BeginTransition<T>(this T source, TransitionBoard<T>? transfer, Action<TransitionParams>? set = default) where T : class
         {
@@ -90,19 +91,21 @@ namespace MinimalisticWPF
                 {
                     transfer.TransitionParams = set;
                 }
+
                 if (transfer.IsStatic)
                 {
                     transfer.Start(source);
                 }
                 else
                 {
-                    transfer.Start();
+                    transfer.Start(source);
                 }
             }
         }
 
         /// <summary>
         /// 启动过渡
+        /// <para>注意 : 由此方法启动的动画必定截断正在执行的过渡</para>
         /// </summary>
         /// <param name="source"></param>
         /// <param name="state">待过渡到的State</param>
@@ -121,6 +124,7 @@ namespace MinimalisticWPF
             }
             else
             {
+                machine.ReSet();
                 machine.States.Add(state);
                 machine.Transition(state.StateName, set);
             }
@@ -162,6 +166,21 @@ namespace MinimalisticWPF
 
     public static class Transition
     {
+        private static string _tempName = "temp";
+        /// <summary>
+        /// 临时绘板中,State的临时名称
+        /// </summary>
+        public static string TempName
+        {
+            get => _tempName;
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    _tempName = value;
+                }
+            }
+        }
         public static TransitionBoard<T> CreateBoardFromObject<T>(T target) where T : class
         {
             return new TransitionBoard<T>(target);
@@ -197,7 +216,7 @@ namespace MinimalisticWPF
         internal bool IsStatic { get; set; } = false;
         internal T? Target { get; set; }
         internal StateMachine? Machine { get; set; }
-        public State TempState { get; internal set; } = new State() { StateName = "temp" };
+        public State TempState { get; internal set; } = new State() { StateName = Transition.TempName };
         public Action<TransitionParams>? TransitionParams { get; internal set; }
 
         /// <summary>
@@ -330,7 +349,7 @@ namespace MinimalisticWPF
         public TransitionBoard<T> ReflectAny(T reflected)
         {
             TempState = new State(reflected, Array.Empty<string>(), Array.Empty<string>());
-            TempState.StateName = "temp";
+            TempState.StateName = Transition.TempName;
             return this;
         }
         /// <summary>
@@ -342,7 +361,7 @@ namespace MinimalisticWPF
         {
             var propertyNames = blackList.Select(p => ((MemberExpression)p.Body).Member.Name).ToArray();
             TempState = new State(reflected, Array.Empty<string>(), propertyNames);
-            TempState.StateName = "temp";
+            TempState.StateName = Transition.TempName;
             return this;
         }
         /// <summary>
@@ -353,32 +372,28 @@ namespace MinimalisticWPF
             if (IsStatic) throw new InvalidOperationException("This method cannot be used under Type-based creation, instead use an overloaded version of the Start () method");
             if (Machine == null) throw new ArgumentException("StateMachine instance lost");
             if (Target == null) throw new ArgumentException("Target object instance lost");
+            Machine.ReSet();
             Machine.States.Add(TempState);
-            Machine.Transition("temp", TransitionParams ?? ((x) => { x.Duration = 0; }));
+            Machine.Transition(Transition.TempName, TransitionParams);
         }
         /// <summary>
-        /// 启动过渡
+        /// 启动过渡,但不再是绘板
         /// </summary>
         public void Start(T target)
         {
-            if (!IsStatic) throw new InvalidOperationException("This method cannot be used under Object-based creation, instead use an overloaded version of the Start () method");
-            Target = target;
             MachinePool.TryGetValue(target, out var temp);
-            var tp = new TransitionParams();
-            TransitionParams?.Invoke(tp);
             if (temp != null)
             {
-                if (!tp.IsQueue) temp.Interpreter?.Interrupt();
-
                 Machine = temp;
-                Machine.States.Add(TempState);
             }
             else
             {
-                Machine = StateMachine.Create(target).SetStates(TempState);
-                MachinePool.Add(Target, Machine);
+                Machine = StateMachine.Create(target);
+                MachinePool.Add(target, Machine);
             }
-            Machine.Transition("temp", TransitionParams ?? ((x) => { x.Duration = 0; }));
+            Machine.ReSet();
+            Machine.States.Add(TempState);
+            Machine.Transition(Transition.TempName, TransitionParams);
         }
     }
 }
