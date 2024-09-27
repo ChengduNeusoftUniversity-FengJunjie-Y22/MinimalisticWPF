@@ -1,5 +1,5 @@
 ﻿# MinimalisticWPF
-- [中文文档](#https://chengduneusoftuniversity-fengjunjie-y22.github.io/MinimalisticWPFDocumentation/)
+- [中文文档](https://chengduneusoftuniversity-fengjunjie-y22.github.io/MinimalisticWPFDocumentation/)
 
 ---
 
