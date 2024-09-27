@@ -3,8 +3,6 @@
 
 ---
 
-# English
-
 ## Change
 <details>
 <summary>V1.5.6</summary>
@@ -49,8 +47,145 @@
   - Unified API style
   - Open up more content that was previously only available inside the state machine system
   - Better code use cases
-  - New document structure
 </details>
+
+# V1.8.x
+
+## Ⅰ API Change
+- AnyClass.StateMachineTransfer
+
+```csharp
+            GD.Transition()
+                .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
+                .SetProperty(x => x.Opacity, 0.2)
+                .SetParams((x) =>
+                {
+                    x.Duration = 0.4;
+                })
+                .Start();
+```
+
+## Ⅱ New API
+- New Methods to start a predefined animation
+  - AnyClass.BeginTransition()
+  - AnyClass.IsSatisfy()
+```csharp
+private void OnClick1(object sender, System.Windows.Input.MouseButtonEventArgs e)
+{
+    GD.BeginTransition(Compile);
+    //[Compile] is a State or TransitionBoard
+
+    GD.IsSatisfy(x => x.ActualWidth < 1000, Compile);
+    //Add a condition before [Compile] start run
+}
+```
+
+---
+
+- Get the state machine instance of the control instance
+  - AnyClass.FindStateMachine()
+```csharp
+var machine = source.FindStateMachine();
+```
+
+---
+
+- API provided by StateMachine
+
+|Property|class|default|Meaning|
+|-----------|------------|--------------|===========|
+|MaxFrameRate|int|120 Hz|Maximum frame rate limit|
+|States|StateCollection||A collection of State|
+
+|Method|Params|Meaning|
+|-----------|--------------|===========|
+|ReSet||Resetting the animation data of state machine|
+
+---
+
+## Ⅲ Practice
+- First, you need to define the animation beforehand
+```csharp
+// Detail parameters, it is recommended to define them before all animations to avoid problems caused by static field positions
+// defined here:
+// Unsafe animation that lasts 2 seconds
+// 2.Animation that is safe and lasts 2 seconds
+private static Action<TransitionParams> _tp = (x) =>
+{
+    x.IsUnSafe = true;
+    x.Duration = 2;
+};
+private static Action<TransitionParams> _tp2 = (x) =>
+{
+    x.IsUnSafe = false;
+    x.Duration = 2;
+};
+
+// rotation, translation, and scale effects defined
+private static RotateTransform rotateTransform = new RotateTransform(90, 50, 50);
+private static TranslateTransform translateTransform = new TranslateTransform(-100, -50);
+private static ScaleTransform scaleTransform = new ScaleTransform(2, 2, 50, 50);
+
+// Static drawing boards, usually used to create [global, non-dynamic] animations
+// The drawing board can be either State or TransitionBoard
+// defined here:
+//1. A rotation, translation, and scale animation UnSafe
+//2. A background color change UnSafe
+//3. A compound animation Safe
+private static State TransformA = State.FromType<Grid>()
+    .SetName("TransformChange1")
+    .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
+    .ToState();
+private static TransitionBoard<Grid> ColorA = Transition.CreateBoardFromType<Grid>()
+    .SetProperty(x => x.Background, Brushes.Tomato)
+    .SetParams(_tp);
+private static TransitionBoard<Grid> Compile = Transition.CreateBoardFromType<Grid>()
+    .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
+    .SetProperty(x => x.Background, Brushes.Tomato)
+    .SetParams(_tp2);
+
+// Instance drawing boards, which are used to create [local, dynamic] animations
+// defined here:
+// 1.An opacity change animation UnSafe
+private TransitionBoard<Grid> OpacityA = Transition.CreateBoardFromType<Grid>()
+    .SetProperty(x => x.Opacity, 0)
+    .SetParams(_tp);
+```
+- Then you can start using those animations ( select one way from bottom )
+```csharp
+private void OnClick1(object sender, System.Windows.Input.MouseButtonEventArgs e)
+{
+    //☆ Each instance can render a different opacity transformation based on the result
+    if (GD.ActualWidth < 500)
+    {
+        OpacityA.SetProperty(x => x.Opacity, 0.6);
+    }
+
+    //1.With Safe, an animation must be interrupted when it starts executing
+    GD.BeginTransition(Compile);
+
+    // 2.With UnSafe, each animation component runs independently and cannot be interrupted
+    // You can combine multiple UnSafe components, but make sure they don't conflict with each other and that no other conflicting animations are added during execution
+    GD.BeginTransition(TransformA, _tp);
+    GD.BeginTransition(ColorA);
+    GD.BeginTransition(OpacityA);
+
+    //3. We can directly check if the object meets the specified conditions, and then use the result to decide whether to start the animation defined by the drawing board
+    //☆ Note: OpacityA needs to start before Compile because it must interrupt the Safe animation
+    GD.IsSatisfy(x => x.ActualWidth < 1000, OpacityA);
+    GD.IsSatisfy(x => x.ActualHeight < 1000, Compile);
+}
+```
+
+
+---
+---
+---
+---
+---
+---
+
+# V1.5.x
 
 ## Key Features
 - [State Machine System - Create linear transitions to specified properties of specified instances](#StateMachineSystem)
