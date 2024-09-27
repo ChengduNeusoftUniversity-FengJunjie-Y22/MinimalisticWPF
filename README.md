@@ -90,7 +90,7 @@ var machine = source.FindStateMachine();
 
 ---
 
-- API provided by StateMachine
+#### API provided by StateMachine
 
 |Property|class|default|Meaning|
 |-----------|------------|--------------|===========|
