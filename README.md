@@ -90,15 +90,15 @@ var machine = source.FindStateMachine();
 
 ---
 
-#### API provided by StateMachine
+  - API provided by StateMachine
 
 |Property|class|default|Meaning|
-|-----------|------------|--------------|===========|
+|-----------|------------|--------------|-----------|
 |MaxFrameRate|int|120 Hz|Maximum frame rate limit|
 |States|StateCollection||A collection of State|
 
 |Method|Params|Meaning|
-|-----------|--------------|===========|
+|-----------|--------------|---------|
 |ReSet||Resetting the animation data of state machine|
 
 ---
