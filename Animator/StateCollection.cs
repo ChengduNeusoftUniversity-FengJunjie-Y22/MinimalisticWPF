@@ -44,6 +44,25 @@ namespace MinimalisticWPF
 
         public int Count => _nodes.Count;
 
+        private int _suffix = 0;
+        public int BoardSuffix
+        {
+            get
+            {
+                if (_suffix < 50)
+                {
+                    _suffix++;
+                    return _suffix;
+                }
+                if (_suffix == 50)
+                {
+                    _suffix = 0;
+                    return _suffix;
+                }
+                return -1;
+            }
+        }
+
         public bool IsReadOnly => false;
 
         public void Add(State item)
@@ -52,6 +71,10 @@ namespace MinimalisticWPF
 
             if (existingNode != null)
             {
+                if (State.IsDebug)
+                {
+                    throw new ArgumentException($"You are trying to add a State of the same name [ {item.StateName} ] to the State collection, which would be replaced with a new State in non-DeBug mode, but you are currently in Debug mode, so an exception is notified");
+                }
                 if (!ReferenceEquals(existingNode, item))
                 {
                     _nodes.Remove(existingNode);

@@ -13,20 +13,12 @@ namespace MinimalisticWPF
 {
     public static class ExtensionForAnyClass
     {
-        /// <summary>
-        /// 开始创建基于StateMachine的过渡效果
-        /// </summary>
-        /// <param name="element"></param>
         public static TransitionBoard<T> Transition<T>(this T element) where T : class
         {
             TransitionBoard<T> tempStoryBoard = new TransitionBoard<T>(element);
             return tempStoryBoard;
         }
 
-        /// <summary>
-        /// 尝试为对象的DataContext加载状态机
-        /// </summary>
-        /// <typeparam name="T">DataContext的真实类型</typeparam>
         public static StateMachine StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class
         {
             var vectorInterface = viewModel as IConditionalTransition<T> ?? throw new ArgumentException($"The [ {nameof(T)} ] Is Not A [ {nameof(IConditionalTransition<T>)} ]");
@@ -64,28 +56,13 @@ namespace MinimalisticWPF
             return machine;
         }
 
-        /// <summary>
-        /// 条件语句 ( 必填 )
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="condition">条件语句</param>
-        /// <returns></returns>
         public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition) where T : class
         {
             var checker = condition.Compile();
             if (checker == null) return false;
             return checker(target);
         }
-        /// <summary>
-        /// 条件语句 ( 必填 )
-        /// <para>若符合条件则执行TransitionBoard过渡 ( 可空 ) </para>
-        /// <para>TransitionBoard过渡效果参数 ( 可空 ) </para>
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="condition">条件语句</param>
-        /// <param name="transfer">TransitionBoard过渡</param>
-        /// <param name="set">细节参数</param>
-        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, TransitionBoard<T>? transfer, Action<TransitionParams>? set) where T : class
+        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, TransitionBoard<T> transfer, Action<TransitionParams> set) where T : class
         {
             var checker = condition.Compile();
             if (checker == null) return false;
@@ -93,16 +70,15 @@ namespace MinimalisticWPF
             if (result) target.BeginTransition(transfer, set);
             return result;
         }
-        /// <summary>
-        /// 条件语句 ( 必填 )
-        /// <para>若符合条件则执行State过渡 ( 可空 ) </para>
-        /// <para>State过渡效果参数 ( 可空 ) </para>
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="condition">条件语句</param>
-        /// <param name="state">State过渡</param>
-        /// <param name="set">细节参数</param>
-        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, State? state, Action<TransitionParams>? set = default) where T : class
+        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, TransitionBoard<T> transfer) where T : class
+        {
+            var checker = condition.Compile();
+            if (checker == null) return false;
+            var result = checker(target);
+            if (result) target.BeginTransition(transfer);
+            return result;
+        }
+        public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition, State state, Action<TransitionParams> set) where T : class
         {
             var checker = condition.Compile();
             if (checker == null) return false;
@@ -111,37 +87,16 @@ namespace MinimalisticWPF
             return result;
         }
 
-        /// <summary>
-        /// 启动TransitionBoard过渡
-        /// <para>注意 : 由此方法启动的动画必定截断正在执行的过渡</para>
-        /// </summary>
-        public static void BeginTransition<T>(this T source, TransitionBoard<T>? transfer, Action<TransitionParams>? set = default) where T : class
+        public static void BeginTransition<T>(this T source, TransitionBoard<T> transfer) where T : class
         {
-            if (transfer != null)
-            {
-                if (set != null)
-                {
-                    transfer.TransitionParams = set;
-                }
-
-                if (transfer.IsStatic)
-                {
-                    transfer.Start(source);
-                }
-                else
-                {
-                    transfer.Start(source);
-                }
-            }
+            transfer.Start(source);
         }
-        /// <summary>
-        /// 启动State过渡
-        /// <para>注意 : 由此方法启动的动画必定截断正在执行的过渡</para>
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="state">待过渡到的State</param>
-        /// <param name="set">过渡细节</param>
-        public static void BeginTransition<T>(this T source, State? state, Action<TransitionParams>? set) where T : class
+        public static void BeginTransition<T>(this T source, TransitionBoard<T> transfer, Action<TransitionParams> set) where T : class
+        {
+            transfer.TransitionParams = set;
+            transfer.Start(source);
+        }
+        public static void BeginTransition<T>(this T source, State state, Action<TransitionParams> set) where T : class
         {
             if (state == null) return;
             if (state.ActualType != typeof(T)) throw new ArgumentException("State does not match the type of the object");
@@ -234,9 +189,6 @@ namespace MinimalisticWPF
             MachinePool.TryGetValue(target, out var temp);
             if (temp != null)
             {
-                temp.States.Clear();
-                temp.Interpreters.Clear();
-                temp.Interpreter?.Interrupt();
                 Machine = temp;
                 return;
             }
@@ -262,7 +214,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                TempState.Values.Add(property.Name, (object?)newValue);
+                TempState.AddProperty(property.Name, (object?)newValue);
             }
             return this;
         }
@@ -278,7 +230,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                TempState.Values.Add(property.Name, (object?)newValue);
+                TempState.AddProperty(property.Name, (object?)newValue);
             }
             return this;
         }
@@ -297,7 +249,7 @@ namespace MinimalisticWPF
                 var value = newValue.Select(t => t.Value).Aggregate(Matrix.Identity, (acc, matrix) => acc * matrix);
                 var interpolatedMatrixStr = $"{value.M11},{value.M12},{value.M21},{value.M22},{value.OffsetX},{value.OffsetY}";
                 var result = Transform.Parse(interpolatedMatrixStr);
-                TempState.Values.Add(property.Name, (object?)result);
+                TempState.AddProperty(property.Name, (object?)result);
             }
             return this;
         }
@@ -313,7 +265,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                TempState.Values.Add(property.Name, (object?)newValue);
+                TempState.AddProperty(property.Name, (object?)newValue);
             }
             return this;
         }
@@ -329,7 +281,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                TempState.Values.Add(property.Name, (object?)newValue);
+                TempState.AddProperty(property.Name, (object?)newValue);
             }
             return this;
         }
@@ -345,7 +297,7 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                TempState.Values.Add(property.Name, (object?)newValue);
+                TempState.AddProperty(property.Name, (object?)newValue);
             }
             return this;
         }
@@ -361,14 +313,14 @@ namespace MinimalisticWPF
                 {
                     return this;
                 }
-                TempState.Values.Add(property.Name, (object?)newValue);
+                TempState.AddProperty(property.Name, (object?)newValue);
             }
             return this;
         }
         /// <summary>
         /// 设置本次过渡的参数
         /// </summary>
-        public TransitionBoard<T> SetParams(Action<TransitionParams>? modifyParams = null)
+        public TransitionBoard<T> SetParams(Action<TransitionParams> modifyParams)
         {
             TransitionParams = modifyParams;
             return this;
@@ -404,8 +356,9 @@ namespace MinimalisticWPF
             if (Machine == null) throw new ArgumentException("StateMachine instance lost");
             if (Target == null) throw new ArgumentException("Target object instance lost");
             Machine.ReSet();
+            TempState.StateName = Transition.TempName + "NonStatic";
             Machine.States.Add(TempState);
-            Machine.Transition(Transition.TempName, TransitionParams);
+            Machine.Transition(TempState.StateName, TransitionParams);
         }
         /// <summary>
         /// 启动过渡,不是内置目标对象
@@ -424,8 +377,9 @@ namespace MinimalisticWPF
                 MachinePool.Add(target, Machine);
             }
             Machine.ReSet();
+            TempState.StateName = Transition.TempName + Machine.States.BoardSuffix;
             Machine.States.Add(TempState);
-            Machine.Transition(Transition.TempName, TransitionParams);
+            Machine.Transition(TempState.StateName, TransitionParams);
         }
     }
 }

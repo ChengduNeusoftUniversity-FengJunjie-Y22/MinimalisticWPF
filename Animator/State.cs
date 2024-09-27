@@ -8,6 +8,11 @@ namespace MinimalisticWPF
 {
     public class State
     {
+        /// <summary>
+        /// 是否在发生一些错误操作时抛出异常
+        /// </summary>
+        public static bool IsDebug { get; set; } = false;
+
         internal State() { }
         internal State(object Target, ICollection<string> WhileList, ICollection<string> BlackList)
         {
@@ -90,6 +95,21 @@ namespace MinimalisticWPF
                 }
 
                 return Values[propertyName];
+            }
+        }
+        /// <summary>
+        /// 增加/替换 State存储的属性值
+        /// </summary>
+        public void AddProperty(string propertyName, object? value)
+        {
+            Values.TryGetValue(propertyName, out var target);
+            if (target == null)
+            {
+                Values.Add(propertyName, value);
+            }
+            else
+            {
+                Values[propertyName] = value;
             }
         }
         /// <summary>
@@ -363,7 +383,7 @@ namespace MinimalisticWPF
                 }
                 else
                 {
-                    Target.Values.Add(property.Name, newValue);
+                    Target.AddProperty(property.Name, newValue);
                 }
             }
 
@@ -389,7 +409,7 @@ namespace MinimalisticWPF
                 }
                 else
                 {
-                    Target.Values.Add(property.Name, newValue);
+                    Target.AddProperty(property.Name, newValue);
                 }
             }
 
@@ -415,7 +435,33 @@ namespace MinimalisticWPF
                 }
                 else
                 {
-                    Target.Values.Add(property.Name, newValue);
+                    Target.AddProperty(property.Name, newValue);
+                }
+            }
+
+            return this;
+        }
+        /// <summary>
+        /// 记录新状态对应的属性值
+        /// </summary>
+        public TypeTempState<T> SetProperty(
+            Expression<Func<T, Point>> propertyLambda,
+            Point newValue)
+        {
+            if (propertyLambda.Body is MemberExpression propertyExpr)
+            {
+                var property = propertyExpr.Member as PropertyInfo;
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(Point))
+                {
+                    return this;
+                }
+                if (Target.Values.ContainsKey(property.Name))
+                {
+                    Target.Values[property.Name] = newValue;
+                }
+                else
+                {
+                    Target.AddProperty(property.Name, newValue);
                 }
             }
 
@@ -441,7 +487,7 @@ namespace MinimalisticWPF
                 }
                 else
                 {
-                    Target.Values.Add(property.Name, newValue);
+                    Target.AddProperty(property.Name, newValue);
                 }
             }
 
@@ -472,7 +518,7 @@ namespace MinimalisticWPF
                 }
                 else
                 {
-                    Target.Values.Add(property.Name, result);
+                    Target.AddProperty(property.Name, result);
                 }
             }
 
@@ -498,7 +544,7 @@ namespace MinimalisticWPF
                 }
                 else
                 {
-                    Target.Values.Add(property.Name, newValue);
+                    Target.AddProperty(property.Name, newValue);
                 }
             }
 

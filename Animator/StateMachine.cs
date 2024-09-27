@@ -377,7 +377,6 @@ namespace MinimalisticWPF
             {
                 if (IsStop || IsRunning) { WhileEnded(); return; }
                 IsRunning = true;
-                if (!IsUnSafe) Machine.Interpreter = this;
 
                 var Times = GetAccDeltaTime((int)Machine.FrameCount);
 
@@ -389,7 +388,7 @@ namespace MinimalisticWPF
                 for (int i = 0; i < Machine.FrameCount; i++)
                 //按帧遍历
                 {
-                    if (IsStop || Application.Current == null || Machine.IsReSet || (IsUnSafe ? false : (Machine.Interpreter != this)))
+                    if (IsStop || Application.Current == null || (IsUnSafe ? false : Machine.IsReSet || Machine.Interpreter != this))
                     {
                         WhileEnded();
                         return;
@@ -437,6 +436,7 @@ namespace MinimalisticWPF
             /// </summary>
             public void Interrupt()
             {
+                if (IsUnSafe) return;
                 IsStop = IsRunning ? true : false;
             }
 
