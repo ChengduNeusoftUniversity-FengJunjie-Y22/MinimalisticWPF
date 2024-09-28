@@ -339,12 +339,12 @@ namespace MinimalisticWPF
         /// <summary>
         /// 完成记录
         /// </summary>
-        /// <param name="IsWhiteList">是否启用白名单</param>
-        /// <returns>State</returns>
-        public State ToState()
+        /// <param name="IsWhiteList">若为false,则反射记录对象所有受支持的属性,默认为true只记录传入了的值</param>
+        public State ToState(bool IsWhiteList = true)
         {
             if (Value == null) throw new ArgumentNullException("Target object loss");
             if (string.IsNullOrEmpty(Name)) throw new ArgumentException("The State name cannot be empty");
+            if (!IsWhiteList) WhiteList.Clear();
             State result = new State(Value, WhiteList, BlackList);
             result.StateName = Name;
             result.ActualType = ActualType;
