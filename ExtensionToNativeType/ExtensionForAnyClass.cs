@@ -19,43 +19,6 @@ namespace MinimalisticWPF
             return tempStoryBoard;
         }
 
-        public static StateMachine StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class
-        {
-            var vectorInterface = viewModel as IConditionalTransition<T> ?? throw new ArgumentException($"The [ {nameof(T)} ] Is Not A [ {nameof(IConditionalTransition<T>)} ]");
-            if (viewModel == null) throw new ArgumentException($"The [ DataContext ] Is Not A [ {nameof(T)} ]");
-
-            var StateFields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Static)
-                .Where(x => x.FieldType == typeof(State)).ToArray();
-            var StateProperties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.PropertyType == typeof(State)).ToArray();
-            var StateVectorField = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .FirstOrDefault(x => x.PropertyType == typeof(StateVector<T>));
-
-            var FieldStates = StateFields.Select(x => (State?)x.GetValue(viewModel)).ToArray();
-            var PropertyStates = StateProperties.Select(x => (State?)x.GetValue(viewModel)).ToArray();
-            var States = PropertyStates.Concat(FieldStates);
-            var StateVector = (StateVector<T>?)StateVectorField?.GetValue(viewModel);
-
-            var machine = StateMachine.Create(viewModel);
-            vectorInterface.StateMachine = machine;
-            if (States != null)
-            {
-                foreach (var state in States)
-                {
-                    if (state != null)
-                    {
-                        vectorInterface.StateMachine.States.Add(state);
-                    }
-                }
-            }
-            if (StateVector != null)
-            {
-                vectorInterface.StateVector = StateVector;
-            }
-
-            return machine;
-        }
-
         public static bool IsSatisfy<T>(this T target, Expression<Func<T, bool>> condition) where T : class
         {
             var checker = condition.Compile();
