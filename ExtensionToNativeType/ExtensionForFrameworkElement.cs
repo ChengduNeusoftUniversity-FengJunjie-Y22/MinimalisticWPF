@@ -69,13 +69,12 @@ namespace MinimalisticWPF
             if (Parent == null) return element;
             var newWidth = Parent.Width * rate;
             var newHeight = Parent.Height * rate;
-            var machine = element.FindStateMachine();
-            if (machine == null) return element;
-            var board = Transition.CreateBoardFromType<FrameworkElement>()
+            element.Transition()
                 .SetProperty(x => x.Width, newWidth)
                 .SetProperty(x => x.Height, newHeight)
-                .SetParams(set);
-            element.BeginTransition(board);
+                .SetParams(set)
+                .Start();
+            Notification.Message("启动完成");
             return element;
         }
 
@@ -87,12 +86,10 @@ namespace MinimalisticWPF
             var Parent = element.Parent as FrameworkElement;
             if (Parent == null) return element;
             var newHeight = Parent.Height * rate;
-            var machine = element.FindStateMachine();
-            if (machine == null) return element;
-            var board = Transition.CreateBoardFromType<FrameworkElement>()
+            element.Transition()
                 .SetProperty(x => x.Height, newHeight)
-                .SetParams(set);
-            element.BeginTransition(board);
+                .SetParams(set)
+                .Start();
             return element;
         }
 
@@ -104,12 +101,10 @@ namespace MinimalisticWPF
             var Parent = element.Parent as FrameworkElement;
             if (Parent == null) return element;
             var newWidth = Parent.Width * rate;
-            var machine = element.FindStateMachine();
-            if (machine == null) return element;
-            var board = Transition.CreateBoardFromType<FrameworkElement>()
+            element.Transition()
                 .SetProperty(x => x.Width, newWidth)
-                .SetParams(set);
-            element.BeginTransition(board);
+                .SetParams(set)
+                .Start();
             return element;
         }
     }
