@@ -13,6 +13,9 @@ namespace MinimalisticWPF
 {
     public static class ExtensionForAnyClass
     {
+        /// <summary>
+        /// 开始创建过渡效果,可直接启动 ( IsStatic == false )
+        /// </summary>
         public static TransitionBoard<T> Transition<T>(this T element) where T : class
         {
             TransitionBoard<T> tempStoryBoard = new TransitionBoard<T>(element);
@@ -117,7 +120,7 @@ namespace MinimalisticWPF
     {
         private static string _tempName = "temp";
         /// <summary>
-        /// TransitionBoard中,State的临时名称,默认TransitionBoard使用名为"temp"的临时State
+        /// TransitionBoard中,State的临时名称
         /// </summary>
         public static string TempName
         {
@@ -132,7 +135,9 @@ namespace MinimalisticWPF
         }
         public static TransitionBoard<T> CreateBoardFromObject<T>(T target) where T : class
         {
-            return new TransitionBoard<T>(target);
+            var result = new TransitionBoard<T>(target);
+            result.IsStatic = true;
+            return result;
         }
         public static TransitionBoard<T> CreateBoardFromType<T>() where T : class
         {
@@ -142,7 +147,10 @@ namespace MinimalisticWPF
 
     public class TransitionBoard<T> where T : class
     {
-        internal static Dictionary<object, StateMachine> MachinePool { get; set; } = new Dictionary<object, StateMachine>();
+        /// <summary>
+        /// 对于任意对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
+        /// </summary>
+        public static Dictionary<object, StateMachine> MachinePool { get; internal set; } = new Dictionary<object, StateMachine>();
 
         internal TransitionBoard() { }
         internal TransitionBoard(T target)
@@ -159,7 +167,10 @@ namespace MinimalisticWPF
             Machine = StateMachine.Create(target).SetStates();
             MachinePool.Add(Target, Machine);
         }
-        internal bool IsStatic { get; set; } = false;
+        /// <summary>
+        /// 是否由Transition静态方法创建,若为true,代表该TransitionBoard无法直接使用Start(),需要改用AnyClass.BeginTransition()
+        /// </summary>
+        public bool IsStatic { get; internal set; } = false;
         internal T? Target { get; set; }
         internal StateMachine? Machine { get; set; }
         public State TempState { get; internal set; } = new State() { StateName = Transition.TempName };
@@ -311,7 +322,7 @@ namespace MinimalisticWPF
             return this;
         }
         /// <summary>
-        /// 启动过渡,内置目标对象
+        /// 启动过渡,内置目标对象( IsStatic == false )
         /// </summary>
         public void Start()
         {
@@ -324,7 +335,7 @@ namespace MinimalisticWPF
             Machine.Transition(TempState.StateName, TransitionParams);
         }
         /// <summary>
-        /// 启动过渡,不是内置目标对象
+        /// 启动过渡,不是内置目标对象( IsStatic == true )
         /// </summary>
         /// <param name="target">新的目标对象</param>
         public void Start(T target)
