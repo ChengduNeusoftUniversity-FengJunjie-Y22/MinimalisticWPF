@@ -9,11 +9,10 @@ using System.Threading.Tasks;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 为ViewModel接入状态机的条件切换功能
-    /// <para>步骤:</para>
-    /// <para>1.使控件的ViewModel (DataContext) 实现此接口</para>
-    /// <para>2.在ViewModel中定义好State与StateVector</para>
-    /// <para>3.控件初始化时调用FrameworkElement.StateMachineLoading(ViewModel)</para>
+    /// 接入状态机的条件切换功能
+    /// <para>使用场景:</para>
+    /// <para>1.ViewModel实现此接口,然后在控件初始化时调用FrameworkElement.StateMachineLoading( )</para>
+    /// <para>2.任何类型可实现此接口,初始化时手动赋予StateMachine和StateVector ( StateMachine需要手动使用StateMachine.Create()创建 )</para>
     /// </summary>
     /// <typeparam name="T">具体实现此接口的类型</typeparam>
     public interface IConditionalTransition<T> where T : class
