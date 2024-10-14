@@ -185,6 +185,8 @@ namespace MinimalisticWPF
             animationInterpreter.LateUpdate = TransitionParams.LateUpdate;
             animationInterpreter.Acceleration = TransitionParams.Acceleration;
             animationInterpreter.IsUnSafe = TransitionParams.IsUnSafe;
+            animationInterpreter.LoopTime = TransitionParams.LoopTime;
+            animationInterpreter.IsAutoReverse = TransitionParams.IsAutoReverse;
 
             if (Application.Current == null)
             {
@@ -369,6 +371,8 @@ namespace MinimalisticWPF
             internal Action? LateUpdate { get; set; }
             internal double Acceleration { get; set; } = 0;
             internal bool IsUnSafe { get; set; } = false;
+            internal int LoopTime { get; set; } = 0;
+            internal bool IsAutoReverse { get; set; } = false;
 
             /// <summary>
             /// 执行动画
@@ -385,47 +389,95 @@ namespace MinimalisticWPF
                     Application.Current.Dispatcher.Invoke(Start);
                 }
 
-                for (int i = 0; i < Machine.FrameCount; i++)
-                //按帧遍历
+                for (int x = 0; LoopTime == int.MaxValue ? true : x <= LoopTime; x++)
                 {
-                    if (IsStop || Application.Current == null || (IsUnSafe ? false : Machine.IsReSet || Machine.Interpreter != this))
+                    for (int i = 0; i < Machine.FrameCount; i++)
+                    //按帧遍历
                     {
-                        WhileEnded();
-                        return;
-                    }
-
-                    if (Application.Current != null && Update != null)
-                    {
-                        Application.Current.Dispatcher.Invoke(Update);
-                    }
-
-                    for (int j = 0; j < Frams.Count; j++)
-                    //按不同类属性遍历
-                    {
-                        for (int k = 0; k < Frams[j].Count; k++)
-                        //按同类属性不同名遍历
+                        if (IsStop || Application.Current == null || (IsUnSafe ? false : Machine.IsReSet || Machine.Interpreter != this))
                         {
-                            if (IsFrameIndexRight(i, j, k) && Application.Current != null)
+                            WhileEnded();
+                            return;
+                        }
+
+                        if (Application.Current != null && Update != null)
+                        {
+                            Application.Current.Dispatcher.Invoke(Update);
+                        }
+
+                        for (int j = 0; j < Frams.Count; j++)
+                        //按不同类属性遍历
+                        {
+                            for (int k = 0; k < Frams[j].Count; k++)
+                            //按同类属性不同名遍历
                             {
-                                Application.Current.Dispatcher.Invoke(() =>
+                                if (IsFrameIndexRight(i, j, k) && Application.Current != null)
                                 {
-                                    Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
-                                });
+                                    Application.Current.Dispatcher.Invoke(() =>
+                                    {
+                                        Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                    });
+                                }
+                                else
+                                {
+                                    WhileEnded();
+                                }
                             }
-                            else
+                        }
+
+                        if (Application.Current != null && LateUpdate != null)
+                        {
+                            Application.Current.Dispatcher.Invoke(LateUpdate);
+                        }
+
+                        Thread.Sleep(Acceleration == 0 ? DeltaTime : i < Times.Count & Times.Count > 0 ? Times[i] : DeltaTime);
+                    }
+
+                    if (IsAutoReverse)
+                    {
+                        for (int i = Machine.FrameCount > 1 ? (int)Machine.FrameCount - 1 : 0; i > -1; i--)
+                        //按帧遍历
+                        {
+                            if (IsStop || Application.Current == null || (IsUnSafe ? false : Machine.IsReSet || Machine.Interpreter != this))
                             {
                                 WhileEnded();
+                                return;
                             }
 
+                            if (Application.Current != null && Update != null)
+                            {
+                                Application.Current.Dispatcher.Invoke(Update);
+                            }
+
+                            for (int j = 0; j < Frams.Count; j++)
+                            //按不同类属性遍历
+                            {
+                                for (int k = 0; k < Frams[j].Count; k++)
+                                //按同类属性不同名遍历
+                                {
+                                    if (IsFrameIndexRight(i, j, k) && Application.Current != null)
+                                    {
+                                        Application.Current.Dispatcher.Invoke(() =>
+                                        {
+                                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                        });
+                                    }
+                                    else
+                                    {
+                                        WhileEnded();
+                                    }
+
+                                }
+                            }
+
+                            if (Application.Current != null && LateUpdate != null)
+                            {
+                                Application.Current.Dispatcher.Invoke(LateUpdate);
+                            }
+
+                            Thread.Sleep(Acceleration == 0 ? DeltaTime : i < Times.Count & Times.Count > 0 ? Times[i] : DeltaTime);
                         }
                     }
-
-                    if (Application.Current != null && LateUpdate != null)
-                    {
-                        Application.Current.Dispatcher.Invoke(LateUpdate);
-                    }
-
-                    Thread.Sleep(Acceleration == 0 ? DeltaTime : i < Times.Count & Times.Count > 0 ? Times[i] : DeltaTime);
                 }
 
                 WhileEnded();

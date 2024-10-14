@@ -32,6 +32,14 @@ namespace MinimalisticWPF
         /// </summary>
         public Action? Completed { get; set; }
         /// <summary>
+        /// 是否自动回复
+        /// </summary>
+        public bool IsAutoReverse { get; set; } = false;
+        /// <summary>
+        /// 循环次数
+        /// </summary>
+        public int LoopTime { get; set; } = 0;
+        /// <summary>
         /// 持续时长(单位: s )
         /// </summary>
         public double Duration { get; set; } = 0;
@@ -61,6 +69,6 @@ namespace MinimalisticWPF
         /// <para>2.立即创建一个Task开始执行此次过渡</para>
         /// <para></para>
         /// </summary>
-        public bool IsUnSafe {  get; set; } = false;
+        public bool IsUnSafe { get; set; } = false;
     }
 }
