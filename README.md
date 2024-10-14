@@ -49,134 +49,302 @@
   - Better code use cases
 </details>
 
+<details>
+<summary>V1.8.4</summary>
+
+  - The animation can be looped through by setting [ LoopTime ]
+  - The reverse animation can be automatically loaded by setting [ IsAutoReverse ]
+</details>
+
 # V1.8.x
 
-## Ⅰ API Change
-- AnyClass.StateMachineTransfer
+## Ⅰ API
+### 1. State
+|Method|Param|Return|Meaning|
+|------|-----|------|-------|
+|FromObject|object|TempState|Record all supported properties based on an object instance|
+|FromType||TempState|Only attribute values can be recorded manually|
+|SetName|string|TempState|Give the State a name|
+|SetProperty|Expression , object|TempState|Logging attribute values|
+|ToState||State ☆|Completion record|
+### 2. StateVector
+|Method|Param|Return|Meaning|
+|------|-----|------|-------|
+|Create||StateVector||
+|AddCondition|Expression , State , Action&lt;TransitionParams>?|StateVector|Describes a mapping that automatically loads an object to a specified State animation when a specified condition is met|
+|Check|T , StateMachine||Check if any of the conditions are met, and if so, call the specified StateMachine instance to load the corresponding animation|
+### 3. Transition
+###### Transition
+|Method|Param|Return|Meaning|
+|------|-----|------|-------|
+|CreateBoardFromObject|object|TransitionBoard|Creating a drawing board|
+|CreateBoardFromType||TransitionBoard|Creating a drawing board|
+###### TransitionBoard
+|Method|Param|Return|Meaning|
+|------|-----|------|-------|
+|SetProperty|Expression , object|TransitionBoard|Set the target property value|
+|SetParams|Action&lt;TransitionParams>|TransitionBoard|Set animation detail parameters|
+|ReflectAny|object|TransitionBoard|Reflection specifies all attribute values of the target as the target|
+|ReflectExcept|object , params Expression<Func<T, string>>[]|TransitionBoard|Reflection specifies a partial attribute value of the target as the target|
+### 4. Any Class [Extension]
+|Method|Overloading|Meaning|
+|------|------|-------|
+|Transition|+0|Quick-start animation|
+|IsSatisfy|+4|Starts the animation with a conditional|
+|BeginTransition|+3|Start the animation with State or TransitionBoard|
+|FindStateMachine|+0|Finds whether the current object has a state machine instance|
+### 5.TransitionParams
+|Property|type|defualt|Meaning|
+|--------|----|-------|-------|
+|Start|Action|null|
+|Update|Action|null|
+|LateUpdate|Action|null|
+|Completed|Action|null|
+|FrameRate|int|120 HZ|
+|Duration|double|0 s|
+|IsAutoReverse|bool|false|
+|LoopTime|int|0|
+|Acceleration|double|0|
+|IsUnSafe|bool|false|Whether to enable the UnSafe animation|
+|IsQueue|bool|false|Whether to queue for execution|
+|IsLast|bool|false|Whether to clear the animation queue at the end of this animation|
+|IsUnique|bool|true|If an animation already exists that points to a State with the specified name, whether the animation should be added to the queue this time, i.e., whether the animation is unique|
 
+## Ⅱ Example
+#### 1. Quickly load an animation
 ```csharp
-            GD.Transition()
-                .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
-                .SetProperty(x => x.Opacity, 0.2)
-                .SetParams((x) =>
-                {
-                    x.Duration = 0.4;
-                })
-                .Start();
-```
-
-## Ⅱ New API
-- New Methods to start a predefined animation
-  - AnyClass.BeginTransition()
-  - AnyClass.IsSatisfy()
-```csharp
-private void OnClick1(object sender, System.Windows.Input.MouseButtonEventArgs e)
-{
-    GD.BeginTransition(Compile);
-    //[Compile] is a State or TransitionBoard
-
-    GD.IsSatisfy(x => x.ActualWidth < 1000, Compile);
-    //Add a condition before [Compile] start run
-}
-```
-
----
-
-- Get the state machine instance of the control instance
-  - AnyClass.FindStateMachine()
-```csharp
-var machine = source.FindStateMachine();
-```
-
----
-
-  - API provided by StateMachine
-
-|Property|class|default|Meaning|
-|-----------|------------|--------------|-----------|
-|MaxFrameRate|int|120 Hz|Maximum frame rate limit|
-|States|StateCollection||A collection of State|
-
-|Method|Params|Meaning|
-|-----------|--------------|---------|
-|ReSet||Resetting the animation data of state machine|
-
----
-
-## Ⅲ Practice
-- First, you need to define the animation beforehand
-```csharp
-// Detail parameters, it is recommended to define them before all animations to avoid problems caused by static field positions
-// defined here:
-// Unsafe animation that lasts 2 seconds
-// 2.Animation that is safe and lasts 2 seconds
-private static Action<TransitionParams> _tp = (x) =>
-{
-    x.IsUnSafe = true;
-    x.Duration = 2;
-};
-private static Action<TransitionParams> _tp2 = (x) =>
-{
-    x.IsUnSafe = false;
-    x.Duration = 2;
-};
-
-// rotation, translation, and scale effects defined
-private static RotateTransform rotateTransform = new RotateTransform(90, 50, 50);
-private static TranslateTransform translateTransform = new TranslateTransform(-100, -50);
-private static ScaleTransform scaleTransform = new ScaleTransform(2, 2, 50, 50);
-
-// Static drawing boards, usually used to create [global, non-dynamic] animations
-// The drawing board can be either State or TransitionBoard
-// defined here:
-//1. A rotation, translation, and scale animation UnSafe
-//2. A background color change UnSafe
-//3. A compound animation Safe
-private static State TransformA = State.FromType<Grid>()
-    .SetName("TransformChange1")
-    .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
-    .ToState();
-private static TransitionBoard<Grid> ColorA = Transition.CreateBoardFromType<Grid>()
-    .SetProperty(x => x.Background, Brushes.Tomato)
-    .SetParams(_tp);
-private static TransitionBoard<Grid> Compile = Transition.CreateBoardFromType<Grid>()
-    .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
-    .SetProperty(x => x.Background, Brushes.Tomato)
-    .SetParams(_tp2);
-
-// Instance drawing boards, which are used to create [local, dynamic] animations
-// defined here:
-// 1.An opacity change animation UnSafe
-private TransitionBoard<Grid> OpacityA = Transition.CreateBoardFromType<Grid>()
-    .SetProperty(x => x.Opacity, 0)
-    .SetParams(_tp);
-```
-- Then you can start using those animations ( select one way from bottom )
-```csharp
-private void OnClick1(object sender, System.Windows.Input.MouseButtonEventArgs e)
-{
-    //☆ Each instance can render a different opacity transformation based on the result
-    if (GD.ActualWidth < 500)
+GD.Transition()
+    .SetProperty(x => x.Opacity, 0.3)
+    .SetProperty(x => x.Width, 200)
+    .SetProperty(x => x.Height, 200)
+    .SetParams((x) =>
     {
-        OpacityA.SetProperty(x => x.Opacity, 0.6);
+        x.Duration = 2;
+    })
+    .Start();
+```
+#### 2. Start the animation based on the [State]
+```csharp
+State _board = State.FromType<Grid>()
+    .SetName("Animation1")
+    .SetProperty(x => x.Opacity, 0.3)
+    .SetProperty(x => x.Width, 200)
+    .SetProperty(x => x.Height, 200)
+    .ToState();
+
+Action<TransitionParams> _params = (x) =>
+{
+    x.Duration = 2;
+};
+
+GD.BeginTransition(_board, _params);
+```
+#### 3. Start the animation based on the [TransitionBoard]
+```csharp
+TransitionBoard<Grid> _board = Transition.CreateBoardFromType<Grid>()
+    .SetProperty(x => x.Opacity, 0.3)
+    .SetProperty(x => x.Width, 200)
+    .SetProperty(x => x.Height, 200)
+    .SetParams((x) =>
+    {
+        x.Duration = 2;
+    });
+
+GD.BeginTransition(_board);
+```
+#### 4. UnSafe
+- Predefined
+```csharp
+static TransitionBoard<Grid> Safe = Transition.CreateBoardFromType<Grid>()
+    .SetProperty(x => x.Width, 100)
+    .SetProperty(x => x.Height, 100)
+    .SetParams((x) =>
+    {
+        x.Duration = 1;
+    });
+TransitionBoard<Grid> UnSafe_1 = Transition.CreateBoardFromType<Grid>()
+    .SetProperty(x => x.Opacity, 1)
+    .SetParams((x) =>
+    {
+        x.IsUnSafe = true;
+        x.Duration = 1;
+    });
+TransitionBoard<Grid> UnSafe_2 = Transition.CreateBoardFromType<Grid>()
+    .SetProperty(x => x.Opacity, 1)
+    .SetParams((x) =>
+    {
+        x.IsUnSafe = true;
+        x.Duration = 1;
+    });
+```
+- Splicing
+```csharp
+if (GD1.Width > 1)
+{
+    UnSafe_1.SetProperty(x => x.Opacity, 0.8);
+}
+
+if (GD2.Height > 1)
+{
+    UnSafe_2.SetProperty(x => x.Opacity, 0.3);
+}
+
+GD1.BeginTransition(UnSafe_1);
+GD2.BeginTransition(UnSafe_2);
+
+GD1.BeginTransition(Safe);
+GD2.BeginTransition(Safe);
+```
+#### 5. LifeCycle
+```csharp
+Action<TransitionParams> _params = (x) =>
+{
+    x.Duration = 2;
+    x.Start = () =>
+    {
+
+    };
+    x.Update = () =>
+    {
+
+    };
+    x.LateUpdate = () =>
+    {
+
+    };
+    x.Completed = () =>
+    {
+
+    };
+};
+```
+#### 6. Good practice in MVVM design pattern
+- DataContext
+```xml
+<UserControl.DataContext>
+    <local:MPasswordBoxViewModel x:Name="ViewModel"
+                                 CornerRadius="10"
+                                 FontSizeConvertRate="0.7"
+                                 TextBrush="White"/>
+</UserControl.DataContext>
+```
+- ViewModel
+```csharp
+/// <summary>
+/// DataContext as password box
+/// </summary>
+public class MPasswordBoxViewModel : ViewModelBase<MPasswordBoxViewModel, MPasswordBoxModel>
+{
+    public MPasswordBoxViewModel() { }
+
+    //Default color
+    public static State Default = State.FromType<MPasswordBoxViewModel>()
+        .SetName("default")
+        .SetProperty(x => x.PasswordStrengthColor, Brushes.White)
+        .ToState();
+
+    //There are four levels of password strength, corresponding to four different colors
+    public static State Level1 = State.FromType<MPasswordBoxViewModel>()
+        .SetName("L1")
+        .SetProperty(x => x.PasswordStrengthColor, Brushes.Tomato)
+        .ToState();
+    public static State Level2 = State.FromType<MPasswordBoxViewModel>()
+        .SetName("L2")
+        .SetProperty(x => x.PasswordStrengthColor, Brushes.Yellow)
+        .ToState();
+    public static State Level3 = State.FromType<MPasswordBoxViewModel>()
+        .SetName("L3")
+        .SetProperty(x => x.PasswordStrengthColor, Brushes.Cyan)
+        .ToState();
+    public static State Level4 = State.FromType<MPasswordBoxViewModel>()
+        .SetName("L4")
+        .SetProperty(x => x.PasswordStrengthColor, Brushes.Lime)
+        .ToState();
+
+    //Switches to the specified State when the specified password strength is reached
+    public StateVector<MPasswordBoxViewModel> Condition { get; set; } = StateVector<MPasswordBoxViewModel>.Create()
+        .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 0, Default, (x) => { x.Duration = 0.3; })
+        .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 1, Level1, (x) => { x.Duration = 0.3; })
+        .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 2, Level2, (x) => { x.Duration = 0.3; })
+        .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 3, Level3, (x) => { x.Duration = 0.3; })
+        .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 4, Level4, (x) => { x.Duration = 0.3; });
+
+    //Real password
+    public string TruePassword
+    {
+        get => Model.TruePassword;
+        set
+        {
+            Model.TruePassword = value;
+            string result = string.Empty;
+            for (int i = 0; i < value.Length; i++)
+            {
+                result += ReplacingCharacters;
+            }
+            UIPassword = result;
+            OnPropertyChanged(nameof(TruePassword));
+
+            OnConditionsChecked();
+            // Methods specified by the IConditionalTransition interface
+            // StateViewModelBase is the smallest unit that implements the MVVM and connects to the state machine. It implements the INotifyPropertyChanged and IConditionalTransition interfaces
+            // This will animate the password strength when it changes
+        }
     }
 
-    //1.With Safe, an animation must be interrupted when it starts executing
-    GD.BeginTransition(Compile);
+    /// <summary>
+    /// Passwords that are visible to the user
+    /// </summary>
+    public string UIPassword
+    {
+        get => Model.UIPassword;
+        set
+        {
+            Model.UIPassword = value;
+            OnPropertyChanged(nameof(UIPassword));
+        }
+    }
 
-    // 2.With UnSafe, each animation component runs independently and cannot be interrupted
-    // You can combine multiple UnSafe components, but make sure they don't conflict with each other and that no other conflicting animations are added during execution
-    GD.BeginTransition(TransformA, _tp);
-    GD.BeginTransition(ColorA);
-    GD.BeginTransition(OpacityA);
+    /// <summary>
+    /// The character used to replace the real password
+    /// </summary>
+    public string ReplacingCharacters
+    {
+        get => Model.ReplacingCharacters;
+        set
+        {
+            Model.ReplacingCharacters = value;
+            string result = string.Empty;
+            for (int i = 0; i < TruePassword.Length; i++)
+            {
+                result += ReplacingCharacters;
+            }
+            UIPassword = result;
+            OnPropertyChanged(nameof(ReplacingCharacters));
+        }
+    }
 
-    //3. We can directly check if the object meets the specified conditions, and then use the result to decide whether to start the animation defined by the drawing board
-    //☆ Note: OpacityA needs to start before Compile because it must interrupt the Safe animation
-    GD.IsSatisfy(x => x.ActualWidth < 1000, OpacityA);
-    GD.IsSatisfy(x => x.ActualHeight < 1000, Compile);
+    /// <summary>
+    /// Border color corresponding to password strength
+    /// </summary>
+    public Brush PasswordStrengthColor
+    {
+        get => Model.PasswordStrengthColor;
+        set
+        {
+            Model.PasswordStrengthColor = value;
+            OnPropertyChanged(nameof(PasswordStrengthColor));
+        }
+    }
 }
 ```
-
+- Code-Behind
+```csharp
+public MPasswordBox()
+{
+    InitializeComponent();
+    this.StateMachineLoading(ViewModel);
+}
+```
 
 ---
 ---
