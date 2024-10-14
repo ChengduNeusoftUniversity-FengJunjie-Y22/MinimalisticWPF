@@ -50,7 +50,7 @@
 </details>
 
 <details>
-<summary>V1.8.4</summary>
+<summary>V1.8.2</summary>
 
   - The animation can be looped through by setting [ LoopTime ]
   - The reverse animation can be automatically loaded by setting [ IsAutoReverse ]
