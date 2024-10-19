@@ -179,7 +179,6 @@ namespace MinimalisticWPF
             TransitionInterpreter animationInterpreter = new TransitionInterpreter(this);
             animationInterpreter.IsLast = TransitionParams.IsLast;
             animationInterpreter.DeltaTime = (int)DeltaTime;
-            animationInterpreter.Start = TransitionParams.Start;
             animationInterpreter.Update = TransitionParams.Update;
             animationInterpreter.Completed = TransitionParams.Completed;
             animationInterpreter.LateUpdate = TransitionParams.LateUpdate;
@@ -192,8 +191,11 @@ namespace MinimalisticWPF
             {
                 return;
             }
+
+
             Application.Current.Dispatcher.Invoke(() =>
             {
+                TransitionParams.Start?.Invoke();
                 animationInterpreter.Frams = ComputingFrames(targetState);
             });
 
@@ -365,7 +367,6 @@ namespace MinimalisticWPF
             /// </summary>
             public bool IsRunning { get; internal set; } = false;
             internal bool IsStop { get; set; } = false;
-            internal Action? Start { get; set; }
             internal Action? Update { get; set; }
             internal Action? Completed { get; set; }
             internal Action? LateUpdate { get; set; }
@@ -383,11 +384,6 @@ namespace MinimalisticWPF
                 IsRunning = true;
 
                 var Times = GetAccDeltaTime((int)Machine.FrameCount);
-
-                if (Application.Current != null && Start != null)
-                {
-                    Application.Current.Dispatcher.Invoke(Start);
-                }
 
                 for (int x = 0; LoopTime == int.MaxValue ? true : x <= LoopTime; x++)
                 {
