@@ -28,9 +28,12 @@ namespace MinimalisticWPF
         /// </summary>
         public bool IsRunning { get; internal set; } = false;
         internal bool IsStop { get; set; } = false;
-        internal Action? Update { get; set; }
-        internal Action? Completed { get; set; }
-        internal Action? LateUpdate { get; set; }
+        public Action? Update { get; set; }
+        public Action? LateUpdate { get; set; }
+        public Action? Completed { get; set; }
+        public Func<Task>? UpdateAsync { get; set; }
+        public Func<Task>? LateUpdateAsync { get; set; }
+        public Func<Task>? CompletedAsync { get; set; }
         internal double Acceleration { get; set; } = 0;
         internal bool IsUnSafe { get; set; } = false;
         internal int LoopTime { get; set; } = 0;
@@ -39,7 +42,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 执行动画
         /// </summary>
-        public void Interpret()
+        public async void Interpret()
         {
             if (IsStop || IsRunning) { WhileEnded(); return; }
             IsRunning = true;
@@ -57,9 +60,16 @@ namespace MinimalisticWPF
                         return;
                     }
 
-                    if (Application.Current != null && Update != null)
+                    if (Application.Current != null)
                     {
-                        Application.Current.Dispatcher.Invoke(Update);
+                        if (Update != null)
+                        {
+                            Application.Current.Dispatcher.Invoke(Update);
+                        }
+                        if (UpdateAsync != null)
+                        {
+                            await UpdateAsync.Invoke();
+                        }
                     }
 
                     for (int j = 0; j < Frams.Count; j++)
@@ -82,9 +92,16 @@ namespace MinimalisticWPF
                         }
                     }
 
-                    if (Application.Current != null && LateUpdate != null)
+                    if (Application.Current != null)
                     {
-                        Application.Current.Dispatcher.Invoke(LateUpdate);
+                        if (LateUpdate != null)
+                        {
+                            Application.Current.Dispatcher.Invoke(LateUpdate);
+                        }
+                        if (LateUpdateAsync != null)
+                        {
+                            await LateUpdateAsync.Invoke();
+                        }
                     }
 
                     Thread.Sleep(Acceleration == 0 ? DeltaTime : i < Times.Count & Times.Count > 0 ? Times[i] : DeltaTime);
@@ -101,9 +118,16 @@ namespace MinimalisticWPF
                             return;
                         }
 
-                        if (Application.Current != null && Update != null)
+                        if (Application.Current != null)
                         {
-                            Application.Current.Dispatcher.Invoke(Update);
+                            if (Update != null)
+                            {
+                                Application.Current.Dispatcher.Invoke(Update);
+                            }
+                            if (UpdateAsync != null)
+                            {
+                                await UpdateAsync.Invoke();
+                            }
                         }
 
                         for (int j = 0; j < Frams.Count; j++)
@@ -127,9 +151,16 @@ namespace MinimalisticWPF
                             }
                         }
 
-                        if (Application.Current != null && LateUpdate != null)
+                        if (Application.Current != null)
                         {
-                            Application.Current.Dispatcher.Invoke(LateUpdate);
+                            if (LateUpdate != null)
+                            {
+                                Application.Current.Dispatcher.Invoke(LateUpdate);
+                            }
+                            if (LateUpdateAsync != null)
+                            {
+                                await LateUpdateAsync.Invoke();
+                            }
                         }
 
                         Thread.Sleep(Acceleration == 0 ? DeltaTime : i < Times.Count & Times.Count > 0 ? Times[i] : DeltaTime);
@@ -152,13 +183,20 @@ namespace MinimalisticWPF
         /// <summary>
         /// 当动画终止时
         /// </summary>
-        internal void WhileEnded()
+        internal async void WhileEnded()
         {
             if (IsUnSafe || Machine.IsReSet) return;
 
-            if (Application.Current != null && Completed != null)
+            if (Application.Current != null)
             {
-                Application.Current.Dispatcher.Invoke(Completed);
+                if (Completed != null)
+                {
+                    Application.Current.Dispatcher.Invoke(Completed);
+                }
+                if (CompletedAsync != null)
+                {
+                    await CompletedAsync.Invoke();
+                }
             }
             IsRunning = false;
             IsStop = false;

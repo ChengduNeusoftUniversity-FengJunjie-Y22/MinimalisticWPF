@@ -32,6 +32,22 @@ namespace MinimalisticWPF
         /// </summary>
         public Action? Completed { get; set; }
         /// <summary>
+        /// 过渡启动前执行(可等待)
+        /// </summary>
+        public Func<Task>? StartAsync { get; set; }
+        /// <summary>
+        /// 每一帧开始时执行(可等待)
+        /// </summary>
+        public Func<Task>? UpdateAsync { get; set; }
+        /// <summary>
+        /// 每一帧结束时执行(可等待)
+        /// </summary>
+        public Func<Task>? LateUpdateAsync { get; set; }
+        /// <summary>
+        /// 动画结束后执行(可等待)
+        /// </summary>
+        public Func<Task>? CompletedAsync { get; set; }
+        /// <summary>
         /// 是否自动回复
         /// </summary>
         public bool IsAutoReverse { get; set; } = false;

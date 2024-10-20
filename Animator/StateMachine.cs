@@ -20,6 +20,7 @@ namespace MinimalisticWPF
 {
     /// <summary>
     /// 状态机
+    /// <para>对于一个实例对象,状态机记录其属性信息,并且调度动画的生成、启动操作</para>
     /// </summary>
     public class StateMachine
     {
@@ -169,7 +170,7 @@ namespace MinimalisticWPF
                 }
             }
         }
-        internal void InterpreterScheduler(string stateName, TransitionParams actionSet)
+        internal async void InterpreterScheduler(string stateName, TransitionParams actionSet)
         {
             var targetState = States.FirstOrDefault(x => x.StateName == stateName);
             if (targetState == null) throw new ArgumentException($"The State Named [ {stateName} ] Cannot Be Found");
@@ -186,16 +187,28 @@ namespace MinimalisticWPF
             animationInterpreter.IsUnSafe = TransitionParams.IsUnSafe;
             animationInterpreter.LoopTime = TransitionParams.LoopTime;
             animationInterpreter.IsAutoReverse = TransitionParams.IsAutoReverse;
+            animationInterpreter.UpdateAsync = TransitionParams.UpdateAsync;
+            animationInterpreter.LateUpdateAsync = TransitionParams.LateUpdateAsync;
+            animationInterpreter.CompletedAsync = TransitionParams.CompletedAsync;
 
             if (Application.Current == null)
             {
                 return;
             }
-
+            else
+            {
+                if (TransitionParams.Start != null)
+                {
+                    Application.Current.Dispatcher.Invoke(TransitionParams.Start);
+                }
+                if (TransitionParams.StartAsync != null)
+                {
+                    await TransitionParams.StartAsync.Invoke();
+                }
+            }
 
             Application.Current.Dispatcher.Invoke(() =>
             {
-                TransitionParams.Start?.Invoke();
                 animationInterpreter.Frams = ComputingFrames(targetState);
             });
 
@@ -345,6 +358,6 @@ namespace MinimalisticWPF
             }
 
             return allFrames;
-        }      
+        }
     }
 }

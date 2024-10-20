@@ -8,6 +8,11 @@ using System.Windows;
 
 namespace MinimalisticWPF
 {
+    /// <summary>
+    /// 条件向量
+    /// <para>记当前状态为StateA,目标状态为StateB,指定条件为Condition,此类型记录了对象在满足Condition时由StateA加载指向StateB动画的条件关系</para>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class StateVector<T> where T : class
     {
         internal StateVector() { }
