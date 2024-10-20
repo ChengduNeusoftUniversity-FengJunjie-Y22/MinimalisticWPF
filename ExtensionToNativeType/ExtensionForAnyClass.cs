@@ -148,7 +148,7 @@ namespace MinimalisticWPF
     public class TransitionBoard<T> where T : class
     {
         /// <summary>
-        /// 对于任意对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
+        /// 对于任意使用Board启动动画的对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
         /// </summary>
         public static Dictionary<object, StateMachine> MachinePool { get; internal set; } = new Dictionary<object, StateMachine>();
 
@@ -175,6 +175,7 @@ namespace MinimalisticWPF
         internal StateMachine? Machine { get; set; }
         public State TempState { get; internal set; } = new State() { StateName = Transition.TempName };
         public Action<TransitionParams>? TransitionParams { get; internal set; }
+        internal List<List<Tuple<PropertyInfo, List<object?>>>>? Preload { get; set; }
 
         /// <summary>
         /// 设置指定属性过渡后的最终值
@@ -322,6 +323,26 @@ namespace MinimalisticWPF
             return this;
         }
         /// <summary>
+        /// 预载帧数据以降低状态机调度动画执行时的计算量,内置目标时( IsStatic == false )
+        /// </summary>
+        public TransitionBoard<T> PreLoad()
+        {
+            var par = new TransitionParams();
+            TransitionParams?.Invoke(par);
+            Preload = StateMachine.PreloadFrames(Target, TempState, par);
+            return this;
+        }
+        /// <summary>
+        /// 预载帧数据以降低状态机调度动画执行时的计算量,不是内置目标时( IsStatic == true )
+        /// </summary>
+        public TransitionBoard<T> PreLoad(T target, State state)
+        {
+            var par = new TransitionParams();
+            TransitionParams?.Invoke(par);
+            Preload = StateMachine.PreloadFrames(target, state, par);
+            return this;
+        }
+        /// <summary>
         /// 启动过渡,内置目标对象( IsStatic == false )
         /// </summary>
         public void Start()
@@ -332,7 +353,7 @@ namespace MinimalisticWPF
             Machine.ReSet();
             TempState.StateName = Transition.TempName + "NonStatic";
             Machine.States.Add(TempState);
-            Machine.Transition(TempState.StateName, TransitionParams);
+            Machine.Transition(TempState.StateName, TransitionParams, Preload);
         }
         /// <summary>
         /// 启动过渡,不是内置目标对象( IsStatic == true )
@@ -353,7 +374,7 @@ namespace MinimalisticWPF
             Machine.ReSet();
             TempState.StateName = Transition.TempName + Machine.States.BoardSuffix;
             Machine.States.Add(TempState);
-            Machine.Transition(TempState.StateName, TransitionParams);
+            Machine.Transition(TempState.StateName, TransitionParams, Preload);
         }
     }
 }

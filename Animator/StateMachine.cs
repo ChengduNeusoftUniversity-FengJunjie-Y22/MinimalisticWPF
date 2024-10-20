@@ -119,7 +119,7 @@ namespace MinimalisticWPF
 
         public string? CurrentState { get; internal set; }
         public TransitionInterpreter? Interpreter { get; internal set; }
-        public Queue<Tuple<string, TransitionParams>> Interpreters { get; internal set; } = new Queue<Tuple<string, TransitionParams>>();
+        public Queue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>> Interpreters { get; internal set; } = new Queue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>>();
 
         /// <summary>
         /// 重置状态机
@@ -138,7 +138,7 @@ namespace MinimalisticWPF
         /// <param name="stateName">状态名称</param>
         /// <param name="actionSet">细节参数</param>
         /// <exception cref="ArgumentException"></exception>
-        public void Transition(string stateName, Action<TransitionParams>? actionSet)
+        public void Transition(string stateName, Action<TransitionParams>? actionSet, List<List<Tuple<PropertyInfo, List<object?>>>>? preload = null)
         {
             IsReSet = false;
 
@@ -147,13 +147,13 @@ namespace MinimalisticWPF
 
             if (temp.IsUnSafe)
             {
-                var task = Task.Run(() => InterpreterScheduler(stateName, temp));
+                var task = Task.Run(() => InterpreterScheduler(stateName, temp, preload));
                 return;
             }
 
             if (Interpreter == null)
             {
-                var task = Task.Run(() => InterpreterScheduler(stateName, temp));
+                var task = Task.Run(() => InterpreterScheduler(stateName, temp, preload));
             }
             else
             {
@@ -163,14 +163,14 @@ namespace MinimalisticWPF
                     return;
                 }
 
-                Interpreters.Enqueue(Tuple.Create(stateName, temp));
+                Interpreters.Enqueue(Tuple.Create(stateName, temp, preload));
                 if (!temp.IsQueue)
                 {
                     Interpreter?.Interrupt();
                 }
             }
         }
-        internal async void InterpreterScheduler(string stateName, TransitionParams actionSet)
+        internal async void InterpreterScheduler(string stateName, TransitionParams actionSet, List<List<Tuple<PropertyInfo, List<object?>>>>? preload)
         {
             var targetState = States.FirstOrDefault(x => x.StateName == stateName);
             if (targetState == null) throw new ArgumentException($"The State Named [ {stateName} ] Cannot Be Found");
@@ -209,7 +209,7 @@ namespace MinimalisticWPF
 
             Application.Current.Dispatcher.Invoke(() =>
             {
-                animationInterpreter.Frams = ComputingFrames(targetState);
+                animationInterpreter.Frams = preload ?? ComputingFrames(targetState);
             });
 
             if (!TransitionParams.IsUnSafe)
@@ -218,6 +218,23 @@ namespace MinimalisticWPF
                 Interpreter = animationInterpreter;
             }
             var task = Task.Run(() => { animationInterpreter.Interpret(); });
+        }
+        /// <summary>
+        /// 预载实例对象过渡至指定State过程中的所有帧数据
+        /// </summary>
+        /// <param name="Target">目标对象</param>
+        /// <param name="state">目标State</param>
+        /// <returns>帧数据</returns>
+        public static List<List<Tuple<PropertyInfo, List<object?>>>>? PreloadFrames(object? Target, State state,TransitionParams par)
+        {
+            if (Target == null)
+            {
+                return null;
+            }
+            var machine = new StateMachine(Target, state);
+            machine.TransitionParams = par;
+            var result = machine.ComputingFrames(state);
+            return result;
         }
         internal List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state)
         {

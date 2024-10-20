@@ -211,7 +211,7 @@ namespace MinimalisticWPF
                 if (Machine.Interpreters.Count > 0)
                 {
                     var newAni = Machine.Interpreters.Dequeue();
-                    Machine.InterpreterScheduler(newAni.Item1, newAni.Item2);
+                    Machine.InterpreterScheduler(newAni.Item1, newAni.Item2,newAni.Item3);
                 }
                 Machine.CurrentState = null;
             }
