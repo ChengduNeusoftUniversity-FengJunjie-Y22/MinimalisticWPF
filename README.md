@@ -57,6 +57,28 @@
   - The reverse animation can be automatically loaded by setting [ IsAutoReverse ]
 </details>
 
+<details>
+<summary>V1.8.5</summary>
+
+  - Add [ Async ] to the lifecycle , just like " StartAsync "
+  - Add [ Preload ] to the TransitionBoard
+  ```csharp
+ var data = gd.Transition()
+                .SetProperty(x => x.Width, 100)
+                .SetParams((x) =>
+                {
+                    x.Duration = 0.5;
+                    x.StartAsync = async () =>
+                    {
+                        await Task.Delay(500);
+                    };
+                })
+                .PreLoad();
+ data.Start();
+  ```
+  - In version 1.8.5, it is possible to perform deferred operations during the lifetime, and when you are scheduling a large number of animations in a short period of time, you can use the PreLoad () function to preload the animation to avoid performance issues that might result from scheduling the computed frames in real time
+</details>
+
 # V1.8.x
 
 ## Ⅰ API
