@@ -24,7 +24,7 @@ namespace MinimalisticWPF
     /// </summary>
     public class StateMachine
     {
-        private int _maxFR = 240;
+        private static int _maxFR = 240;
 
         /// <param name="viewModel">受状态机控制的实例对象</param>
         /// <param name="states">所有该对象可能具备的状态</param>
@@ -73,7 +73,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 最大帧率限制
         /// </summary>
-        public int MaxFrameRate
+        public static int MaxFrameRate
         {
             get => _maxFR;
             set
