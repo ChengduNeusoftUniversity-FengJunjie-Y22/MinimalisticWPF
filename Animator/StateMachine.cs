@@ -137,6 +137,7 @@ namespace MinimalisticWPF
         /// </summary>
         /// <param name="stateName">状态名称</param>
         /// <param name="actionSet">细节参数</param>
+        /// <param name="preload">预载数据</param>
         /// <exception cref="ArgumentException"></exception>
         public void Transition(string stateName, Action<TransitionParams>? actionSet, List<List<Tuple<PropertyInfo, List<object?>>>>? preload = null)
         {
@@ -225,7 +226,7 @@ namespace MinimalisticWPF
         /// <param name="Target">目标对象</param>
         /// <param name="state">目标State</param>
         /// <returns>帧数据</returns>
-        public static List<List<Tuple<PropertyInfo, List<object?>>>>? PreloadFrames(object? Target, State state,TransitionParams par)
+        public static List<List<Tuple<PropertyInfo, List<object?>>>>? PreloadFrames(object? Target, State state, TransitionParams par)
         {
             if (Target == null)
             {

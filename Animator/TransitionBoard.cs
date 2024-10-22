@@ -10,7 +10,7 @@ using System.Windows;
 
 namespace MinimalisticWPF
 {
-    public class TransitionBoard<T> : ITransitionBoard where T : class
+    public class TransitionBoard<T> where T : class
     {
         /// <summary>
         /// 对于任意使用Board启动动画的对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
@@ -40,7 +40,6 @@ namespace MinimalisticWPF
         internal StateMachine? Machine { get; set; }
         public State TempState { get; internal set; } = new State() { StateName = Transition.TempName };
         public Action<TransitionParams>? TransitionParams { get; set; }
-        public int StartTime { get; set; } = 0;
         public List<List<Tuple<PropertyInfo, List<object?>>>>? Preload { get; set; }
 
         /// <summary>
@@ -201,11 +200,11 @@ namespace MinimalisticWPF
         /// <summary>
         /// 预载帧数据以降低状态机调度动画执行时的计算量,不是内置目标时( IsStatic == true )
         /// </summary>
-        public TransitionBoard<T> PreLoad(T target, State state)
+        public TransitionBoard<T> PreLoad(T target)
         {
             var par = new TransitionParams();
             TransitionParams?.Invoke(par);
-            Preload = StateMachine.PreloadFrames(target, state, par);
+            Preload = StateMachine.PreloadFrames(target, TempState, par);
             return this;
         }
         /// <summary>
