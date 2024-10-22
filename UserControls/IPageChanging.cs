@@ -13,13 +13,18 @@ namespace MinimalisticWPF
     public interface IPageChanging
     {
         /// <summary>
+        /// 页面实例的名称（ 唯一 ）
+        /// </summary>
+        string PageName { get; }
+
+        /// <summary>
         /// 描述如何返回页面实例,这将在每次切换至该页面时调用
         /// </summary>
         object GetPage();
 
         /// <summary>
-        /// 页面实例的名称（ 唯一 ）
+        /// 描述页面的实际尺寸
         /// </summary>
-        string PageName { get; }
+        Size GetPageSize();
     }
 }
