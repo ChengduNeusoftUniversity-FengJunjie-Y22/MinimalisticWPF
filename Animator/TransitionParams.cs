@@ -15,6 +15,24 @@ namespace MinimalisticWPF
             action?.Invoke(this);
         }
 
+        private static int defaultFrameRate = 60;
+        /// <summary>
+        /// 默认帧率
+        /// </summary>
+        public static int DefaultFrameRate
+        {
+            get => defaultFrameRate;
+            set
+            {
+                if (value > 0)
+                {
+                    defaultFrameRate = value;
+                }
+            }
+        }
+
+        private int framerate = defaultFrameRate;
+
         /// <summary>
         /// 过渡启动前执行
         /// </summary>
@@ -60,9 +78,16 @@ namespace MinimalisticWPF
         /// </summary>
         public double Duration { get; set; } = 0;
         /// <summary>
-        /// 过渡帧率(默认: 120 )
+        /// 过渡帧率(默认: 60 )
         /// </summary>
-        public int FrameRate { get; set; } = 120;
+        public int FrameRate
+        {
+            get => framerate;
+            set
+            {
+                framerate = value;
+            }
+        }
         /// <summary>
         /// 是否排队执行(默认:不排队)
         /// </summary>
