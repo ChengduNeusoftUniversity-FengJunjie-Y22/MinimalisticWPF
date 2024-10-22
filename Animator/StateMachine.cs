@@ -148,13 +148,13 @@ namespace MinimalisticWPF
 
             if (temp.IsUnSafe)
             {
-                var task = Task.Run(() => InterpreterScheduler(stateName, temp, preload));
+                InterpreterScheduler(stateName, temp, preload);
                 return;
             }
 
             if (Interpreter == null)
             {
-                var task = Task.Run(() => InterpreterScheduler(stateName, temp, preload));
+                InterpreterScheduler(stateName, temp, preload);
             }
             else
             {
@@ -200,7 +200,7 @@ namespace MinimalisticWPF
             {
                 if (TransitionParams.Start != null)
                 {
-                    Application.Current.Dispatcher.Invoke(TransitionParams.Start);
+                    TransitionParams.Start.Invoke();
                 }
                 if (TransitionParams.StartAsync != null)
                 {
@@ -208,10 +208,7 @@ namespace MinimalisticWPF
                 }
             }
 
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                animationInterpreter.Frams = preload ?? ComputingFrames(targetState);
-            });
+            animationInterpreter.Frams = preload ?? ComputingFrames(targetState);
 
             if (!TransitionParams.IsUnSafe)
             {
