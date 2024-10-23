@@ -11,15 +11,15 @@ namespace MinimalisticWPF
 {
     public static class PageManager
     {
-        public static IPageChanging?[] Pages { get; private set; } = Array.Empty<IPageChanging?>();
+        public static IPageNavigate?[] Pages { get; private set; } = Array.Empty<IPageNavigate?>();
 
         internal static void Scan()
         {
-            Pages = Array.Empty<IPageChanging?>();
+            Pages = Array.Empty<IPageNavigate?>();
             var types = AppDomain.CurrentDomain.GetAssemblies()
-                                .SelectMany(a => a.GetTypes().Where(t => t.GetInterfaces().Contains(typeof(IPageChanging))))
+                                .SelectMany(a => a.GetTypes().Where(t => t.GetInterfaces().Contains(typeof(IPageNavigate))))
                                 .ToArray();
-            Pages = types.Select(x => Activator.CreateInstance(x) as IPageChanging)
+            Pages = types.Select(x => Activator.CreateInstance(x) as IPageNavigate)
                 .Where(x => x != null)
                 .ToArray();
         }

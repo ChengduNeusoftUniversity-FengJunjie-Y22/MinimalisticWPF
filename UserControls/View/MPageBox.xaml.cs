@@ -43,7 +43,7 @@ namespace MinimalisticWPF
                 return;
             }
             var page = data as UIElement;
-            var method = page as IPageChanging;
+            var method = page as IPageNavigate;
             var size = method?.GetPageSize() ?? new Size(Width, Height);
             Width = size.Width;
             Height = size.Height;
