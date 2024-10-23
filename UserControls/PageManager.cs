@@ -13,8 +13,9 @@ namespace MinimalisticWPF
     {
         public static IPageChanging?[] Pages { get; private set; } = Array.Empty<IPageChanging?>();
 
-        public static void Scan()
+        internal static void Scan()
         {
+            Pages = Array.Empty<IPageChanging?>();
             var types = AppDomain.CurrentDomain.GetAssemblies()
                                 .SelectMany(a => a.GetTypes().Where(t => t.GetInterfaces().Contains(typeof(IPageChanging))))
                                 .ToArray();
@@ -23,14 +24,14 @@ namespace MinimalisticWPF
                 .ToArray();
         }
 
-        public static object? Find(Type pageType, int? index = null)
+        public static object? Find(Type pageType)
         {
-            return index == null ? Pages.FirstOrDefault(x => x?.GetType() == pageType) : index > 0 && index < Pages.Length ? Pages[(int)index]?.GetPage() : null;
+            return Pages.FirstOrDefault(x => x?.GetPage()?.GetType() == pageType);
         }
 
         public static object? Find(string pageName)
         {
-            return Pages.FirstOrDefault(x => x?.PageName == pageName)?.GetPage();
+            return Pages.FirstOrDefault(x => x?.GetPageName() == pageName)?.GetPage();
         }
 
         public static object? Find(int pageIndex)

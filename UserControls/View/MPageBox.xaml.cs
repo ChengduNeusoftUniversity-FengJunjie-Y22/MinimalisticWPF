@@ -22,9 +22,9 @@ namespace MinimalisticWPF
             InitializeComponent();
         }
 
-        public void Navigate(Type pageType, int? index = null)
+        public void Navigate(Type pageType)
         {
-            UpdateSource(PageManager.Find(pageType, index));
+            UpdateSource(PageManager.Find(pageType));
         }
         public void Navigate(string pageName)
         {
@@ -45,6 +45,8 @@ namespace MinimalisticWPF
             var page = data as UIElement;
             var method = page as IPageChanging;
             var size = method?.GetPageSize() ?? new Size(Width, Height);
+            Width = size.Width;
+            Height = size.Height;
             CurrentPage.Child = page;
         }
     }

@@ -8,23 +8,23 @@ using System.Windows;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 允许用户控件作为 [ 页面 ] 并在特定容器内实现丝滑切换
+    /// 允许将 [ 用户控件 ] 作为 [ 页面 ] 显示在 [ MPageBox ] 中
     /// </summary>
     public interface IPageChanging
     {
         /// <summary>
-        /// 页面实例的名称（ 唯一 ）
+        /// 返回[唯一]页面名称
         /// </summary>
-        string PageName { get; }
+        string GetPageName();
 
         /// <summary>
-        /// 描述如何返回页面实例,这将在每次切换至该页面时调用
-        /// </summary>
-        object GetPage();
-
-        /// <summary>
-        /// 描述页面的实际尺寸
+        /// 返回页面尺寸
         /// </summary>
         Size GetPageSize();
+
+        /// <summary>
+        /// 返回页面实例
+        /// </summary>
+        object GetPage();
     }
 }
