@@ -36,7 +36,7 @@ namespace MinimalisticWPF
 
         public static object? Find(int pageIndex)
         {
-            if (pageIndex > 0 && pageIndex < Pages.Length)
+            if (pageIndex >= 0 && pageIndex < Pages.Length)
             {
                 return Pages[pageIndex]?.GetPage();
             }
