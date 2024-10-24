@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.Pkcs;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,6 +13,21 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+
+public enum NavigateModes
+{
+    Fade,
+    Slide,
+    None
+}
+
+public enum SlideDirection
+{
+    RightToLeft,
+    LeftToRight,
+    TopToBottom,
+    BottomToTop,
+}
 
 namespace MinimalisticWPF
 {
@@ -48,6 +64,63 @@ namespace MinimalisticWPF
         public static readonly DependencyProperty FadeOutTimeProperty =
             DependencyProperty.Register("FadeOutTime", typeof(double), typeof(MPageBox), new PropertyMetadata(0.8));
 
+        /// <summary>
+        /// 切页加速率
+        /// </summary>
+        public double Acceleration
+        {
+            get { return (double)GetValue(AccelerationProperty); }
+            set { SetValue(AccelerationProperty, value); }
+        }
+        public static readonly DependencyProperty AccelerationProperty =
+            DependencyProperty.Register("Acceleration", typeof(double), typeof(MPageBox), new PropertyMetadata(0.0));
+
+        /// <summary>
+        /// 切页帧率
+        /// </summary>
+        public int FrameRate
+        {
+            get { return (int)GetValue(FrameRateProperty); }
+            set { SetValue(FrameRateProperty, value); }
+        }
+        public static readonly DependencyProperty FrameRateProperty =
+            DependencyProperty.Register("FrameRate", typeof(int), typeof(MPageBox), new PropertyMetadata(60));
+
+        /// <summary>
+        /// 导航模式
+        /// </summary>
+        public NavigateModes NavigateMode
+        {
+            get { return (NavigateModes)GetValue(NavigateModeProperty); }
+            set { SetValue(NavigateModeProperty, value); }
+        }
+        public static readonly DependencyProperty NavigateModeProperty =
+            DependencyProperty.Register("NavigateMode", typeof(NavigateModes), typeof(MPageBox), new PropertyMetadata(NavigateModes.Fade));
+
+        /// <summary>
+        /// 滑动方向
+        /// </summary>
+        public SlideDirection SlideDirection
+        {
+            get { return (SlideDirection)GetValue(SlideDirectionProperty); }
+            set { SetValue(SlideDirectionProperty, value); }
+        }
+        public static readonly DependencyProperty SlideDirectionProperty =
+            DependencyProperty.Register("SlideDirection", typeof(SlideDirection), typeof(MPageBox), new PropertyMetadata(SlideDirection.RightToLeft));
+
+        internal TranslateTransform Slide
+        {
+            get => new TranslateTransform(SlideX, SlideY);
+        }
+        internal double SlideX
+        {
+            get => (SlideDirection == SlideDirection.RightToLeft || SlideDirection == SlideDirection.LeftToRight) ? Width : 0;
+        }
+        internal double SlideY
+        {
+            get => (SlideDirection == SlideDirection.TopToBottom || SlideDirection == SlideDirection.BottomToTop) ? Height : 0;
+        }
+
         public void Navigate(Type pageType)
         {
             UpdateSource(PageManager.Find(pageType));
@@ -62,6 +135,19 @@ namespace MinimalisticWPF
         }
         private void UpdateSource(object? data)
         {
+            switch (NavigateMode)
+            {
+                case NavigateModes.Fade:
+                    FadeAction(data); break;
+                case NavigateModes.Slide:
+                    SlideAction(data); break;
+                case NavigateModes.None:
+                    CurrentPage.Child = data as UIElement;
+                    break;
+            }
+        }
+        private void FadeAction(object? data)
+        {
             if (data == null)
             {
                 return;
@@ -72,10 +158,49 @@ namespace MinimalisticWPF
                 .SetParams((x) =>
                 {
                     x.Duration = FadeTime;
+                    x.FrameRate = FrameRate;
                     x.Completed = () =>
                     {
                         CurrentPage.Transition()
                             .SetProperty(x => x.Opacity, 1)
+                            .SetParams((x) =>
+                            {
+                                x.Duration = FadeOutTime;
+                                x.Acceleration = Acceleration;
+                                x.Start = () =>
+                                {
+                                    CurrentPage.Child = page;
+                                };
+                            })
+                            .Start();
+                    };
+                })
+                .Start();
+        }
+        private void SlideAction(object? data)
+        {
+            if (data == null)
+            {
+                return;
+            }
+            var page = data as UIElement;
+            var translate = Slide;
+            translate.X = (SlideDirection == SlideDirection.LeftToRight || SlideDirection == SlideDirection.TopToBottom) ? translate.X : -translate.X;
+            translate.Y = (SlideDirection == SlideDirection.RightToLeft || SlideDirection == SlideDirection.BottomToTop) ? -translate.Y : translate.Y;
+            CurrentPage.Transition()
+                .SetProperty(x => x.Opacity, 0)
+                .SetProperty(x => x.RenderTransform, translate)
+                .SetParams((x) =>
+                {
+                    x.Duration = FadeTime;
+                    x.Completed = () =>
+                    {
+                        translate.X = -translate.X;
+                        translate.Y = -translate.Y;
+                        CurrentPage.RenderTransform = translate;
+                        CurrentPage.Transition()
+                            .SetProperty(x => x.Opacity, 1)
+                            .SetProperty(x => x.RenderTransform, Transform.Identity)
                             .SetParams((x) =>
                             {
                                 x.Duration = FadeOutTime;
