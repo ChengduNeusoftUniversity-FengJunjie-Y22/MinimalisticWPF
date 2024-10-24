@@ -67,8 +67,6 @@ namespace MinimalisticWPF
                 return;
             }
             var page = data as UIElement;
-            var method = page as IPageNavigate;
-            var size = method?.GetPageSize() ?? new Size(Width, Height);
             CurrentPage.Transition()
                 .SetProperty(x => x.Opacity, 0)
                 .SetParams((x) =>

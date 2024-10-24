@@ -18,11 +18,6 @@ namespace MinimalisticWPF
         string GetPageName();
 
         /// <summary>
-        /// 返回页面尺寸
-        /// </summary>
-        Size GetPageSize();
-
-        /// <summary>
         /// 返回页面实例
         /// </summary>
         object GetPage();
