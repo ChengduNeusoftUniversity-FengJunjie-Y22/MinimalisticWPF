@@ -10,8 +10,10 @@ using System.Xml.Linq;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 覆写返回值行为逻辑
+    /// 覆写 [ 需要返回结果值的切面行为 ] 时使用
     /// </summary>
+    /// <param name="args">在覆写方法时,由此顺序获取本次传给方法的参数值</param>
+    /// <returns></returns>
     public delegate object? ProxyReturnHandler(object?[]? args);
 
     /// <summary>
