@@ -10,9 +10,9 @@ using System.Xml.Linq;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 覆写原有属性getter的逻辑
+    /// 覆写返回值行为逻辑
     /// </summary>
-    public delegate object? ProxyReturnHandler();
+    public delegate object? ProxyReturnHandler(object?[]? args);
 
     /// <summary>
     /// 代理中间件,存储代理行为
@@ -43,7 +43,7 @@ namespace MinimalisticWPF
             {
                 GetterActions.TryGetValue(Name, out var actions);
                 actions?.Item1?.Invoke();
-                var result = actions?.Item2 == null ? _targetType?.GetMethod(Name)?.Invoke(_target, args) : actions.Item2.Invoke();
+                var result = actions?.Item2 == null ? _targetType?.GetMethod(Name)?.Invoke(_target, args) : actions.Item2.Invoke(args);
                 actions?.Item3?.Invoke();
                 return result;
             }
@@ -59,7 +59,7 @@ namespace MinimalisticWPF
             {
                 MethodActions.TryGetValue(Name, out var actions);
                 actions?.Item1?.Invoke();
-                var result = actions?.Item2 == null ? _targetType?.GetMethod(Name)?.Invoke(_target, args) : actions.Item2.Invoke();
+                var result = actions?.Item2 == null ? _targetType?.GetMethod(Name)?.Invoke(_target, args) : actions.Item2.Invoke(args);
                 actions?.Item3?.Invoke();
                 return result;
             }
