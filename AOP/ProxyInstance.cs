@@ -10,11 +10,15 @@ using System.Xml.Linq;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 覆写 [ 需要返回结果值的切面行为 ] 时使用
+    /// 编写 [ 切面逻辑 ] 时使用
     /// </summary>
-    /// <param name="args">在覆写方法时,由此顺序获取本次传给方法的参数值</param>
-    /// <returns></returns>
-    public delegate object? ProxyReturnHandler(object?[]? args);
+    /// <param name="args">在覆写方法时,由args顺序获取本次传给方法的参数值</param>
+    /// <returns>
+    /// <para>[ getter ] 覆写时 , 需要返回新的getter逻辑返回的值</para>
+    /// <para>[ method ] 覆写时 , 需要返回新的method逻辑返回的值</para>
+    /// <para>[ 扩展 ] 而非覆写时,返回null即可</para>
+    /// </returns>
+    public delegate object? ProxyHandler(object?[]? args);
 
     /// <summary>
     /// 代理中间件,存储代理行为
@@ -31,9 +35,9 @@ namespace MinimalisticWPF
         internal Type? _targetType;
         internal int _localid = 0;
 
-        internal Dictionary<string, Tuple<Action?, ProxyReturnHandler?, Action?>> GetterActions { get; set; } = new Dictionary<string, Tuple<Action?, ProxyReturnHandler?, Action?>>();
-        internal Dictionary<string, Tuple<Action?, Action?, Action?>> SetterActions { get; set; } = new Dictionary<string, Tuple<Action?, Action?, Action?>>();
-        internal Dictionary<string, Tuple<Action?, ProxyReturnHandler?, Action?>> MethodActions { get; set; } = new Dictionary<string, Tuple<Action?, ProxyReturnHandler?, Action?>>();
+        internal Dictionary<string, Tuple<ProxyHandler?, ProxyHandler?, ProxyHandler?>> GetterActions { get; set; } = new Dictionary<string, Tuple<ProxyHandler?, ProxyHandler?, ProxyHandler?>>();
+        internal Dictionary<string, Tuple<ProxyHandler?, ProxyHandler?, ProxyHandler?>> SetterActions { get; set; } = new Dictionary<string, Tuple<ProxyHandler?, ProxyHandler?, ProxyHandler?>>();
+        internal Dictionary<string, Tuple<ProxyHandler?, ProxyHandler?, ProxyHandler?>> MethodActions { get; set; } = new Dictionary<string, Tuple<ProxyHandler?, ProxyHandler?, ProxyHandler?>>();
 
         protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
         {
@@ -44,25 +48,25 @@ namespace MinimalisticWPF
             if (Name.StartsWith("get_"))
             {
                 GetterActions.TryGetValue(Name, out var actions);
-                actions?.Item1?.Invoke();
+                actions?.Item1?.Invoke(args);
                 var result = actions?.Item2 == null ? _targetType?.GetMethod(Name)?.Invoke(_target, args) : actions.Item2.Invoke(args);
-                actions?.Item3?.Invoke();
+                actions?.Item3?.Invoke(args);
                 return result;
             }
             else if (Name.StartsWith("set_"))
             {
                 SetterActions.TryGetValue(Name, out var actions);
-                actions?.Item1?.Invoke();
+                actions?.Item1?.Invoke(args);
                 var result = actions?.Item2 == null ? _targetType?.GetMethod(Name)?.Invoke(_target, args) : null;
-                actions?.Item3?.Invoke();
+                actions?.Item3?.Invoke(args);
                 return result;
             }
             else
             {
                 MethodActions.TryGetValue(Name, out var actions);
-                actions?.Item1?.Invoke();
+                actions?.Item1?.Invoke(args);
                 var result = actions?.Item2 == null ? _targetType?.GetMethod(Name)?.Invoke(_target, args) : actions.Item2.Invoke(args);
-                actions?.Item3?.Invoke();
+                actions?.Item3?.Invoke(args);
                 return result;
             }
         }

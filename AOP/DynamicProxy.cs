@@ -11,13 +11,17 @@ namespace MinimalisticWPF
 {
     public static class DynamicProxy
     {
+        /// <summary>
+        /// 创建实例对象的代理
+        /// </summary>
+        /// <typeparam name="T">实例对象的接口抽象</typeparam>
         public static T CreateProxy<T>(this T target) where T : IProxy
         {
             var type = typeof(T);
             dynamic proxy = DispatchProxy.Create<T, ProxyInstance>() ?? throw new InvalidOperationException();
             proxy._target = target;
             proxy._targetType = type;
-            ProxyIDs.Add(proxy,proxy._localid);
+            ProxyIDs.Add(proxy, proxy._localid);
             return proxy;
         }
 
@@ -29,8 +33,7 @@ namespace MinimalisticWPF
         /// <param name="start"></param>
         /// <param name="coverage"></param>
         /// <param name="end"></param>
-        /// <returns></returns>
-        public static object SetPropertyGetter(this object source, string propertyName, Action? start, ProxyReturnHandler? coverage, Action? end)
+        public static object SetPropertyGetter(this object source, string propertyName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end)
         {
             if (!ProxyIDs.TryGetValue(source, out var id))
             {
@@ -59,8 +62,7 @@ namespace MinimalisticWPF
         /// <param name="start"></param>
         /// <param name="coverage"></param>
         /// <param name="end"></param>
-        /// <returns></returns>
-        public static object SetPropertySetter(this object source, string propertyName, Action? start, Action? coverage, Action? end)
+        public static object SetPropertySetter(this object source, string propertyName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end)
         {
             if (!ProxyIDs.TryGetValue(source, out var id))
             {
@@ -89,8 +91,7 @@ namespace MinimalisticWPF
         /// <param name="start"></param>
         /// <param name="coverage"></param>
         /// <param name="end"></param>
-        /// <returns></returns>
-        public static object SetMethod(this object source, string methodName, Action? start, ProxyReturnHandler? coverage, Action? end)
+        public static object SetMethod(this object source, string methodName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end)
         {
             if (!ProxyIDs.TryGetValue(source, out var id))
             {
