@@ -222,6 +222,7 @@ namespace MinimalisticWPF
         /// </summary>
         /// <param name="Target">目标对象</param>
         /// <param name="state">目标State</param>
+        /// <param name="par"></param>
         /// <returns>帧数据</returns>
         public static List<List<Tuple<PropertyInfo, List<object?>>>>? PreloadFrames(object? Target, State state, TransitionParams par)
         {

@@ -82,7 +82,7 @@
 <details>
 <summary>V1.8.7</summary>
 
-  - Provides process simplification for aspect-oriented programming
+  - ★ Provides process simplification for aspect-oriented programming
     - 1.On the basis of [ IProxy ] , an interface is abstracted for the properties or methods that need to be proxied
     ```csharp
     public interface IPropertyProxy : IProxy
@@ -113,7 +113,7 @@
     ```
     - Now, when you attempt [ pro.GetName() ], custom events are executed both before and after the method call, and when the second delegate passed in is not empty, the default behavior is overwritten and you can get the arguments received when the method is triggered in order from [ args ]
 
-  - UserControls can now be used as pages to toggle between specific containers
+  - ★ UserControls can now be used as pages to toggle between specific containers
     - 1.Make the user control implement the [IPageNavigate] interface
     ```csharp
     public partial class Page1 : UserControl, IPageNavigate
@@ -150,6 +150,7 @@
     
       Pages.Navigate(typeof(Page1));
       ```
+  - ★ The thread creation during animation scheduling is reduced, and the length of List is specified in advance when calculating linear interpolation to reduce the overhead caused by expansion
    
 </details>
 
