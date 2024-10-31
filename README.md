@@ -79,6 +79,80 @@
   - In version 1.8.5, it is possible to perform deferred operations during the lifetime, and when you are scheduling a large number of animations in a short period of time, you can use the PreLoad () function to preload the animation to avoid performance issues that might result from scheduling the computed frames in real time
 </details>
 
+<details>
+<summary>V1.8.7</summary>
+
+  - Provides process simplification for aspect-oriented programming
+    - 1.On the basis of [ IProxy ] , an interface is abstracted for the properties or methods that need to be proxied
+    ```csharp
+    public interface IPropertyProxy : IProxy
+    {
+        string Name { get; set; }
+        string GetName();
+    }
+    public class TObj : IPropertyProxy
+    {
+        public TObj() { }
+
+        public string Name { get; set; } = "defaultValue";
+
+        public string GetName()
+        {
+            return "defaultResult";
+        }
+    }
+    ```
+    - 2.Create a proxy and intercept its GetName () method
+    ```csharp
+    TObj obj = new TObj();
+    IPropertyProxy pro = obj.CreateProxy<IPropertyProxy>();
+    pro.SetMethod(nameof(pro.GetName), 
+                object? (args) => { MessageBox.Show($"before method call"); return null; }, 
+                object? (args) => { return "coverage result"; }, 
+                object? (args) => { MessageBox.Show($"after method call"); return null; });
+    ```
+    - Now, when you attempt [ pro.GetName() ], custom events are executed both before and after the method call, and when the second delegate passed in is not empty, the default behavior is overwritten and you can get the arguments received when the method is triggered in order from [ args ]
+
+  - UserControls can now be used as pages to toggle between specific containers
+    - 1.Make the user control implement the [IPageNavigate] interface
+    ```csharp
+    public partial class Page1 : UserControl, IPageNavigate
+    {
+        public Page1()
+        {
+            InitializeComponent();
+        }
+
+        public string GetPageName()
+        {
+            return "page1";
+        }
+
+        public object GetPage()
+        {
+            return new Page1();
+        }
+    }
+    ```
+    - 2.Using [ MPageBox ] in XAML 
+    ```xml
+    xmlns:mn="clr-namespace:MinimalisticWPF;assembly=MinimalisticWPF"
+  
+    <mn:MPageBox x:Name="Pages" 
+                 NavigateMode="None" 
+                 SlideDirection="RightToLeft" 
+                 Acceleration="1" 
+                 FrameRate="120"/>
+    ```
+    - 3.Switching pages by Name or Type
+      ```csharp
+      Pages.Navigate("Page1");
+    
+      Pages.Navigate(typeof(Page1));
+      ```
+   
+</details>
+
 # V1.8.x
 
 ## Ⅰ API
