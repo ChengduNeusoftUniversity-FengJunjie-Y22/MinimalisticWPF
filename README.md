@@ -145,11 +145,11 @@
                  FrameRate="120"/>
     ```
     - 3.Switching pages by Name or Type
-      ```csharp
+    ```csharp
       Pages.Navigate("Page1");
     
       Pages.Navigate(typeof(Page1));
-      ```
+    ```
   - ★ The thread creation during animation scheduling is reduced, and the length of List is specified in advance when calculating linear interpolation to reduce the overhead caused by expansion
    
 </details>
