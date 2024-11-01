@@ -154,6 +154,19 @@
    
 </details>
 
+<details>
+<summary>V1.8.8</summary>
+
+  - [ AOP ] Add a delegate parameter to get the return value of the previous method
+  ```csharp
+  pro.SetMethod(nameof(pro.GetName),
+                object? (args, last) => { MessageBox.Show($"before default method"); return "AOP before\n"; },
+                object? (args, last) => { return $"{last}AOP Coverage \n"; },
+                object? (args, last) => { MessageBox.Show($"results :\n{last}AOP after\n"); return null; });
+  ```
+
+</details>
+
 # V1.8.x
 
 ## Ⅰ API

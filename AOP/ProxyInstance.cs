@@ -11,15 +11,12 @@ namespace MinimalisticWPF
 {
     /// <summary>
     /// 编写 [ 切面逻辑 ] 时使用
+    /// <para>[ getter ] 覆写时 , 需要返回新的getter逻辑返回的值</para>
+    /// <para>[ method ] 覆写时 , 需要返回新的method逻辑返回的值</para>
+    /// <para>[ 扩展 ] 而非覆写 , 返回null即可</para>
     /// </summary>
     /// <param name="args">在覆写方法时,由args顺序获取本次传给方法的参数值</param>
     /// <param name="lastResult">上一个方法返回的值</param>
-    /// <param name="result">方法执行结束后,由result获取本次方法返回值</param>
-    /// <returns>
-    /// <para>[ getter ] 覆写时 , 需要返回新的getter逻辑返回的值</para>
-    /// <para>[ method ] 覆写时 , 需要返回新的method逻辑返回的值</para>
-    /// <para>[ 扩展 ] 而非覆写时,返回null即可</para>
-    /// </returns>
     public delegate object? ProxyHandler(object?[]? args, object? lastResult);
 
     /// <summary>
