@@ -11,14 +11,14 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Title>MinimalisticWPF</Title>
 		<Copyright></Copyright>
-		<PackageProjectUrl>https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF</PackageProjectUrl>
+		<PackageProjectUrl>https://github.com/Axvser/MinimalisticWPF</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<RepositoryUrl>https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Axvser/MinimalisticWPF</RepositoryUrl>
 		<NeutralLanguage>zh-CN</NeutralLanguage>
 		<IncludeSymbols>False</IncludeSymbols>
 		<Description>The library implements a state machine system that smoothly modifies the properties of an instance object. This means that you can create complex animations with a small amount of code, and if you are using the MVVM design pattern, the system also allows you to set some conditions in advance, and when the ViewModel meets the conditions you set, the property values are automatically changed to translate to the state of the object corresponding to this condition</Description>
 		<RepositoryType>git</RepositoryType>
-		<Version>1.8.8</Version>
+		<Version>1.9.0</Version>
 	</PropertyGroup>
 
 	<ItemGroup>

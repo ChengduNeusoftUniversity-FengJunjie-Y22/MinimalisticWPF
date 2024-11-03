@@ -1,6 +1,6 @@
 ﻿# MinimalisticWPF
-- [github](https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF)
-- [中文文档](https://chengduneusoftuniversity-fengjunjie-y22.github.io/MinimalisticWPFDocumentation/)
+- [github](https://github.com/Axvser/MinimalisticWPF)
+- [中文文档](https://axvser.github.io/MinimalisticWPFDoc/)
 
 ---
 
