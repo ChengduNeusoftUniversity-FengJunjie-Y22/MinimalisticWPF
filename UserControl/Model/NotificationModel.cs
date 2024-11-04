@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MinimalisticWPF.MVVM.Model
+namespace MinimalisticWPF
 {
     public class NotificationModel : ModelBase
     {

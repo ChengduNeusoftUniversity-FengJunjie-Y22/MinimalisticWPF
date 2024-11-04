@@ -9,7 +9,7 @@ using static MinimalisticWPF.ProxyInstance;
 
 namespace MinimalisticWPF
 {
-    public static class DynamicProxy
+    public static class ExtensionForProxy
     {
         /// <summary>
         /// 创建实例对象的代理
@@ -33,7 +33,7 @@ namespace MinimalisticWPF
         /// <param name="start"></param>
         /// <param name="coverage"></param>
         /// <param name="end"></param>
-        public static object SetPropertyGetter(this object source, string propertyName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end)
+        public static T SetPropertyGetter<T>(this T source, string propertyName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end) where T : IProxy
         {
             if (!ProxyIDs.TryGetValue(source, out var id))
             {
@@ -62,7 +62,7 @@ namespace MinimalisticWPF
         /// <param name="start"></param>
         /// <param name="coverage"></param>
         /// <param name="end"></param>
-        public static object SetPropertySetter(this object source, string propertyName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end)
+        public static T SetPropertySetter<T>(this T source, string propertyName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end) where T : IProxy
         {
             if (!ProxyIDs.TryGetValue(source, out var id))
             {
@@ -91,7 +91,7 @@ namespace MinimalisticWPF
         /// <param name="start"></param>
         /// <param name="coverage"></param>
         /// <param name="end"></param>
-        public static object SetMethod(this object source, string methodName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end)
+        public static T SetMethod<T>(this T source, string methodName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end) where T : IProxy
         {
             if (!ProxyIDs.TryGetValue(source, out var id))
             {
