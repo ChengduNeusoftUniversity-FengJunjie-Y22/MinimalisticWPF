@@ -21,6 +21,7 @@ namespace MinimalisticWPF
             if (!IsInitialized)
             {
                 AttributeRead();
+                IsInitialized = !IsInitialized;
             }
         }
 
@@ -51,6 +52,7 @@ namespace MinimalisticWPF
         /// <returns>object? 尝试获取的实例</returns>
         public static object? GetInstance(Type pageType, params object?[]? value)
         {
+            Scan();
             if (NavigableAttributes.TryGetValue(pageType, out var result))
             {
                 switch (result.Mode)
