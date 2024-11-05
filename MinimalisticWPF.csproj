@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<NoWarn>1573</NoWarn>
-		<NoWarn>1591</NoWarn>
+		<NoWarn>1591</NoWarn>		
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<TargetFrameworks>net6.0-windows;net8.0-windows</TargetFrameworks>
 		<Nullable>enable</Nullable>
@@ -18,10 +18,11 @@
 		<IncludeSymbols>False</IncludeSymbols>
 		<Description>The library implements a state machine system that smoothly modifies the properties of an instance object. This means that you can create complex animations with a small amount of code, and if you are using the MVVM design pattern, the system also allows you to set some conditions in advance, and when the ViewModel meets the conditions you set, the property values are automatically changed to translate to the state of the object corresponding to this condition</Description>
 		<RepositoryType>git</RepositoryType>
-		<Version>1.8.9</Version>
+		<Version>1.9.0</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
 		<PackageReference Include="NetCore5.0.Microsoft.Expression.Drawing" Version="1.0.0" />
 	</ItemGroup>
 

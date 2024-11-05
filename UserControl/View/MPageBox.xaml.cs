@@ -14,32 +14,36 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-public enum NavigateModes
-{
-    Fade,
-    Slide,
-    None
-}
-
-public enum SlideDirection
-{
-    RightToLeft,
-    LeftToRight,
-    TopToBottom,
-    BottomToTop,
-}
-
 namespace MinimalisticWPF
 {
+    /// <summary>
+    /// 导航模式
+    /// <para>[ Fade ] 淡入淡出</para>
+    /// <para>[ Slide ] 滑动</para>
+    /// </summary>
+    public enum NavigateModes
+    {
+        Fade,
+        Slide,
+        None
+    }
+
+    /// <summary>
+    /// 滑动导航时,滑动的方向
+    /// </summary>
+    public enum SlideDirection
+    {
+        RightToLeft,
+        LeftToRight,
+        TopToBottom,
+        BottomToTop,
+    }
     public partial class MPageBox : UserControl
     {
         public MPageBox()
         {
             InitializeComponent();
-            if (PageManager.Pages.Length == 0)
-            {
-                PageManager.Scan();
-            }
+            Navigator.Scan();
         }
 
         /// <summary>
@@ -95,7 +99,7 @@ namespace MinimalisticWPF
             set { SetValue(NavigateModeProperty, value); }
         }
         public static readonly DependencyProperty NavigateModeProperty =
-            DependencyProperty.Register("NavigateMode", typeof(NavigateModes), typeof(MPageBox), new PropertyMetadata(NavigateModes.Fade));
+            DependencyProperty.Register("NavigateMode", typeof(NavigateModes), typeof(MPageBox), new PropertyMetadata(NavigateModes.Slide));
 
         /// <summary>
         /// 滑动方向
@@ -121,18 +125,11 @@ namespace MinimalisticWPF
             get => (SlideDirection == SlideDirection.TopToBottom || SlideDirection == SlideDirection.BottomToTop) ? Height : 0;
         }
 
-        public void Navigate(Type pageType)
+        public void Navigate(Type pageType, params object?[] value)
         {
-            UpdateSource(PageManager.Find(pageType));
+            UpdateSource(Navigator.GetInstance(pageType, value));
         }
-        public void Navigate(string pageName)
-        {
-            UpdateSource(PageManager.Find(pageName));
-        }
-        public void Navigate(int pageIndex)
-        {
-            UpdateSource(PageManager.Find(pageIndex));
-        }
+
         private void UpdateSource(object? data)
         {
             switch (NavigateMode)
@@ -158,6 +155,7 @@ namespace MinimalisticWPF
                 .SetParams((x) =>
                 {
                     x.Duration = FadeTime;
+                    x.Acceleration = Acceleration;
                     x.FrameRate = FrameRate;
                     x.Completed = () =>
                     {
@@ -167,6 +165,7 @@ namespace MinimalisticWPF
                             {
                                 x.Duration = FadeOutTime;
                                 x.Acceleration = Acceleration;
+                                x.FrameRate = FrameRate;
                                 x.Start = () =>
                                 {
                                     CurrentPage.Child = page;
@@ -193,6 +192,8 @@ namespace MinimalisticWPF
                 .SetParams((x) =>
                 {
                     x.Duration = FadeTime;
+                    x.Acceleration = Acceleration;
+                    x.FrameRate = FrameRate;
                     x.Completed = () =>
                     {
                         translate.X = -translate.X;
@@ -204,6 +205,8 @@ namespace MinimalisticWPF
                             .SetParams((x) =>
                             {
                                 x.Duration = FadeOutTime;
+                                x.Acceleration = Acceleration;
+                                x.FrameRate = FrameRate;
                                 x.Start = () =>
                                 {
                                     CurrentPage.Child = page;
