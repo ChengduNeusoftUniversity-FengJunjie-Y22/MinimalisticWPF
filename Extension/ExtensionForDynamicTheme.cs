@@ -14,7 +14,7 @@ namespace MinimalisticWPF
 
         public static Type[] Assemblies { get; } = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes())
-                .Where(t => typeof(IThemeAttribute).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
+                .Where(t => typeof(IThemeAttribute).IsAssignableFrom(t) && typeof(Attribute).IsAssignableFrom(t) && !t.IsAbstract)
                 .ToArray();
 
         public static T ApplyTheme<T>(this T source, Type attributeType, Action<TransitionParams>? paramAction = null) where T : class
