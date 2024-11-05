@@ -174,8 +174,15 @@ namespace MinimalisticWPF
         /// </summary>
         public static Brush ToBrush(this string source)
         {
-            if (!source.StartsWith("#") || source.Length != 7) { return Brushes.Transparent; }
-            return new SolidColorBrush((Color)ColorConverter.ConvertFromString(source));
+            try
+            {
+                Brush brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(source));
+                return brush;
+            }
+            catch (FormatException)
+            {
+                return Brushes.Transparent;
+            }
         }
 
         /// <summary>

@@ -31,6 +31,12 @@ namespace MinimalisticWPF
             }
         }
 
+        public static Action<TransitionParams> Theme { get; set; } = (x) =>
+        {
+            x.FrameRate = DefaultFrameRate;
+            x.Duration = 0.5;
+        };
+
         private int framerate = defaultFrameRate;
 
         /// <summary>
