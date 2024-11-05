@@ -7,6 +7,9 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
+    /// <summary>
+    /// 暗色主题
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class WhenDark : Attribute, IThemeAttribute
     {
