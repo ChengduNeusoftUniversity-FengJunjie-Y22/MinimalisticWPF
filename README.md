@@ -10,11 +10,6 @@
 
 ---
 
-## Message
-[ 2024-11-6 ] 
-- The authors implemented dynamic themes so that after a custom [ Attribute ] implements the [ IThemeAttribute ] interface and mount this [ Attribute ] for the target property, it can use the extension method [object.   ApplyTheme] to implement theme switching
-- The authors plan to complete the 1.9.x document and refactor the 1.8.x document this week . As of now, there are some code examples missing from previous versions in the documentation, which will be improved when 1.9.0 is released to nuget
-
 ## Version
 <details>
 <summary>V1.5.6 - [ Release ] - Basic animation implementation component</summary>
@@ -68,22 +63,98 @@
 <details>
 <summary>V1.9.0 - [ Beta ] - Try to support dynamic themes</summary>
 
+#### Page1 is a control that requires a dynamic theme
+- Global theme effect
+- Render theme effects based on the Color property
+```csharp
+public partial class Page1 : UserControl
+    {
+        public Page1()
+        {
+            InitializeComponent();
 
+            this.RunWithGlobalTheme(); //Global theme effect
+        }
+
+        [WhenDark(typeof(Brush), nameof(Brushes.Tomato))]   //For dark themes, the value should be Tomato
+        [WhenLight(typeof(Brush), nameof(Brushes.Yellow))]  //For light themes, this value should be Yellow
+        public Brush Color
+        {
+            get => txt.Foreground;
+            set => txt.Foreground = value;
+        }
+    }
+```
+#### Apply theme for Page1
+##### （1）Global Apply
+- RunWithGlobalTheme method must be run to take effect globally
+- windowBack represents the background color of the main window
+```csharp
+DynamicTheme.GlobalApply(typeof(WhenLight), windowBack: Brushes.White);
+```
+##### （2）Partial Apply
+- The first argument indicates the concrete type of the feature
+- The second argument is the delegate that will be used to construct the animation parameters.Otherwise, TransitionParams.Theme is called
+- Finally, you pass in a number of object instances that you want to switch to the given theme
+```csharp
+var page1 = new Page1();
+var page2 = new Page1();
+DynamicTheme.PartialApply(typeof(WhenLight),null,page1,page2);
+```
+##### （3）Self Starting
+- The first argument indicates the concrete type of the feature
+- The second argument is the delegate that will be used to construct the animation parameters.Otherwise, TransitionParams.Theme is called
+```csharp
+var page = new Page1();
+page.ApplyTheme(typeof(WhenDark),null);
+```
+
+#### Declare a custom theme
+- Inheriting from Attribute
+- Implement IThemeAttribute
+  - Requires an object property to represent the value of the property under the Theme
+- Once you've completed these steps, you've defined your own theme, which can be used in the same way as the default themes provided by the library
+- Example
+```csharp
+    [AttributeUsage(AttributeTargets.Property)]
+    public abstract class GlassTheme : Attribute, IThemeAttribute
+    {
+        public GlassTheme() { }
+
+        public object? Target { get; set; }
+    }
+```
+- When dealing with colors, you can do something like this
+```csharp
+        public WhenLight(Type type, params object?[] param)
+        {
+            if (type == typeof(Brush))
+            {
+                var value = param.FirstOrDefault()?.ToString()?.ToBrush();
+                Target = value ?? Brushes.Transparent;
+            }
+            else
+            {
+                Target = Activator.CreateInstance(type, param);
+            }
+        }
+```
+- In fact, the theme switch is mainly a gradient of Brush values, but the library also provides 7 supported data types, as long as the data types are supported by the animation module, the dynamic theme is also applicable
 
 </details>
 
 ## Document
 
 <details>
-<summary>V1.9.x</summary>
+<summary>V1.9.x - [ Writing ] - Testing phase, no documentation, specific information please check the history of version changes [ Version ]</summary>
 
-
+###
 
 </details>
 
 
 <details>
-<summary>V1.8.x</summary>
+<summary>V1.8.x - [ Writing ] - The AOP example will be completed in the next version</summary>
 
 ## Ⅰ API
 ### 1. State
@@ -376,7 +447,7 @@ public MPasswordBox()
 </details>
 
 <details>
-<summary>V1.5.x</summary>
+<summary>V1.5.x - [ Finished ]</summary>
 
 ## Key Features
 - [State Machine System - Create linear transitions to specified properties of specified instances](#StateMachineSystem)
