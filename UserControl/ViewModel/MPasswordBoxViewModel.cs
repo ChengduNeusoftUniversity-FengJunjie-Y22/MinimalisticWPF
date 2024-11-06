@@ -15,7 +15,7 @@ namespace MinimalisticWPF
     /// </summary>
     public class MPasswordBoxViewModel : ViewModelBase<MPasswordBoxViewModel, MPasswordBoxModel>
     {
-        public MPasswordBoxViewModel() { }
+        public MPasswordBoxViewModel() { this.AsGlobalTheme(); }
 
         //默认颜色
         public static State Default = State.FromType<MPasswordBoxViewModel>()

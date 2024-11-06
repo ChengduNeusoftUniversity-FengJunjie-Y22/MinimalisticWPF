@@ -1,12 +1,23 @@
 ﻿# MinimalisticWPF
+
+#### Easier animation construction √
+#### Support for conditional animation loading within the MVVM design pattern √
+#### Aspect-oriented Programming simplification √
+#### Dynamic theme support [ Beta… ]
+
 - [github](https://github.com/Axvser/MinimalisticWPF)
 - [中文文档](https://axvser.github.io/MinimalisticWPFDoc/)
 
 ---
 
+## Message
+[ 2024-11-6 ] 
+- The authors implemented dynamic themes so that after a custom [ Attribute ] implements the [ IThemeAttribute ] interface and mount this [ Attribute ] for the target property, it can use the extension method [object.   ApplyTheme] to implement theme switching
+- The authors plan to complete the 1.9.x document and refactor the 1.8.x document this week . As of now, there are some code examples missing from previous versions in the documentation, which will be improved when 1.9.0 is released to nuget
+
 ## Version
 <details>
-<summary>V1.5.6 - The last version does not support AOP and uses an older API</summary>
+<summary>V1.5.6 - [ Release ] - Basic animation implementation component</summary>
 
   - Repair it.
     - Gradient results may be distorted when the frame rate is between 57 and 61
@@ -42,7 +53,7 @@
 </details>
 
 <details>
-<summary>V1.8.9 - The last version that does not support dynamic themes</summary>
+<summary>V1.8.9 - [ Release ] - Animation system optimization and aspect-oriented programming support</summary>
 
   - [ AOP ] Add a delegate parameter to get the return value of the previous method
   ```csharp
@@ -54,7 +65,25 @@
 
 </details>
 
-# V1.8.x
+<details>
+<summary>V1.9.0 - [ Beta ] - Try to support dynamic themes</summary>
+
+
+
+</details>
+
+## Document
+
+<details>
+<summary>V1.9.x</summary>
+
+
+
+</details>
+
+
+<details>
+<summary>V1.8.x</summary>
 
 ## Ⅰ API
 ### 1. State
@@ -344,14 +373,10 @@ public MPasswordBox()
 }
 ```
 
----
----
----
----
----
----
+</details>
 
-# V1.5.x
+<details>
+<summary>V1.5.x</summary>
 
 ## Key Features
 - [State Machine System - Create linear transitions to specified properties of specified instances](#StateMachineSystem)
@@ -820,3 +845,5 @@ Set((x)=>
       MessageBox.Show(weathers[0].GetCombined());
       ```
     - weather[0] Is for today's weather
+ 
+</details>

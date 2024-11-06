@@ -62,7 +62,7 @@ namespace MinimalisticWPF
         public Brush EdgeBrush
         {
             get => ViewModel.EdgeBrush;
-            set => ViewModel.EdgeBrush = value;
+            set => ViewModel.SetEdgeBrush(value);
         }
 
         public Thickness EdgeThickness
@@ -75,6 +75,12 @@ namespace MinimalisticWPF
         {
             get => ViewModel.CornerRadius;
             set => ViewModel.CornerRadius = value;
+        }
+
+        public bool IsUseBorder
+        {
+            get => ViewModel.IsUseBorder;
+            set => ViewModel.IsUseBorder = value;
         }
 
         public Brush HoverBrush { get; set; } = Brushes.Cyan;

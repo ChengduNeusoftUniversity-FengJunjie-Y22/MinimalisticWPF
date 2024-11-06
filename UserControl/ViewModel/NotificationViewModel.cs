@@ -8,7 +8,7 @@ namespace MinimalisticWPF
 {
     public class NotificationViewModel : ViewModelBase<NotificationViewModel, NotificationModel>
     {
-        public NotificationViewModel() { }
+        public NotificationViewModel() { this.AsGlobalTheme(); }
 
         public string Title
         {
