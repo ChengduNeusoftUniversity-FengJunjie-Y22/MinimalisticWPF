@@ -154,7 +154,7 @@ page.ApplyTheme(typeof(WhenDark),null);
 
 
 <details>
-<summary>V1.8.x - [ Writing ] - The AOP example will be completed in the next version</summary>
+<summary>V1.8.x - [ Writing ] - The AOP example will be completed later on github</summary>
 
 ## Ⅰ API
 ### 1. State

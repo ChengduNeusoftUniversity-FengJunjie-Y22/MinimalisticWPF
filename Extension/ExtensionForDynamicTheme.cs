@@ -46,7 +46,20 @@ namespace MinimalisticWPF
                     GenerateValue(source, newMachine);
                 }
             }
-            InstanceHosts.Add(source);
+            if (!InstanceHosts.Contains(source))
+            {
+                InstanceHosts.Add(source);
+            }
+            return source;
+        }
+
+        /// <summary>
+        /// 取消此实例在全局主题中的响应
+        /// </summary>
+        /// <param name="source"></param>
+        public static T RunWithOutGlobalTheme<T>(this T source) where T : class
+        {
+            InstanceHosts.Remove(source);
             return source;
         }
 
@@ -85,7 +98,7 @@ namespace MinimalisticWPF
             return source;
         }
 
-        private static void GenerateValue<T>(T target, StateMachine machine)where T : class
+        private static void GenerateValue<T>(T target, StateMachine machine) where T : class
         {
             var dic = new Dictionary<Type, State>();
             foreach (var type in Assemblies)
