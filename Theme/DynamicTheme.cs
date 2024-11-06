@@ -12,7 +12,7 @@ namespace MinimalisticWPF
     public static class DynamicTheme
     {
         /// <summary>
-        /// [ 全局 ] 应用主题 , 需要 object.AsGlobalTheme() 激活对象以在全局生效
+        /// [ 全局 ] 应用主题 , 需要 object.RunWithGlobalTheme() 激活对象以在全局生效
         /// </summary>
         /// <param name="attributeType">主题特性类型</param>
         /// <param name="paramAction">过渡参数构造</param>

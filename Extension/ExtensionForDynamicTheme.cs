@@ -31,7 +31,7 @@ namespace MinimalisticWPF
         /// 令全局主题切换可作用至该实例
         /// </summary>
         /// <param name="source"></param>
-        public static T AsGlobalTheme<T>(this T source) where T : class
+        public static T RunWithGlobalTheme<T>(this T source) where T : class
         {
             if (!ThemeValues.TryGetValue(typeof(T), out _))
             {

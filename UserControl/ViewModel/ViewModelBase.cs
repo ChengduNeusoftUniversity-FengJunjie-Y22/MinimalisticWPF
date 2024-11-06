@@ -47,8 +47,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(Text));
             }
         }
-        [WhenDark(typeof(Brush), nameof(Brushes.White))]
-        [WhenLight(typeof(Brush), "#1e1e1e")]
         public virtual Brush TextBrush
         {
             get => Model.TextBrush;
@@ -86,8 +84,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(EdgeThickness));
             }
         }
-        [WhenDark(typeof(Brush), nameof(Brushes.White))]
-        [WhenLight(typeof(Brush), "#1e1e1e")]
         public virtual Brush EdgeBrush
         {
             get => Model.EdgeBrush;
@@ -106,8 +102,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(CornerRadius));
             }
         }
-        [WhenDark(typeof(Brush), "#1e1e1e")]
-        [WhenLight(typeof(Brush), nameof(Brushes.White))]
         public virtual Brush BackBrush
         {
             get => Model.BackBrush;
@@ -117,8 +111,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(BackBrush));
             }
         }
-        [WhenDark(typeof(Brush), nameof(Brushes.White))]
-        [WhenLight(typeof(Brush), "#1e1e1e")]
         public virtual Brush HoverBackground
         {
             get => Model.HoverBackground;
@@ -128,8 +120,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(HoverBackground));
             }
         }
-        [WhenDark(typeof(Brush), nameof(Brushes.Cyan))]
-        [WhenLight(typeof(Brush), nameof(Brushes.Violet))]
         public virtual Brush HoverTextBrush
         {
             get => Model.HoverTextBrush;
@@ -139,8 +129,6 @@ namespace MinimalisticWPF
                 OnPropertyChanged(nameof(HoverTextBrush));
             }
         }
-        [WhenDark(typeof(Brush), nameof(Brushes.White))]
-        [WhenLight(typeof(Brush), "#1e1e1e")]
         public virtual Brush HoverEdgeBrush
         {
             get => Model.HoverEdgeBrush;

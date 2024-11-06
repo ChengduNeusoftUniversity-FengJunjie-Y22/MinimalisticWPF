@@ -11,7 +11,7 @@ namespace MinimalisticWPF
 {
     public class MButtonViewModel : ViewModelBase<MButtonViewModel, MButtonModel>
     {
-        public MButtonViewModel() { this.AsGlobalTheme(); }
+        public MButtonViewModel() { }
 
         public static State Start = State.FromObject(new MButtonViewModel())
             .SetName("default")

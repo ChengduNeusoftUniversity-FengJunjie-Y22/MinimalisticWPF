@@ -10,7 +10,7 @@ namespace MinimalisticWPF
 {
     public class MTopBarViewModel : ViewModelBase<MTopBarViewModel, MTopBarModel>
     {
-        public MTopBarViewModel() { this.AsGlobalTheme(); }
+        public MTopBarViewModel() { }
 
         private bool _isUseBorder = false;
         public bool IsUseBorder

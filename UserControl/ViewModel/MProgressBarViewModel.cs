@@ -10,7 +10,7 @@ namespace MinimalisticWPF
 {
     public class MProgressBarViewModel : ViewModelBase<MProgressBarViewModel, MProgressBarModel>
     {
-        public MProgressBarViewModel() { this.AsGlobalTheme(); }
+        public MProgressBarViewModel() { }
 
         public override double Width
         {
