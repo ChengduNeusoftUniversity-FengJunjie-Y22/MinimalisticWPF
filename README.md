@@ -154,10 +154,10 @@ page.ApplyTheme(typeof(WhenDark),null);
 
 
 <details>
-<summary>V1.8.x - [ Writing ] - The AOP example will be completed later on github</summary>
+<summary>V1.8.x - [ Finished ]</summary>
 
 ## Ⅰ API
-### 1. State
+### 1. State - Keep track of the property values of an object at a time
 |Method|Param|Return|Meaning|
 |------|-----|------|-------|
 |FromObject|object|TempState|Record all supported properties based on an object instance|
@@ -165,13 +165,13 @@ page.ApplyTheme(typeof(WhenDark),null);
 |SetName|string|TempState|Give the State a name|
 |SetProperty|Expression , object|TempState|Logging attribute values|
 |ToState||State ☆|Completion record|
-### 2. StateVector
+### 2. StateVector - Describe the relation in which a condition corresponds to an animation
 |Method|Param|Return|Meaning|
 |------|-----|------|-------|
 |Create||StateVector||
 |AddCondition|Expression , State , Action&lt;TransitionParams>?|StateVector|Describes a mapping that automatically loads an object to a specified State animation when a specified condition is met|
 |Check|T , StateMachine||Check if any of the conditions are met, and if so, call the specified StateMachine instance to load the corresponding animation|
-### 3. Transition
+### 3. Transition - Animation behavior
 ###### Transition
 |Method|Param|Return|Meaning|
 |------|-----|------|-------|
@@ -198,6 +198,10 @@ page.ApplyTheme(typeof(WhenDark),null);
 |Update|Action|null|
 |LateUpdate|Action|null|
 |Completed|Action|null|
+|StartAsync|Func&lt;Task>|null|
+|UpdateAsync|Func&lt;Task>|null|
+|LateUpdateAsync|Func&lt;Task>|null|
+|CompletedAsync|Func&lt;Task>|null|
 |FrameRate|int|120 HZ|
 |Duration|double|0 s|
 |IsAutoReverse|bool|false|
@@ -293,11 +297,14 @@ GD2.BeginTransition(UnSafe_2);
 GD1.BeginTransition(Safe);
 GD2.BeginTransition(Safe);
 ```
+- UnSafe must be executed before Safe
+
 #### 5. LifeCycle
 ```csharp
 Action<TransitionParams> _params = (x) =>
 {
     x.Duration = 2;
+
     x.Start = () =>
     {
 
@@ -311,6 +318,23 @@ Action<TransitionParams> _params = (x) =>
 
     };
     x.Completed = () =>
+    {
+
+    };
+
+    x.StartAsync = () =>
+    {
+
+    };
+    x.UpdateAsync = () =>
+    {
+
+    };
+    x.LateUpdateAsync = () =>
+    {
+
+    };
+    x.CompletedAsync = () =>
     {
 
     };
@@ -443,6 +467,43 @@ public MPasswordBox()
     this.StateMachineLoading(ViewModel);
 }
 ```
+
+#### 7.AOP
+- For types that need proxies, we need to create an interface first
+```csharp
+public interface IPropertyProxy : IProxy
+{
+    string Name { get; set; }
+    string GetName();
+}
+public class TObj : IPropertyProxy
+{
+    public TObj() { }
+
+    public string Name { get; set; } = "defaultValue";
+
+    public string GetName()
+    {
+        return "defaultResult";
+    }
+}
+```
+- Create the proxy object [ proxy ]
+  - Intercepting a specified method
+  - Add custom logic before and after method execution
+  - Override the default implementation of the method
+```csharp
+TObj obj = new TObj();
+IPropertyProxy proxy = obj.CreateProxy<IPropertyProxy>();
+proxy.SetMethod(nameof(pro.GetName),
+              object? (args, last) => { MessageBox.Show($"before default method"); return "AOP before\n"; },
+              object? (args, last) => { return $"{last}AOP Coverage \n"; },
+              object? (args, last) => { MessageBox.Show($"results :\n{last}AOP after\n"); return null; });
+```
+- Tips
+  - Passing null indicates no appending or overwriting
+  - [ args ] Represents the params received when the method is called
+  - [ last ] Represents the return value of the previous step
 
 </details>
 
