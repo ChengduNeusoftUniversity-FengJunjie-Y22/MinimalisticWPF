@@ -39,7 +39,7 @@ namespace MinimalisticWPF
         /// <param name="viewModel">受状态机控制的实例对象</param>
         /// <param name="states">所有该对象可能具备的状态</param>
         /// <exception cref="ArgumentException"></exception>
-        internal StateMachine(object viewModel, params State[] states)
+        private StateMachine(object viewModel, params State[] states)
         {
             Target = viewModel;
             Type type = viewModel.GetType();
@@ -124,7 +124,7 @@ namespace MinimalisticWPF
         public double FrameCount { get => Math.Clamp(TransitionParams.Duration * Math.Clamp(TransitionParams.FrameRate, 1, MaxFrameRate), 1, int.MaxValue); }
 
         /// <summary>
-        /// 创建一个用于管理指定对象过渡行为的状态机实例
+        /// 创建/获取 一个用于管理指定对象过渡行为的状态机实例
         /// </summary>
         public static StateMachine Create(object targetObj, params State[] states)
         {
@@ -162,17 +162,26 @@ namespace MinimalisticWPF
         public string? CurrentState { get; internal set; }
         public TransitionInterpreter? Interpreter { get; internal set; }
         public Queue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>> Interpreters { get; internal set; } = new Queue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>>();
+        public List<TransitionInterpreter> UnSafeInterpreters { get; internal set; } = new List<TransitionInterpreter>();
 
         /// <summary>
         /// 重置状态机
         /// </summary>
-        public void ReSet()
+        /// <param name="IsStopUnsafe">是否终止已启动的Unsafe过渡</param>
+        public void ReSet(bool IsStopUnsafe = false)
         {
             IsReSet = true;
             CurrentState = null;
             Interpreter?.Interrupt();
             Interpreter = null;
             Interpreters.Clear();
+            if(IsStopUnsafe)
+            {
+                foreach(var item in UnSafeInterpreters)
+                {
+                    item.Interrupt();
+                }
+            }
         }
         /// <summary>
         /// 过渡至目标状态
@@ -252,7 +261,11 @@ namespace MinimalisticWPF
 
             animationInterpreter.Frams = preload ?? ComputingFrames(targetState, this);
 
-            if (!TransitionParams.IsUnSafe)
+            if (TransitionParams.IsUnSafe)
+            {
+                UnSafeInterpreters.Add(animationInterpreter);
+            }
+            else
             {
                 CurrentState = stateName;
                 Interpreter = animationInterpreter;

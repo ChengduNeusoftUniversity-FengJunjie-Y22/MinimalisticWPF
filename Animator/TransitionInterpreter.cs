@@ -185,7 +185,16 @@ namespace MinimalisticWPF
         /// </summary>
         internal async void WhileEnded()
         {
-            if (IsUnSafe || Machine.IsReSet) return;
+            if(IsUnSafe)
+            {
+                Machine.UnSafeInterpreters.Remove(this);
+                return;
+            }
+
+            if(Machine.IsReSet)
+            {
+                return;
+            }
 
             if (Application.Current != null)
             {

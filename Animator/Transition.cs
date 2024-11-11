@@ -39,5 +39,32 @@ namespace MinimalisticWPF
         {
             return new TransitionBoard<T>() { IsStatic = true };
         }
+        /// <summary>
+        /// 打断指定对象的Safe过渡
+        /// </summary>
+        /// <param name="targets">被打断过渡的目标对象</param>
+        public static void StopSafe(params object[] targets)
+        {
+            foreach (var target in targets)
+            {
+                var machine = StateMachine.Create(target);
+                machine.Interpreter?.Interrupt();
+            }
+        }
+        /// <summary>
+        /// 打断指定对象的UnSafe过渡
+        /// </summary>
+        /// <param name="targets">被打断过渡的目标对象</param>
+        public static void StopUnSafe(params object[] targets)
+        {
+            foreach (var target in targets)
+            {
+                var machine = StateMachine.Create(target);
+                foreach (var itor in machine.UnSafeInterpreters)
+                {
+                    itor.Interrupt();
+                }
+            }
+        }
     }
 }

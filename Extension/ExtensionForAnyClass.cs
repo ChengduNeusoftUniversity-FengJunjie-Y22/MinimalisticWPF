@@ -53,15 +53,36 @@ namespace MinimalisticWPF
             return result;
         }
 
+        /// <summary>
+        /// 启动过渡
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="transfer">动画效果</param>
         public static void BeginTransition<T>(this T source, TransitionBoard<T> transfer) where T : class
         {
             transfer.Start(source);
         }
+        /// <summary>
+        /// 启动过渡
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="transfer">动画效果</param>
+        /// <param name="set">效果参数</param>
         public static void BeginTransition<T>(this T source, TransitionBoard<T> transfer, Action<TransitionParams> set) where T : class
         {
             transfer.TransitionParams = set;
             transfer.Start(source);
         }
+        /// <summary>
+        /// 启动过渡
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="state">状态信息</param>
+        /// <param name="set">效果参数</param>
+        /// <exception cref="ArgumentException"></exception>
         public static void BeginTransition<T>(this T source, State state, Action<TransitionParams> set) where T : class
         {
             if (state == null) return;
@@ -82,8 +103,27 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
+        /// 打断过渡
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="IsStopUnsafe">是否终止执行中的Unsafe过渡</param>
+        public static T StopTransition<T>(this T source, bool IsStopUnsafe = false) where T : class
+        {
+            var machine = StateMachine.Create(source);
+            machine.Interpreter?.Interrupt();
+            if (IsStopUnsafe)
+            {
+                foreach (var itor in machine.UnSafeInterpreters)
+                {
+                    itor.Interrupt();
+                }
+            }
+            return source;
+        }
+
+        /// <summary>
         /// 尝试找出系统中管理该对象过渡效果的状态机实例,注意该方法不会在不存在状态机实例时自动创建状态机
-        /// <para>第一优先级 : TransitionBoard 对象池（字典）内存储的状态机</para>
+        /// <para>第一优先级 : StateMachine 对象池（字典）内存储的状态机</para>
         /// <para>第二优先级 : 实例对象自身包含的属性</para>
         /// <para>第三优先级 : 若为一个FrameworkElement，尝试从其DataContext中获取状态机</para>
         /// </summary>

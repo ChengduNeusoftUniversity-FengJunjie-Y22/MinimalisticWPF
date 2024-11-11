@@ -37,16 +37,8 @@ namespace MinimalisticWPF
         {
             if (!ThemeValues.TryGetValue(typeof(T), out _))
             {
-                if (StateMachine.MachinePool.TryGetValue(source, out var machine))
-                {
-                    GenerateValue(source, machine);
-                }
-                else
-                {
-                    var newMachine = StateMachine.Create(source);
-                    StateMachine.MachinePool.Add(source, newMachine);
-                    GenerateValue(source, newMachine);
-                }
+                var machine = StateMachine.Create(source);
+                GenerateValue(source, machine);
             }
             if (!InstanceHosts.Contains(source))
             {
@@ -84,16 +76,8 @@ namespace MinimalisticWPF
             }
             else
             {
-                if (StateMachine.MachinePool.TryGetValue(source, out var machine))
-                {
-                    GenerateValue(source, machine);
-                }
-                else
-                {
-                    var newMachine = StateMachine.Create(source);
-                    StateMachine.MachinePool.Add(source, newMachine);
-                    GenerateValue(source, newMachine);
-                }
+                var machine = StateMachine.Create(source);
+                GenerateValue(source, machine);
                 ApplyTheme(source, attributeType, paramAction);
             }
 

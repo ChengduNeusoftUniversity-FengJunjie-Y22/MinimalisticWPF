@@ -212,16 +212,7 @@ namespace MinimalisticWPF
         /// <param name="target">新的目标对象</param>
         public void Start(T target)
         {
-            StateMachine.MachinePool.TryGetValue(target, out var temp);
-            if (temp != null)
-            {
-                Machine = temp;
-            }
-            else
-            {
-                Machine = StateMachine.Create(target);
-                StateMachine.MachinePool.Add(target, Machine);
-            }
+            Machine = StateMachine.Create(target);
             Machine.ReSet();
             TempState.StateName = Transition.TempName + Machine.States.BoardSuffix;
             Machine.States.Add(TempState);
