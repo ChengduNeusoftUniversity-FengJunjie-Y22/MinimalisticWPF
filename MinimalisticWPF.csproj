@@ -18,7 +18,7 @@
 		<IncludeSymbols>False</IncludeSymbols>
 		<Description>It simplifies the process of visual effect realization, and provides special functions for MVVM and AOP. In summary, it is dedicated to the application of minimalism concepts in WPF development</Description>
 		<RepositoryType>git</RepositoryType>
-		<Version>1.9.0</Version>
+		<Version>1.9.1</Version>
 	</PropertyGroup>
 
 	<ItemGroup>

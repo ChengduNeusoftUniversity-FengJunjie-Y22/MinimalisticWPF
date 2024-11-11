@@ -38,9 +38,9 @@ namespace MinimalisticWPF
         TopToBottom,
         BottomToTop,
     }
-    public partial class MPageBox : UserControl
+    public partial class MNavigateBox : UserControl
     {
-        public MPageBox()
+        public MNavigateBox()
         {
             InitializeComponent();
             Navigator.Scan();
@@ -55,7 +55,7 @@ namespace MinimalisticWPF
             set { SetValue(FadeTimeProperty, value); }
         }
         public static readonly DependencyProperty FadeTimeProperty =
-            DependencyProperty.Register("FadeTime", typeof(double), typeof(MPageBox), new PropertyMetadata(0.2));
+            DependencyProperty.Register("FadeTime", typeof(double), typeof(MNavigateBox), new PropertyMetadata(0.2));
 
         /// <summary>
         /// 淡出时间 ( 秒 )
@@ -66,7 +66,7 @@ namespace MinimalisticWPF
             set { SetValue(FadeOutTimeProperty, value); }
         }
         public static readonly DependencyProperty FadeOutTimeProperty =
-            DependencyProperty.Register("FadeOutTime", typeof(double), typeof(MPageBox), new PropertyMetadata(0.8));
+            DependencyProperty.Register("FadeOutTime", typeof(double), typeof(MNavigateBox), new PropertyMetadata(0.8));
 
         /// <summary>
         /// 切页加速率
@@ -77,7 +77,7 @@ namespace MinimalisticWPF
             set { SetValue(AccelerationProperty, value); }
         }
         public static readonly DependencyProperty AccelerationProperty =
-            DependencyProperty.Register("Acceleration", typeof(double), typeof(MPageBox), new PropertyMetadata(0.0));
+            DependencyProperty.Register("Acceleration", typeof(double), typeof(MNavigateBox), new PropertyMetadata(0.0));
 
         /// <summary>
         /// 切页帧率
@@ -88,7 +88,7 @@ namespace MinimalisticWPF
             set { SetValue(FrameRateProperty, value); }
         }
         public static readonly DependencyProperty FrameRateProperty =
-            DependencyProperty.Register("FrameRate", typeof(int), typeof(MPageBox), new PropertyMetadata(60));
+            DependencyProperty.Register("FrameRate", typeof(int), typeof(MNavigateBox), new PropertyMetadata(60));
 
         /// <summary>
         /// 导航模式
@@ -99,7 +99,7 @@ namespace MinimalisticWPF
             set { SetValue(NavigateModeProperty, value); }
         }
         public static readonly DependencyProperty NavigateModeProperty =
-            DependencyProperty.Register("NavigateMode", typeof(NavigateModes), typeof(MPageBox), new PropertyMetadata(NavigateModes.Slide));
+            DependencyProperty.Register("NavigateMode", typeof(NavigateModes), typeof(MNavigateBox), new PropertyMetadata(NavigateModes.Fade));
 
         /// <summary>
         /// 滑动方向
@@ -110,7 +110,7 @@ namespace MinimalisticWPF
             set { SetValue(SlideDirectionProperty, value); }
         }
         public static readonly DependencyProperty SlideDirectionProperty =
-            DependencyProperty.Register("SlideDirection", typeof(SlideDirection), typeof(MPageBox), new PropertyMetadata(SlideDirection.RightToLeft));
+            DependencyProperty.Register("SlideDirection", typeof(SlideDirection), typeof(MNavigateBox), new PropertyMetadata(SlideDirection.RightToLeft));
 
         internal TranslateTransform Slide
         {

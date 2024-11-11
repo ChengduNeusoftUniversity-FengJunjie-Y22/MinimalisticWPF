@@ -28,7 +28,7 @@ namespace MinimalisticWPF
         public static Dictionary<int, ProxyInstance> ProxyInstances { get; internal set; } = new Dictionary<int, ProxyInstance>();
         public static Dictionary<object, int> ProxyIDs { get; internal set; } = new Dictionary<object, int>();
 
-        internal ProxyInstance() { _localid = _id; _id++; ProxyInstances.Add(_localid, this); }
+        public ProxyInstance() { _localid = _id; _id++; ProxyInstances.Add(_localid, this); }
 
         internal object? _target;
         internal Type? _targetType;

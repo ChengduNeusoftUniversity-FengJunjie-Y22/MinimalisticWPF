@@ -8,12 +8,12 @@ using System.Windows.Media;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 暗色主题
+    /// 亮色主题
     /// </summary>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public class WhenDark : Attribute, IThemeAttribute
+    public class Light : Attribute, IThemeAttribute
     {
-        public WhenDark(params object?[] param)
+        public Light(params object?[] param)
         {
             Parameters = param;
         }

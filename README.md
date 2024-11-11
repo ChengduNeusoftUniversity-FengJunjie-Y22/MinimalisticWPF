@@ -143,6 +143,84 @@ page.ApplyTheme(typeof(WhenDark),null);
 
 </details>
 
+<details>
+<summary>V1.9.2 - [Beta] - Improvements</summary>
+
+### Ⅰ Dynamic Theme
+- Now [ IThemeAttribute ] requires you to implement an array representing the parameters needed to construct a new value
+- You no longer need to specify the type; you just need to pass in the arguments needed to construct the new value
+- [ WhenDark ] => [ Dark ]
+- [ WhenLight] => [ Light ]
+```csharp
+        [Dark(nameof(Brushes.Tomato))]
+        [Light("#1e1e1e")]
+        public Brush Color
+        {
+            get => txt.Foreground;
+            set => txt.Foreground = value;
+        }
+
+        [Dark(6)]
+        [Light(16,1,2,0)]
+        public CornerRadius CornerRadius
+        {
+            get => bor.CornerRadius;
+            set => bor.CornerRadius = value;
+        }
+
+        [Dark(0.0)]
+        [Light(1.0)]
+        public double ThemeOpacity
+        {
+            get => Opacity;
+            set => Opacity = value;
+        }
+
+        [Dark(1,1,1,1)]
+        [Light(5)]
+        public Thickness ThemeThickness
+        {
+            get => bor.BorderThickness;
+            set => bor.BorderThickness = value;
+        }
+```
+
+### Ⅱ Flexible termination
+- Extension method
+```csharp
+gd.StopTransition(false);
+//The bool value indicates whether to terminate the Unsafe transition being performed by the object
+```
+- Static methods
+```csharp
+Transition.StopSafe(gd,gd2);
+Transition.StopUnSafe(gd,gd2);
+//Allow multiple objects to be passed in and terminate the transition
+```
+
+### Ⅲ Navigate
+- The new version only requires that you attach the [ Navigable ] attribute to the control
+  - You can pass an enumeration value to indicate whether singleton mode is enabled or not
+  - By default, the singleton pattern is used
+  ```csharp
+    [Navigable(ConstructionModes.Singleton)]
+    public partial class Page2 : UserControl
+    {
+        public Page2()
+        {
+            InitializeComponent();
+        }
+    }
+  ```
+- The container has been changed from [ MPageBox ] to [ MNavigateBox ]
+
+### Ⅳ StateMachine
+- The frequency of reflection operation in instantiation of StateMachine is reduced
+- When [ Statemachine.Create() ] is used, it first looks up if a StateMachine already exists in the object pool and then chooses to return an existing StateMachine or a new one
+- [ ReSet() ] adds an optional bool argument that indicates whether the Unsafe transition should be interrupted when the state machine is reset
+
+</details>
+
 ## Document
 
 <details>
