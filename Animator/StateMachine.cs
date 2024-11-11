@@ -179,7 +179,7 @@ namespace MinimalisticWPF
             {
                 foreach(var item in UnSafeInterpreters)
                 {
-                    item.Interrupt();
+                    item.Interrupt(true);
                 }
             }
         }
