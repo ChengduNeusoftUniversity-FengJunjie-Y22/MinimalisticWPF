@@ -85,10 +85,6 @@ namespace MinimalisticWPF
                                     Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
                                 });
                             }
-                            else
-                            {
-                                WhileEnded();
-                            }
                         }
                     }
 
@@ -143,11 +139,6 @@ namespace MinimalisticWPF
                                         Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
                                     });
                                 }
-                                else
-                                {
-                                    WhileEnded();
-                                }
-
                             }
                         }
 
@@ -174,10 +165,11 @@ namespace MinimalisticWPF
         /// <summary>
         /// 打断动画
         /// </summary>
-        public void Interrupt()
+        /// <param name="IsUnsafeOver">终止Unsafe时需要为true</param>
+        public void Interrupt(bool IsUnsafeOver = false)
         {
-            if (IsUnSafe) return;
-            IsStop = IsRunning ? true : false;
+            if (IsUnSafe && !IsUnsafeOver) return;
+            IsStop = IsRunning;
         }
 
         /// <summary>
@@ -185,13 +177,13 @@ namespace MinimalisticWPF
         /// </summary>
         internal async void WhileEnded()
         {
-            if(IsUnSafe)
+            if (IsUnSafe)
             {
                 Machine.UnSafeInterpreters.Remove(this);
                 return;
             }
 
-            if(Machine.IsReSet)
+            if (Machine.IsReSet)
             {
                 return;
             }

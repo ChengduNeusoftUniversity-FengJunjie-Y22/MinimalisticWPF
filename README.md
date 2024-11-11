@@ -188,14 +188,16 @@ page.ApplyTheme(typeof(WhenDark),null);
 ### Ⅱ Flexible termination
 - Extension method
 ```csharp
-gd.StopTransition(false);
-//The bool value indicates whether to terminate the Unsafe transition being performed by the object
+gd.StopTransition(IsStopSafe: true, IsStopUnSafe: false);
+gd.StopTransition(true,false);
+//The bool value indicates whether to terminate the Safe/UnSafe transition being performed by the object
 ```
 - Static methods
 ```csharp
-Transition.StopSafe(gd,gd2);
-Transition.StopUnSafe(gd,gd2);
-//Allow multiple objects to be passed in and terminate the transition
+Transition.Dispose()            // All transitions
+Transition.Stop(gd,gd2);        // Only transitions of the selected object
+Transition.StopSafe(gd,gd2);    // Only Safe transitions
+Transition.StopUnSafe(gd,gd2);  // Only UnSafe transitions
 ```
 
 ### Ⅲ Navigate

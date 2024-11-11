@@ -106,16 +106,20 @@ namespace MinimalisticWPF
         /// 打断过渡
         /// </summary>
         /// <param name="source"></param>
-        /// <param name="IsStopUnsafe">是否终止执行中的Unsafe过渡</param>
-        public static T StopTransition<T>(this T source, bool IsStopUnsafe = false) where T : class
+        /// <param name="IsStopSafe">是否停止Safe过渡</param>
+        /// <param name="IsStopUnSafe">是否停止UnSafe过渡</param>
+        public static T StopTransition<T>(this T source, bool IsStopSafe = true, bool IsStopUnSafe = false) where T : class
         {
             var machine = StateMachine.Create(source);
-            machine.Interpreter?.Interrupt();
-            if (IsStopUnsafe)
+            if (IsStopSafe)
+            {
+                machine.Interpreter?.Interrupt();
+            }
+            if (IsStopUnSafe)
             {
                 foreach (var itor in machine.UnSafeInterpreters)
                 {
-                    itor.Interrupt();
+                    itor.Interrupt(true);
                 }
             }
             return source;

@@ -40,6 +40,36 @@ namespace MinimalisticWPF
             return new TransitionBoard<T>() { IsStatic = true };
         }
         /// <summary>
+        /// 终止所有过渡
+        /// </summary>
+        public static void Dispose()
+        {
+            foreach (var machine in StateMachine.MachinePool.Values)
+            {
+                machine.Interpreter?.Interrupt();
+                foreach (var intor in machine.UnSafeInterpreters)
+                {
+                    intor.Interrupt(true);
+                }
+            }
+        }
+        /// <summary>
+        /// 终止指定对象的所有过渡
+        /// </summary>
+        /// <param name="targets"></param>
+        public static void Stop(params object[] targets)
+        {
+            foreach (var target in targets)
+            {
+                var machine = StateMachine.Create(target);
+                machine.Interpreter?.Interrupt();
+                foreach (var itor in machine.UnSafeInterpreters)
+                {
+                    itor.Interrupt(true);
+                }
+            }
+        }
+        /// <summary>
         /// 打断指定对象的Safe过渡
         /// </summary>
         /// <param name="targets">被打断过渡的目标对象</param>
@@ -62,7 +92,7 @@ namespace MinimalisticWPF
                 var machine = StateMachine.Create(target);
                 foreach (var itor in machine.UnSafeInterpreters)
                 {
-                    itor.Interrupt();
+                    itor.Interrupt(true);
                 }
             }
         }
