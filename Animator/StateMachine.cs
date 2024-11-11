@@ -26,6 +26,11 @@ namespace MinimalisticWPF
     {
         private static int _maxFR = 240;
 
+        /// <summary>
+        /// 类型中支持加载动画的属性
+        /// </summary>
+        public static Dictionary<Type, Tuple<PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[]>> PropertyInfos { get; internal set; } = new Dictionary<Type, Tuple<PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[]>>();
+
         /// <param name="viewModel">受状态机控制的实例对象</param>
         /// <param name="states">所有该对象可能具备的状态</param>
         /// <exception cref="ArgumentException"></exception>
@@ -33,25 +38,45 @@ namespace MinimalisticWPF
         {
             Target = viewModel;
             Type type = viewModel.GetType();
-
-            Properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.CanWrite && x.CanRead)
-                .ToArray();
-
-            DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double))
-                .ToArray();
-            BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
-                .ToArray();
-            TransformProperties = Properties.Where(x => x.PropertyType == typeof(Transform))
-                .ToArray();
-            PointProperties = Properties.Where(x => x.PropertyType == typeof(Point))
-                .ToArray();
-            CornerRadiusProperties = Properties.Where(x => x.PropertyType == typeof(CornerRadius))
-                .ToArray();
-            ThicknessProperties = Properties.Where(x => x.PropertyType == typeof(Thickness))
-                .ToArray();
-            ILinearInterpolationProperties = Properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType))
-                .ToArray();
+            if (PropertyInfos.TryGetValue(type, out var infos))
+            {
+                DoubleProperties = infos.Item1;
+                BrushProperties = infos.Item2;
+                TransformProperties = infos.Item3;
+                PointProperties = infos.Item4;
+                CornerRadiusProperties = infos.Item5;
+                ThicknessProperties = infos.Item6;
+                ILinearInterpolationProperties = infos.Item7;
+            }
+            else
+            {
+                var Properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(x => x.CanWrite && x.CanRead);
+                DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double))
+                    .ToArray();
+                BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
+                    .ToArray();
+                TransformProperties = Properties.Where(x => x.PropertyType == typeof(Transform))
+                    .ToArray();
+                PointProperties = Properties.Where(x => x.PropertyType == typeof(Point))
+                    .ToArray();
+                CornerRadiusProperties = Properties.Where(x => x.PropertyType == typeof(CornerRadius))
+                    .ToArray();
+                ThicknessProperties = Properties.Where(x => x.PropertyType == typeof(Thickness))
+                    .ToArray();
+                ILinearInterpolationProperties = Properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType))
+                    .ToArray();
+                PropertyInfos.Add(type,
+                    Tuple.Create(
+                    DoubleProperties,
+                    BrushProperties,
+                    TransformProperties,
+                    PointProperties,
+                    CornerRadiusProperties,
+                    ThicknessProperties,
+                    ILinearInterpolationProperties)
+                    );
+            }
 
             foreach (var state in states)
             {
@@ -60,7 +85,6 @@ namespace MinimalisticWPF
                 else throw new ArgumentException($"A state named [ {state.StateName} ] already exists in the collection.Modify the collection to ensure that the state name is unique");
             }
         }
-        public PropertyInfo[] Properties { get; internal set; }
         public PropertyInfo[] DoubleProperties { get; internal set; }
         public PropertyInfo[] BrushProperties { get; internal set; }
         public PropertyInfo[] TransformProperties { get; internal set; }
@@ -208,7 +232,7 @@ namespace MinimalisticWPF
                 }
             }
 
-            animationInterpreter.Frams = preload ?? ComputingFrames(targetState);
+            animationInterpreter.Frams = preload ?? ComputingFrames(targetState, this);
 
             if (!TransitionParams.IsUnSafe)
             {
@@ -224,7 +248,7 @@ namespace MinimalisticWPF
         /// <param name="state">目标State</param>
         /// <param name="par"></param>
         /// <returns>帧数据</returns>
-        public static List<List<Tuple<PropertyInfo, List<object?>>>>? PreloadFrames(object? Target, State state, TransitionParams par)
+        internal static List<List<Tuple<PropertyInfo, List<object?>>>>? PreloadFrames(object? Target, State state, TransitionParams par)
         {
             if (Target == null)
             {
@@ -232,26 +256,29 @@ namespace MinimalisticWPF
             }
             var machine = new StateMachine(Target, state);
             machine.TransitionParams = par;
-            var result = machine.ComputingFrames(state);
+            var result = ComputingFrames(state, machine);
             return result;
         }
-        internal List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state)
+        internal static List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state, StateMachine machine)
         {
-            List<List<Tuple<PropertyInfo, List<object?>>>> result = new List<List<Tuple<PropertyInfo, List<object?>>>>();
 
-            result.Add(DoubleComputing(state));
-            result.Add(BrushComputing(state));
-            result.Add(TransformComputing(state));
-            result.Add(PointComputing(state));
-            result.Add(CornerRadiusComputing(state));
-            result.Add(ThicknessComputing(state));
-            result.Add(ILinearInterpolationComputing(state));
+            List<List<Tuple<PropertyInfo, List<object?>>>> result = new List<List<Tuple<PropertyInfo, List<object?>>>>(7);
+
+            var count = (int)machine.FrameCount;
+            var fc = count == 0 ? 1 : count;
+            result.Add(DoubleComputing(state, machine.Target, machine.DoubleProperties, fc));
+            result.Add(BrushComputing(state, machine.Target, machine.BrushProperties, fc));
+            result.Add(TransformComputing(state, machine.Target, machine.TransformProperties, fc));
+            result.Add(PointComputing(state, machine.Target, machine.PointProperties, fc));
+            result.Add(CornerRadiusComputing(state, machine.Target, machine.CornerRadiusProperties, fc));
+            result.Add(ThicknessComputing(state, machine.Target, machine.ThicknessProperties, fc));
+            result.Add(ILinearInterpolationComputing(state, machine.Target, machine.ILinearInterpolationProperties, fc));
 
             return result;
         }
-        internal List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(State state)
+        internal static List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(State state, object Target, PropertyInfo[] DoubleProperties, int FrameCount)
         {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
             for (int i = 0; i < DoubleProperties.Length; i++)
             {
                 if (state.Values.ContainsKey(DoubleProperties[i].Name))
@@ -260,16 +287,16 @@ namespace MinimalisticWPF
                     var newValue = state[DoubleProperties[i].Name];
                     if (currentValue != newValue)
                     {
-                        allFrames.Add(Tuple.Create(DoubleProperties[i], ILinearInterpolation.DoubleComputing(currentValue, newValue, (int)FrameCount)));
+                        allFrames.Add(Tuple.Create(DoubleProperties[i], ILinearInterpolation.DoubleComputing(currentValue, newValue, FrameCount)));
                     }
                 }
             }
 
             return allFrames;
         }
-        internal List<Tuple<PropertyInfo, List<object?>>> BrushComputing(State state)
+        internal static List<Tuple<PropertyInfo, List<object?>>> BrushComputing(State state, object Target, PropertyInfo[] BrushProperties, int FrameCount)
         {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
             for (int i = 0; i < BrushProperties.Length; i++)
             {
                 if (state.Values.ContainsKey(BrushProperties[i].Name))
@@ -278,16 +305,16 @@ namespace MinimalisticWPF
                     var newValue = state[BrushProperties[i].Name];
                     if (currentValue != newValue)
                     {
-                        allFrames.Add(Tuple.Create(BrushProperties[i], ILinearInterpolation.BrushComputing(currentValue, newValue, (int)FrameCount)));
+                        allFrames.Add(Tuple.Create(BrushProperties[i], ILinearInterpolation.BrushComputing(currentValue, newValue, FrameCount)));
                     }
                 }
             }
 
             return allFrames;
         }
-        internal List<Tuple<PropertyInfo, List<object?>>> TransformComputing(State state)
+        internal static List<Tuple<PropertyInfo, List<object?>>> TransformComputing(State state, object Target, PropertyInfo[] TransformProperties, int FrameCount)
         {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
             for (int i = 0; i < TransformProperties.Length; i++)
             {
                 if (state.Values.ContainsKey(TransformProperties[i].Name))
@@ -296,16 +323,16 @@ namespace MinimalisticWPF
                     var newValue = state[TransformProperties[i].Name];
                     if (currentValue != newValue)
                     {
-                        allFrames.Add(Tuple.Create(TransformProperties[i], ILinearInterpolation.TransformComputing(currentValue, newValue, (int)FrameCount)));
+                        allFrames.Add(Tuple.Create(TransformProperties[i], ILinearInterpolation.TransformComputing(currentValue, newValue, FrameCount)));
                     }
                 }
             }
 
             return allFrames;
         }
-        internal List<Tuple<PropertyInfo, List<object?>>> PointComputing(State state)
+        internal static List<Tuple<PropertyInfo, List<object?>>> PointComputing(State state, object Target, PropertyInfo[] PointProperties, int FrameCount)
         {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
             for (int i = 0; i < PointProperties.Length; i++)
             {
                 if (state.Values.ContainsKey(PointProperties[i].Name))
@@ -314,16 +341,16 @@ namespace MinimalisticWPF
                     var newValue = state[PointProperties[i].Name];
                     if (currentValue != newValue)
                     {
-                        allFrames.Add(Tuple.Create(PointProperties[i], ILinearInterpolation.PointComputing(currentValue, newValue, (int)FrameCount)));
+                        allFrames.Add(Tuple.Create(PointProperties[i], ILinearInterpolation.PointComputing(currentValue, newValue, FrameCount)));
                     }
                 }
             }
 
             return allFrames;
         }
-        internal List<Tuple<PropertyInfo, List<object?>>> CornerRadiusComputing(State state)
+        internal static List<Tuple<PropertyInfo, List<object?>>> CornerRadiusComputing(State state, object Target, PropertyInfo[] CornerRadiusProperties, int FrameCount)
         {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
             for (int i = 0; i < CornerRadiusProperties.Length; i++)
             {
                 if (state.Values.ContainsKey(CornerRadiusProperties[i].Name))
@@ -332,16 +359,16 @@ namespace MinimalisticWPF
                     var newValue = state[CornerRadiusProperties[i].Name];
                     if (currentValue != newValue)
                     {
-                        allFrames.Add(Tuple.Create(CornerRadiusProperties[i], ILinearInterpolation.CornerRadiusComputing(currentValue, newValue, (int)FrameCount)));
+                        allFrames.Add(Tuple.Create(CornerRadiusProperties[i], ILinearInterpolation.CornerRadiusComputing(currentValue, newValue, FrameCount)));
                     }
                 }
             }
 
             return allFrames;
         }
-        internal List<Tuple<PropertyInfo, List<object?>>> ThicknessComputing(State state)
+        internal static List<Tuple<PropertyInfo, List<object?>>> ThicknessComputing(State state, object Target, PropertyInfo[] ThicknessProperties, int FrameCount)
         {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
             for (int i = 0; i < ThicknessProperties.Length; i++)
             {
                 if (state.Values.ContainsKey(ThicknessProperties[i].Name))
@@ -350,16 +377,16 @@ namespace MinimalisticWPF
                     var newValue = state[ThicknessProperties[i].Name];
                     if (currentValue != newValue)
                     {
-                        allFrames.Add(Tuple.Create(ThicknessProperties[i], ILinearInterpolation.ThicknessComputing(currentValue, newValue, (int)FrameCount)));
+                        allFrames.Add(Tuple.Create(ThicknessProperties[i], ILinearInterpolation.ThicknessComputing(currentValue, newValue, FrameCount)));
                     }
                 }
             }
 
             return allFrames;
         }
-        internal List<Tuple<PropertyInfo, List<object?>>> ILinearInterpolationComputing(State state)
+        internal static List<Tuple<PropertyInfo, List<object?>>> ILinearInterpolationComputing(State state, object Target, PropertyInfo[] ILinearInterpolationProperties, int FrameCount)
         {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>();
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
             for (int i = 0; i < ILinearInterpolationProperties.Length; i++)
             {
                 if (state.Values.ContainsKey(ILinearInterpolationProperties[i].Name))
@@ -368,7 +395,7 @@ namespace MinimalisticWPF
                     var newValue = (ILinearInterpolation?)state[ILinearInterpolationProperties[i].Name];
                     if (currentValue != newValue)
                     {
-                        allFrames.Add(Tuple.Create(ILinearInterpolationProperties[i], newValue.Interpolate(currentValue?.Current, newValue.Current, (int)FrameCount)));
+                        allFrames.Add(Tuple.Create(ILinearInterpolationProperties[i], newValue.Interpolate(currentValue?.Current, newValue.Current, FrameCount)));
                     }
                 }
             }

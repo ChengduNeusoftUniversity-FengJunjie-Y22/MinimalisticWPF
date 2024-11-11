@@ -13,8 +13,8 @@ namespace MinimalisticWPF
     public interface IThemeAttribute
     {
         /// <summary>
-        /// 指定主题下属性的目标值
+        /// 构造新值所需的参数
         /// </summary>
-        object? Target { get; set; }
+        object?[]? Parameters { get; set; }
     }
 }
