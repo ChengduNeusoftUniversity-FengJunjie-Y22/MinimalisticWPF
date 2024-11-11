@@ -69,8 +69,7 @@ namespace MinimalisticWPF
             var machine = source.FindStateMachine();
             if (machine == null)
             {
-                var newMachine = StateMachine.Create(source).SetStates();
-                TransitionBoard<T>.MachinePool.Add(source, newMachine);
+                var newMachine = StateMachine.Create(source);
                 newMachine.States.Add(state);
                 newMachine.Transition(state.StateName, set);
             }
@@ -83,14 +82,14 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 尝试找出系统中管理该对象过渡效果的状态机实例
+        /// 尝试找出系统中管理该对象过渡效果的状态机实例,注意该方法不会在不存在状态机实例时自动创建状态机
         /// <para>第一优先级 : TransitionBoard 对象池（字典）内存储的状态机</para>
         /// <para>第二优先级 : 实例对象自身包含的属性</para>
         /// <para>第三优先级 : 若为一个FrameworkElement，尝试从其DataContext中获取状态机</para>
         /// </summary>
         public static StateMachine? FindStateMachine<T>(this T source) where T : class
         {
-            TransitionBoard<T>.MachinePool.TryGetValue(source, out var machineA);
+            StateMachine.MachinePool.TryGetValue(source, out var machineA);
             if (machineA != null) return machineA;
 
 

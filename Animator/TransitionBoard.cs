@@ -12,25 +12,11 @@ namespace MinimalisticWPF
 {
     public class TransitionBoard<T> where T : class
     {
-        /// <summary>
-        /// 对于任意使用Board启动动画的对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
-        /// </summary>
-        public static Dictionary<object, StateMachine> MachinePool { get; internal set; } = new Dictionary<object, StateMachine>();
-
         internal TransitionBoard() { }
         internal TransitionBoard(T target)
         {
             Target = target;
-
-            MachinePool.TryGetValue(target, out var temp);
-            if (temp != null)
-            {
-                Machine = temp;
-                return;
-            }
-
-            Machine = StateMachine.Create(target).SetStates();
-            MachinePool.Add(Target, Machine);
+            Machine = StateMachine.Create(target);
         }
         /// <summary>
         /// 是否由Transition静态方法创建,若为true,代表该TransitionBoard无法直接使用Start(),需要改用AnyClass.BeginTransition()
@@ -226,7 +212,7 @@ namespace MinimalisticWPF
         /// <param name="target">新的目标对象</param>
         public void Start(T target)
         {
-            MachinePool.TryGetValue(target, out var temp);
+            StateMachine.MachinePool.TryGetValue(target, out var temp);
             if (temp != null)
             {
                 Machine = temp;
@@ -234,7 +220,7 @@ namespace MinimalisticWPF
             else
             {
                 Machine = StateMachine.Create(target);
-                MachinePool.Add(target, Machine);
+                StateMachine.MachinePool.Add(target, Machine);
             }
             Machine.ReSet();
             TempState.StateName = Transition.TempName + Machine.States.BoardSuffix;

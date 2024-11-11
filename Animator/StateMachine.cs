@@ -27,6 +27,11 @@ namespace MinimalisticWPF
         private static int _maxFR = 240;
 
         /// <summary>
+        /// 对于任意使用Board启动动画的对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
+        /// </summary>
+        public static Dictionary<object, StateMachine> MachinePool { get; internal set; } = new Dictionary<object, StateMachine>();
+
+        /// <summary>
         /// 类型中支持加载动画的属性
         /// </summary>
         public static Dictionary<Type, Tuple<PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[]>> PropertyInfos { get; internal set; } = new Dictionary<Type, Tuple<PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[]>>();
@@ -121,13 +126,26 @@ namespace MinimalisticWPF
         /// <summary>
         /// 创建一个用于管理指定对象过渡行为的状态机实例
         /// </summary>
-        public static StateMachine Create(object targetObj)
+        public static StateMachine Create(object targetObj, params State[] states)
         {
-            StateMachine result = new StateMachine(targetObj);
-            return result;
+            if (MachinePool.TryGetValue(targetObj, out var machine))
+            {
+                foreach (var state in states)
+                {
+                    machine.States.Add(state);
+                }
+                return machine;
+            }
+            else
+            {
+                var newMachine = new StateMachine(targetObj, states);
+                MachinePool.Add(targetObj, newMachine);
+                return newMachine;
+            }
         }
+
         /// <summary>
-        /// 手动添加State用于过渡
+        /// 设置状态机中已有状态
         /// </summary>
         public StateMachine SetStates(params State[] states)
         {
@@ -261,7 +279,6 @@ namespace MinimalisticWPF
         }
         internal static List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state, StateMachine machine)
         {
-
             List<List<Tuple<PropertyInfo, List<object?>>>> result = new List<List<Tuple<PropertyInfo, List<object?>>>>(7);
 
             var count = (int)machine.FrameCount;

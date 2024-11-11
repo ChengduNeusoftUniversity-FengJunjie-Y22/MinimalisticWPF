@@ -37,14 +37,14 @@ namespace MinimalisticWPF
         {
             if (!ThemeValues.TryGetValue(typeof(T), out _))
             {
-                if (TransitionBoard<T>.MachinePool.TryGetValue(source, out var machine))
+                if (StateMachine.MachinePool.TryGetValue(source, out var machine))
                 {
                     GenerateValue(source, machine);
                 }
                 else
                 {
                     var newMachine = StateMachine.Create(source);
-                    TransitionBoard<T>.MachinePool.Add(source, newMachine);
+                    StateMachine.MachinePool.Add(source, newMachine);
                     GenerateValue(source, newMachine);
                 }
             }
@@ -84,14 +84,14 @@ namespace MinimalisticWPF
             }
             else
             {
-                if (TransitionBoard<T>.MachinePool.TryGetValue(source, out var machine))
+                if (StateMachine.MachinePool.TryGetValue(source, out var machine))
                 {
                     GenerateValue(source, machine);
                 }
                 else
                 {
                     var newMachine = StateMachine.Create(source);
-                    TransitionBoard<T>.MachinePool.Add(source, newMachine);
+                    StateMachine.MachinePool.Add(source, newMachine);
                     GenerateValue(source, newMachine);
                 }
                 ApplyTheme(source, attributeType, paramAction);
