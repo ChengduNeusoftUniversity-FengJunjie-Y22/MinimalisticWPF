@@ -144,7 +144,7 @@ page.ApplyTheme(typeof(WhenDark),null);
 </details>
 
 <details>
-<summary>V1.9.2 - [ Beta ] - Improvements</summary>
+<summary>V1.9.1 - [ Beta ] - Improvements</summary>
 
 ### Ⅰ Dynamic Theme
 - Now [ IThemeAttribute ] requires you to implement an array representing the parameters needed to construct a new value
