@@ -14,8 +14,15 @@ namespace MinimalisticWPF
             this.StateMachineLoading(ViewModel);
         }
 
+        private static TransitionBoard<Border> _selected = Transition.CreateBoardFromType<Border>()
+            .SetProperty(x => x.Opacity, 1)
+            .SetParams((x) => { x.Duration = 0.5; });
+        private static TransitionBoard<Border> _noselected = Transition.CreateBoardFromType<Border>()
+            .SetProperty(x => x.Opacity, 0)
+            .SetParams((x) => { x.Duration = 0.5; });
+
         private bool _iseol = false;
-        public bool IsEdgeOpacityLocked
+        public bool IsAnimationLocked
         {
             get => _iseol;
             set
@@ -99,22 +106,16 @@ namespace MinimalisticWPF
 
         private void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (IsAnimationLocked) return;
             ViewModel.IsMouseInside = true;
-            if (IsEdgeOpacityLocked) return;
-            this.FixedBorder.Transition()
-                .SetProperty(x => x.Opacity, 1)
-                .SetParams((x) => { x.Duration = 0.5; })
-                .Start();
+            FixedBorder.BeginTransition(_selected);
         }
 
         private void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (IsAnimationLocked) return;
             ViewModel.IsMouseInside = false;
-            if (IsEdgeOpacityLocked) return;
-            this.FixedBorder.Transition()
-                .SetProperty(x => x.Opacity, 0)
-                .SetParams((x) => { x.Duration = 0.5; })
-                .Start();
+            FixedBorder.BeginTransition(_noselected);
         }
     }
 }
