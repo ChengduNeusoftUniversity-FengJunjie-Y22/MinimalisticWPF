@@ -175,9 +175,9 @@ namespace MinimalisticWPF
             Interpreter?.Interrupt();
             Interpreter = null;
             Interpreters.Clear();
-            if(IsStopUnsafe)
+            if (IsStopUnsafe)
             {
-                foreach(var item in UnSafeInterpreters)
+                foreach (var item in UnSafeInterpreters)
                 {
                     item.Interrupt(true);
                 }
@@ -229,19 +229,23 @@ namespace MinimalisticWPF
 
             TransitionParams = actionSet;
 
-            TransitionInterpreter animationInterpreter = new TransitionInterpreter(this);
-            animationInterpreter.IsLast = TransitionParams.IsLast;
-            animationInterpreter.DeltaTime = (int)DeltaTime;
-            animationInterpreter.Update = TransitionParams.Update;
-            animationInterpreter.Completed = TransitionParams.Completed;
-            animationInterpreter.LateUpdate = TransitionParams.LateUpdate;
-            animationInterpreter.Acceleration = TransitionParams.Acceleration;
-            animationInterpreter.IsUnSafe = TransitionParams.IsUnSafe;
-            animationInterpreter.LoopTime = TransitionParams.LoopTime;
-            animationInterpreter.IsAutoReverse = TransitionParams.IsAutoReverse;
-            animationInterpreter.UpdateAsync = TransitionParams.UpdateAsync;
-            animationInterpreter.LateUpdateAsync = TransitionParams.LateUpdateAsync;
-            animationInterpreter.CompletedAsync = TransitionParams.CompletedAsync;
+            TransitionInterpreter animationInterpreter = new(this)
+            {
+                IsLast = TransitionParams.IsLast,
+                DeltaTime = (int)DeltaTime,
+                Update = TransitionParams.Update,
+                Completed = TransitionParams.Completed,
+                LateUpdate = TransitionParams.LateUpdate,
+                Acceleration = TransitionParams.Acceleration,
+                IsUnSafe = TransitionParams.IsUnSafe,
+                LoopTime = TransitionParams.LoopTime,
+                IsAutoReverse = TransitionParams.IsAutoReverse,
+                UpdateAsync = TransitionParams.UpdateAsync,
+                LateUpdateAsync = TransitionParams.LateUpdateAsync,
+                CompletedAsync = TransitionParams.CompletedAsync,
+                UIPriority = TransitionParams.UIPriority,
+                IsBeginInvoke = TransitionParams.IsBeginInvoke
+            };
 
             if (Application.Current == null)
             {

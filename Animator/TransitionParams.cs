@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
 
 namespace MinimalisticWPF
 {
@@ -117,5 +119,13 @@ namespace MinimalisticWPF
         /// <para></para>
         /// </summary>
         public bool IsUnSafe { get; set; } = false;
+        /// <summary>
+        /// UI更新优先级
+        /// </summary>
+        public DispatcherPriority UIPriority { get; set; } = DispatcherPriority.Render;
+        /// <summary>
+        /// 刷新属性时是否采用BeginInvoke() 
+        /// </summary>
+        public bool IsBeginInvoke { get; set; } = false;
     }
 }

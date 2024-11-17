@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace MinimalisticWPF
 {
@@ -38,6 +39,8 @@ namespace MinimalisticWPF
         internal bool IsUnSafe { get; set; } = false;
         internal int LoopTime { get; set; } = 0;
         internal bool IsAutoReverse { get; set; } = false;
+        internal DispatcherPriority UIPriority { get; set; } = DispatcherPriority.Render;
+        internal bool IsBeginInvoke { get; set; } = false;
 
         /// <summary>
         /// 执行动画
@@ -52,7 +55,6 @@ namespace MinimalisticWPF
             for (int x = 0; LoopTime == int.MaxValue ? true : x <= LoopTime; x++)
             {
                 for (int i = 0; i < Machine.FrameCount; i++)
-                //按帧遍历
                 {
                     if (IsStop || Application.Current == null || (IsUnSafe ? false : Machine.IsReSet || Machine.Interpreter != this))
                     {
@@ -73,17 +75,25 @@ namespace MinimalisticWPF
                     }
 
                     for (int j = 0; j < Frams.Count; j++)
-                    //按不同类属性遍历
                     {
                         for (int k = 0; k < Frams[j].Count; k++)
-                        //按同类属性不同名遍历
                         {
                             if (IsFrameIndexRight(i, j, k) && Application.Current != null)
                             {
-                                Application.Current.Dispatcher.Invoke(() =>
+                                if (IsBeginInvoke)
                                 {
-                                    Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
-                                });
+                                    await Application.Current.Dispatcher.BeginInvoke(UIPriority, () =>
+                                    {
+                                        Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                    });
+                                }
+                                else
+                                {
+                                    Application.Current.Dispatcher.Invoke(UIPriority, () =>
+                                    {
+                                        Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                    });
+                                }
                             }
                         }
                     }
@@ -106,7 +116,6 @@ namespace MinimalisticWPF
                 if (IsAutoReverse)
                 {
                     for (int i = Machine.FrameCount > 1 ? (int)Machine.FrameCount - 1 : 0; i > -1; i--)
-                    //按帧遍历
                     {
                         if (IsStop || Application.Current == null || (IsUnSafe ? false : Machine.IsReSet || Machine.Interpreter != this))
                         {
@@ -127,17 +136,25 @@ namespace MinimalisticWPF
                         }
 
                         for (int j = 0; j < Frams.Count; j++)
-                        //按不同类属性遍历
                         {
                             for (int k = 0; k < Frams[j].Count; k++)
-                            //按同类属性不同名遍历
                             {
                                 if (IsFrameIndexRight(i, j, k) && Application.Current != null)
                                 {
-                                    Application.Current.Dispatcher.Invoke(() =>
+                                    if (IsBeginInvoke)
                                     {
-                                        Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
-                                    });
+                                        await Application.Current.Dispatcher.BeginInvoke(UIPriority, () =>
+                                        {
+                                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                        });
+                                    }
+                                    else
+                                    {
+                                        Application.Current.Dispatcher.Invoke(UIPriority, () =>
+                                        {
+                                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                        });
+                                    }
                                 }
                             }
                         }
