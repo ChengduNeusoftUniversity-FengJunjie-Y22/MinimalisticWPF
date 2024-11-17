@@ -82,10 +82,14 @@ namespace MinimalisticWPF
                             {
                                 if (IsBeginInvoke)
                                 {
-                                    await Application.Current.Dispatcher.BeginInvoke(UIPriority, () =>
+                                    try
                                     {
-                                        Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
-                                    });
+                                        await Application.Current.Dispatcher.BeginInvoke(UIPriority, () =>
+                                        {
+                                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                        });
+                                    }
+                                    catch { }
                                 }
                                 else
                                 {
@@ -143,10 +147,14 @@ namespace MinimalisticWPF
                                 {
                                     if (IsBeginInvoke)
                                     {
-                                        await Application.Current.Dispatcher.BeginInvoke(UIPriority, () =>
+                                        try
                                         {
-                                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
-                                        });
+                                            await Application.Current.Dispatcher.BeginInvoke(UIPriority, () =>
+                                            {
+                                                Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
+                                            });
+                                        }
+                                        catch { }
                                     }
                                     else
                                     {

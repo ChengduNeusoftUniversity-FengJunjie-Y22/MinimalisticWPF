@@ -17,29 +17,26 @@ namespace MinimalisticWPF
             action?.Invoke(this);
         }
 
-        private static int defaultFrameRate = 60;
         /// <summary>
         /// 默认帧率
         /// </summary>
-        public static int DefaultFrameRate
-        {
-            get => defaultFrameRate;
-            set
-            {
-                if (value > 0)
-                {
-                    defaultFrameRate = value;
-                }
-            }
-        }
-
+        public static int DefaultFrameRate { get; set; } = 60;
+        /// <summary>
+        /// 默认优先级
+        /// </summary>
+        public static DispatcherPriority DefaultUIPriority { get; set; } = DispatcherPriority.Normal;
+        /// <summary>
+        /// UI刷新是否采用BeginInvoke
+        /// </summary>
+        public static bool DefaultIsBeginInvoke { get; set; } = false;
+        /// <summary>
+        /// 主题切换默认参数
+        /// </summary>
         public static Action<TransitionParams> Theme { get; set; } = (x) =>
         {
             x.FrameRate = DefaultFrameRate;
             x.Duration = 0.5;
         };
-
-        private int framerate = defaultFrameRate;
 
         /// <summary>
         /// 过渡启动前执行
@@ -88,14 +85,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 过渡帧率(默认: 60 )
         /// </summary>
-        public int FrameRate
-        {
-            get => framerate;
-            set
-            {
-                framerate = value;
-            }
-        }
+        public int FrameRate { get; set; } = DefaultFrameRate;
         /// <summary>
         /// 是否排队执行(默认:不排队)
         /// </summary>
@@ -122,10 +112,10 @@ namespace MinimalisticWPF
         /// <summary>
         /// UI更新优先级
         /// </summary>
-        public DispatcherPriority UIPriority { get; set; } = DispatcherPriority.Render;
+        public DispatcherPriority UIPriority { get; set; } = DefaultUIPriority;
         /// <summary>
-        /// 刷新属性时是否采用BeginInvoke() 
+        /// 刷新属性时是否采用BeginInvoke
         /// </summary>
-        public bool IsBeginInvoke { get; set; } = false;
+        public bool IsBeginInvoke { get; set; } = DefaultIsBeginInvoke;
     }
 }

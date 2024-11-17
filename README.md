@@ -194,7 +194,7 @@ gd.StopTransition(true,false);
 ```
 - Static methods
 ```csharp
-Transition.Dispose()            // All transitions
+Transition.Dispose();           // All transitions
 Transition.Stop(gd,gd2);        // Only transitions of the selected object
 Transition.StopSafe(gd,gd2);    // Only Safe transitions
 Transition.StopUnSafe(gd,gd2);  // Only UnSafe transitions
@@ -220,6 +220,33 @@ Transition.StopUnSafe(gd,gd2);  // Only UnSafe transitions
 - The frequency of reflection operation in instantiation of StateMachine is reduced
 - When [ Statemachine.Create() ] is used, it first looks up if a StateMachine already exists in the object pool and then chooses to return an existing StateMachine or a new one
 - [ ReSet() ] adds an optional bool argument that indicates whether the Unsafe transition should be interrupted when the state machine is reset
+
+</details>
+
+<details>
+<summary>V1.9.2</summary>
+
+### Ⅰ Transition System
+- For UI refresh in transition system, you can now select [ BeginInvoke/Invoke ]
+- For UI refresh in transition system, you can now set [ DispatcherPriority ]
+- (1) Set them globally
+```csharp
+TransitionParams.DefaultUIPriority = DispatcherPriority.Render;
+TransitionParams.DefaultIsBeginInvoke = true;
+```
+- (2) Set them partially
+```csharp
+var animation = Transition.CreateBoardFromType<Grid>()
+                .SetProperty(x => x.Margin, new Thickness(0))
+                .SetParams((p) =>
+                {
+                    p.IsBeginInvoke = true;
+                    p.UIPriority = DispatcherPriority.Normal;
+                });
+```
+
+### Ⅱ Additional Notes
+- The user controls provided by this library are not perfect, and usually they only exist as simple examples.Even though these user controls will be gradually optimized in future versions
 
 </details>
 
