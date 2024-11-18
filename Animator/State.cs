@@ -8,62 +8,17 @@ namespace MinimalisticWPF
 {
     public class State
     {
-        /// <summary>
-        /// 是否在发生一些错误操作时抛出异常
-        /// </summary>
-        public static bool IsDebug { get; set; } = false;
-
         internal State() { }
         internal State(object Target, ICollection<string> WhileList, ICollection<string> BlackList)
         {
-            ActualType = Target.GetType();
-            PropertyInfo[] Properties = ActualType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.CanWrite && x.CanRead &&
-                WhileList.Count > 0 ? WhileList.Contains(x.Name) : true &&
-                BlackList.Count > 0 ? !BlackList.Contains(x.Name) : true)
-                .ToArray();//所有可用属性
-            PropertyInfo[] DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double))
-                .ToArray();//筛选Double属性
-            PropertyInfo[] BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
-                .ToArray();//筛选Brush属性
-            PropertyInfo[] TransformProperties = Properties.Where(x => x.PropertyType == typeof(Transform))
-                .ToArray();//筛选Transform属性
-            PropertyInfo[] PointProperties = Properties.Where(x => x.PropertyType == typeof(Point))
-                .ToArray();//筛选Point属性
-            PropertyInfo[] CornerRadiusProperties = Properties.Where(x => x.PropertyType == typeof(CornerRadius))
-                .ToArray();//筛选CornerRadius属性
-            PropertyInfo[] ThicknessProperties = Properties.Where(x => x.PropertyType == typeof(Thickness))
-                .ToArray();//筛选Thickness属性
-            PropertyInfo[] ILinearInterpolationProperties = Properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType))
-                .ToArray();//筛选ILinearInterpolation接口支持的属性
-
-            foreach (PropertyInfo propertyInfo in DoubleProperties)
+            Type = Target.GetType();
+            StateMachine.InitializePropertyInfos(Type);
+            if (StateMachine.PropertyInfos.TryGetValue(Type, out var infodictionary))
             {
-                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
-            }
-            foreach (PropertyInfo propertyInfo in BrushProperties)
-            {
-                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
-            }
-            foreach (PropertyInfo propertyInfo in TransformProperties)
-            {
-                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
-            }
-            foreach (PropertyInfo propertyInfo in PointProperties)
-            {
-                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
-            }
-            foreach (PropertyInfo propertyInfo in CornerRadiusProperties)
-            {
-                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
-            }
-            foreach (PropertyInfo propertyInfo in ThicknessProperties)
-            {
-                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
-            }
-            foreach (PropertyInfo propertyInfo in ILinearInterpolationProperties)
-            {
-                Values.Add(propertyInfo.Name, propertyInfo.GetValue(Target));
+                foreach (var info in infodictionary.Values.Where(x => WhileList.Count > 0 ? WhileList.Contains(x.Name) : false || BlackList.Count <= 0 || !BlackList.Contains(x.Name)))
+                {
+                    Values.Add(info.Name, info.GetValue(Target));
+                }
             }
         }
 
@@ -74,7 +29,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录状态对象的真实类型
         /// </summary>
-        public Type? ActualType { get; internal set; } = default;
+        public Type? Type { get; internal set; } = default;
         /// <summary>
         /// 记录的状态值
         /// </summary>
@@ -132,10 +87,10 @@ namespace MinimalisticWPF
 
     public class ObjectTempState<T>
     {
-        internal ObjectTempState(T target) { Value = target; ActualType = typeof(T); }
+        internal ObjectTempState(T target) { Value = target; Type = typeof(T); }
 
         internal T Value { get; set; }
-        internal Type ActualType { get; set; }
+        internal Type Type { get; set; }
         internal string Name { get; set; } = string.Empty;
         internal List<string> WhiteList { get; set; } = new List<string>();
         internal string[] BlackList { get; set; } = Array.Empty<string>();
@@ -347,14 +302,14 @@ namespace MinimalisticWPF
             if (!IsWhiteList) WhiteList.Clear();
             State result = new State(Value, WhiteList, BlackList);
             result.StateName = Name;
-            result.ActualType = ActualType;
+            result.Type = Type;
             return result;
         }
     }
 
     public class TypeTempState<T>
     {
-        internal TypeTempState() { Target = new State(); Target.ActualType = typeof(T); }
+        internal TypeTempState() { Target = new State(); Target.Type = typeof(T); }
 
         internal State Target { get; set; }
 

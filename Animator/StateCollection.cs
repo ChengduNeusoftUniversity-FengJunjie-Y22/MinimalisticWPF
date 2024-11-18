@@ -71,10 +71,6 @@ namespace MinimalisticWPF
 
             if (existingNode != null)
             {
-                if (State.IsDebug)
-                {
-                    throw new ArgumentException($"You are trying to add a State of the same name [ {item.StateName} ] to the State collection, which would be replaced with a new State in non-DeBug mode, but you are currently in Debug mode, so an exception is notified");
-                }
                 if (!ReferenceEquals(existingNode, item))
                 {
                     _nodes.Remove(existingNode);
@@ -86,32 +82,26 @@ namespace MinimalisticWPF
                 _nodes.Add(item);
             }
         }
-
         public void Clear()
         {
             _nodes.Clear();
         }
-
         public bool Contains(State item)
         {
             return _nodes.Contains(item);
         }
-
         public void CopyTo(State[] array, int arrayIndex)
         {
             _nodes.CopyTo(array, arrayIndex);
         }
-
         public bool Remove(State item)
         {
             return _nodes.Remove(item);
         }
-
         public IEnumerator<State> GetEnumerator()
         {
             return _nodes.GetEnumerator();
         }
-
         IEnumerator IEnumerable.GetEnumerator()
         {
             return _nodes.GetEnumerator();

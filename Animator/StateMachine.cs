@@ -34,7 +34,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 类型中支持加载动画的属性
         /// </summary>
-        public static Dictionary<Type, Tuple<PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[]>> PropertyInfos { get; internal set; } = new Dictionary<Type, Tuple<PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[], PropertyInfo[]>>();
+        public static Dictionary<Type, Dictionary<string, PropertyInfo>> PropertyInfos { get; internal set; } = new Dictionary<Type, Dictionary<string, PropertyInfo>>();
 
         /// <param name="viewModel">受状态机控制的实例对象</param>
         /// <param name="states">所有该对象可能具备的状态</param>
@@ -42,62 +42,16 @@ namespace MinimalisticWPF
         private StateMachine(object viewModel, params State[] states)
         {
             Target = viewModel;
-            Type type = viewModel.GetType();
-            if (PropertyInfos.TryGetValue(type, out var infos))
-            {
-                DoubleProperties = infos.Item1;
-                BrushProperties = infos.Item2;
-                TransformProperties = infos.Item3;
-                PointProperties = infos.Item4;
-                CornerRadiusProperties = infos.Item5;
-                ThicknessProperties = infos.Item6;
-                ILinearInterpolationProperties = infos.Item7;
-            }
-            else
-            {
-                var Properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    .Where(x => x.CanWrite && x.CanRead);
-                DoubleProperties = Properties.Where(x => x.PropertyType == typeof(double))
-                    .ToArray();
-                BrushProperties = Properties.Where(x => x.PropertyType == typeof(Brush))
-                    .ToArray();
-                TransformProperties = Properties.Where(x => x.PropertyType == typeof(Transform))
-                    .ToArray();
-                PointProperties = Properties.Where(x => x.PropertyType == typeof(Point))
-                    .ToArray();
-                CornerRadiusProperties = Properties.Where(x => x.PropertyType == typeof(CornerRadius))
-                    .ToArray();
-                ThicknessProperties = Properties.Where(x => x.PropertyType == typeof(Thickness))
-                    .ToArray();
-                ILinearInterpolationProperties = Properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType))
-                    .ToArray();
-                PropertyInfos.Add(type,
-                    Tuple.Create(
-                    DoubleProperties,
-                    BrushProperties,
-                    TransformProperties,
-                    PointProperties,
-                    CornerRadiusProperties,
-                    ThicknessProperties,
-                    ILinearInterpolationProperties)
-                    );
-            }
-
+            Type = viewModel.GetType();
+            InitializePropertyInfos(Type);
             foreach (var state in states)
             {
-                var temp = States.FirstOrDefault(x => x.StateName == state.StateName);
-                if (temp == null) States.Add(state);
-                else throw new ArgumentException($"A state named [ {state.StateName} ] already exists in the collection.Modify the collection to ensure that the state name is unique");
+                States.Add(state);
             }
         }
-        public PropertyInfo[] DoubleProperties { get; internal set; }
-        public PropertyInfo[] BrushProperties { get; internal set; }
-        public PropertyInfo[] TransformProperties { get; internal set; }
-        public PropertyInfo[] PointProperties { get; internal set; }
-        public PropertyInfo[] CornerRadiusProperties { get; internal set; }
-        public PropertyInfo[] ThicknessProperties { get; internal set; }
-        public PropertyInfo[] ILinearInterpolationProperties { get; internal set; }
+
         public object Target { get; internal set; }
+        public Type Type { get; internal set; }
         public StateCollection States { get; internal set; } = new StateCollection();
         /// <summary>
         /// 最大帧率限制
@@ -300,141 +254,202 @@ namespace MinimalisticWPF
 
             var count = (int)machine.FrameCount;
             var fc = count == 0 ? 1 : count;
-            result.Add(DoubleComputing(state, machine.Target, machine.DoubleProperties, fc));
-            result.Add(BrushComputing(state, machine.Target, machine.BrushProperties, fc));
-            result.Add(TransformComputing(state, machine.Target, machine.TransformProperties, fc));
-            result.Add(PointComputing(state, machine.Target, machine.PointProperties, fc));
-            result.Add(CornerRadiusComputing(state, machine.Target, machine.CornerRadiusProperties, fc));
-            result.Add(ThicknessComputing(state, machine.Target, machine.ThicknessProperties, fc));
-            result.Add(ILinearInterpolationComputing(state, machine.Target, machine.ILinearInterpolationProperties, fc));
+            result.Add(DoubleComputing(machine.Type, state, machine.Target, fc));
+            result.Add(BrushComputing(machine.Type, state, machine.Target, fc));
+            result.Add(TransformComputing(machine.Type, state, machine.Target, fc));
+            result.Add(PointComputing(machine.Type, state, machine.Target, fc));
+            result.Add(CornerRadiusComputing(machine.Type, state, machine.Target, fc));
+            result.Add(ThicknessComputing(machine.Type, state, machine.Target, fc));
+            result.Add(ILinearInterpolationComputing(machine.Type, state, machine.Target, fc));
 
             return result;
         }
-        internal static List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(State state, object Target, PropertyInfo[] DoubleProperties, int FrameCount)
+
+        public static List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            for (int i = 0; i < DoubleProperties.Length; i++)
+            if (PropertyInfos.TryGetValue(type, out var infodictionary))
             {
-                if (state.Values.ContainsKey(DoubleProperties[i].Name))
+                foreach (var propertyname in state.Values.Keys)
                 {
-                    var currentValue = DoubleProperties[i].GetValue(Target);
-                    var newValue = state[DoubleProperties[i].Name];
-                    if (currentValue != newValue)
+                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
                     {
-                        allFrames.Add(Tuple.Create(DoubleProperties[i], ILinearInterpolation.DoubleComputing(currentValue, newValue, FrameCount)));
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.DoubleComputing(currentValue, newValue, FrameCount)));
+                        }
                     }
                 }
             }
-
             return allFrames;
         }
-        internal static List<Tuple<PropertyInfo, List<object?>>> BrushComputing(State state, object Target, PropertyInfo[] BrushProperties, int FrameCount)
+        public static List<Tuple<PropertyInfo, List<object?>>> BrushComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            for (int i = 0; i < BrushProperties.Length; i++)
+            if (PropertyInfos.TryGetValue(type, out var infodictionary))
             {
-                if (state.Values.ContainsKey(BrushProperties[i].Name))
+                foreach (var propertyname in state.Values.Keys)
                 {
-                    var currentValue = BrushProperties[i].GetValue(Target);
-                    var newValue = state[BrushProperties[i].Name];
-                    if (currentValue != newValue)
+                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
                     {
-                        allFrames.Add(Tuple.Create(BrushProperties[i], ILinearInterpolation.BrushComputing(currentValue, newValue, FrameCount)));
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.BrushComputing(currentValue, newValue, FrameCount)));
+                        }
                     }
                 }
             }
-
             return allFrames;
         }
-        internal static List<Tuple<PropertyInfo, List<object?>>> TransformComputing(State state, object Target, PropertyInfo[] TransformProperties, int FrameCount)
+        public static List<Tuple<PropertyInfo, List<object?>>> TransformComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            for (int i = 0; i < TransformProperties.Length; i++)
+            if (PropertyInfos.TryGetValue(type, out var infodictionary))
             {
-                if (state.Values.ContainsKey(TransformProperties[i].Name))
+                foreach (var propertyname in state.Values.Keys)
                 {
-                    var currentValue = TransformProperties[i].GetValue(Target);
-                    var newValue = state[TransformProperties[i].Name];
-                    if (currentValue != newValue)
+                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
                     {
-                        allFrames.Add(Tuple.Create(TransformProperties[i], ILinearInterpolation.TransformComputing(currentValue, newValue, FrameCount)));
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.TransformComputing(currentValue, newValue, FrameCount)));
+                        }
                     }
                 }
             }
-
             return allFrames;
         }
-        internal static List<Tuple<PropertyInfo, List<object?>>> PointComputing(State state, object Target, PropertyInfo[] PointProperties, int FrameCount)
+        public static List<Tuple<PropertyInfo, List<object?>>> PointComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            for (int i = 0; i < PointProperties.Length; i++)
+            if (PropertyInfos.TryGetValue(type, out var infodictionary))
             {
-                if (state.Values.ContainsKey(PointProperties[i].Name))
+                foreach (var propertyname in state.Values.Keys)
                 {
-                    var currentValue = PointProperties[i].GetValue(Target);
-                    var newValue = state[PointProperties[i].Name];
-                    if (currentValue != newValue)
+                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
                     {
-                        allFrames.Add(Tuple.Create(PointProperties[i], ILinearInterpolation.PointComputing(currentValue, newValue, FrameCount)));
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.PointComputing(currentValue, newValue, FrameCount)));
+                        }
                     }
                 }
             }
-
             return allFrames;
         }
-        internal static List<Tuple<PropertyInfo, List<object?>>> CornerRadiusComputing(State state, object Target, PropertyInfo[] CornerRadiusProperties, int FrameCount)
+        public static List<Tuple<PropertyInfo, List<object?>>> CornerRadiusComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            for (int i = 0; i < CornerRadiusProperties.Length; i++)
+            if (PropertyInfos.TryGetValue(type, out var infodictionary))
             {
-                if (state.Values.ContainsKey(CornerRadiusProperties[i].Name))
+                foreach (var propertyname in state.Values.Keys)
                 {
-                    var currentValue = CornerRadiusProperties[i].GetValue(Target);
-                    var newValue = state[CornerRadiusProperties[i].Name];
-                    if (currentValue != newValue)
+                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
                     {
-                        allFrames.Add(Tuple.Create(CornerRadiusProperties[i], ILinearInterpolation.CornerRadiusComputing(currentValue, newValue, FrameCount)));
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.CornerRadiusComputing(currentValue, newValue, FrameCount)));
+                        }
                     }
                 }
             }
-
             return allFrames;
         }
-        internal static List<Tuple<PropertyInfo, List<object?>>> ThicknessComputing(State state, object Target, PropertyInfo[] ThicknessProperties, int FrameCount)
+        public static List<Tuple<PropertyInfo, List<object?>>> ThicknessComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            for (int i = 0; i < ThicknessProperties.Length; i++)
+            if (PropertyInfos.TryGetValue(type, out var infodictionary))
             {
-                if (state.Values.ContainsKey(ThicknessProperties[i].Name))
+                foreach (var propertyname in state.Values.Keys)
                 {
-                    var currentValue = ThicknessProperties[i].GetValue(Target);
-                    var newValue = state[ThicknessProperties[i].Name];
-                    if (currentValue != newValue)
+                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
                     {
-                        allFrames.Add(Tuple.Create(ThicknessProperties[i], ILinearInterpolation.ThicknessComputing(currentValue, newValue, FrameCount)));
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.ThicknessComputing(currentValue, newValue, FrameCount)));
+                        }
                     }
                 }
             }
-
             return allFrames;
         }
-        internal static List<Tuple<PropertyInfo, List<object?>>> ILinearInterpolationComputing(State state, object Target, PropertyInfo[] ILinearInterpolationProperties, int FrameCount)
+        public static List<Tuple<PropertyInfo, List<object?>>> ILinearInterpolationComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            for (int i = 0; i < ILinearInterpolationProperties.Length; i++)
+            if (PropertyInfos.TryGetValue(type, out var infodictionary))
             {
-                if (state.Values.ContainsKey(ILinearInterpolationProperties[i].Name))
+                foreach (var propertyname in state.Values.Keys)
                 {
-                    var currentValue = (ILinearInterpolation?)ILinearInterpolationProperties[i].GetValue(Target);
-                    var newValue = (ILinearInterpolation?)state[ILinearInterpolationProperties[i].Name];
-                    if (currentValue != newValue)
+                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
                     {
-                        allFrames.Add(Tuple.Create(ILinearInterpolationProperties[i], newValue.Interpolate(currentValue?.Current, newValue.Current, FrameCount)));
+                        var currentValue = (ILinearInterpolation?)propertyinfo.GetValue(Target);
+                        var newValue = (ILinearInterpolation?)state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, newValue.Interpolate(currentValue?.Current, newValue.Current, FrameCount)));
+                        }
                     }
                 }
             }
-
             return allFrames;
+        }
+
+        /// <summary>
+        /// 初始化指定类型中受过渡系统支持的属性信息
+        /// </summary>
+        /// <param name="type">指定类型</param>
+        public static void InitializePropertyInfos(Type type)
+        {
+            if (!PropertyInfos.ContainsKey(type))
+            {
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(x => x.CanWrite && x.CanRead &&
+                (x.PropertyType == typeof(double)
+                || x.PropertyType == typeof(Brush)
+                || x.PropertyType == typeof(Transform)
+                || x.PropertyType == typeof(Point)
+                || x.PropertyType == typeof(CornerRadius)
+                || x.PropertyType == typeof(Thickness)
+                || typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)
+                ));
+                var propdictionary = new Dictionary<string, PropertyInfo>();
+                foreach (var property in properties)
+                {
+                    propdictionary.Add(property.Name, property);
+                }
+                PropertyInfos.Add(type, propdictionary);
+            }
+        }
+        /// <summary>
+        /// 尝试获取指定类型中指定名称的属性信息
+        /// </summary>
+        /// <param name="type">指定类型</param>
+        /// <param name="propertyname">指定属性名称</param>
+        /// <param name="result">输出属性信息</param>
+        public static bool TryGetPropertyInfo(Type type, string propertyname, out PropertyInfo? result)
+        {
+            if (PropertyInfos.TryGetValue(type, out var propdic))
+            {
+                if (propdic.TryGetValue(propertyname, out var propertyInfo))
+                {
+                    result = propertyInfo;
+                    return true;
+                }
+            }
+            result = null;
+            return false;
         }
     }
 }

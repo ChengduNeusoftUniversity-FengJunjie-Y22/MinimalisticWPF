@@ -86,7 +86,7 @@ namespace MinimalisticWPF
         public static void BeginTransition<T>(this T source, State state, Action<TransitionParams> set) where T : class
         {
             if (state == null) return;
-            if (state.ActualType != typeof(T)) throw new ArgumentException("State does not match the type of the object");
+            if (state.Type != typeof(T)) throw new ArgumentException("State does not match the type of the object");
             var machine = source.FindStateMachine();
             if (machine == null)
             {

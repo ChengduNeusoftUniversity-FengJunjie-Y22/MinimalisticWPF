@@ -21,13 +21,14 @@ namespace MinimalisticWPF
         /// </summary>
         public static List<object> InstanceHosts { get; internal set; } = new List<object>(64);
 
-        /// <summary>
-        /// 程序集中用于标注主题的全部自定义特性
-        /// </summary>
-        public static Type[] Assemblies { get; } = AppDomain.CurrentDomain.GetAssemblies()
+        private static Type[] _assemblies = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes())
                 .Where(t => typeof(IThemeAttribute).IsAssignableFrom(t) && typeof(Attribute).IsAssignableFrom(t) && !t.IsAbstract)
                 .ToArray();
+        /// <summary>
+        /// 程序集中用于标注主题的全部自定义特性
+        /// </summary>
+        public static Type[] Assemblies => _assemblies;
 
         /// <summary>
         /// 令全局主题切换可作用至该实例
@@ -37,8 +38,8 @@ namespace MinimalisticWPF
         {
             if (!ThemeValues.TryGetValue(typeof(T), out _))
             {
-                var machine = StateMachine.Create(source);
-                GenerateValue(source, machine);
+                StateMachine.Create(source);
+                GenerateValue<T>();
             }
             if (!InstanceHosts.Contains(source))
             {
@@ -46,7 +47,6 @@ namespace MinimalisticWPF
             }
             return source;
         }
-
         /// <summary>
         /// 取消此实例在全局主题中的响应
         /// </summary>
@@ -56,7 +56,6 @@ namespace MinimalisticWPF
             InstanceHosts.Remove(source);
             return source;
         }
-
         /// <summary>
         /// 应用指定类型的主题
         /// </summary>
@@ -76,102 +75,65 @@ namespace MinimalisticWPF
             }
             else
             {
-                var machine = StateMachine.Create(source);
-                GenerateValue(source, machine);
+                StateMachine.Create(source);
+                GenerateValue<T>();
                 ApplyTheme(source, attributeType, paramAction);
             }
 
             return source;
         }
-
-        private static void GenerateValue<T>(T target, StateMachine machine) where T : class
+        /// <summary>
+        /// 生成主题State供过渡系统使用
+        /// </summary>
+        private static void GenerateValue<T>() where T : class
         {
             var dic = new Dictionary<Type, State>();
-            foreach (var type in Assemblies)
+            foreach (var attributeType in Assemblies)
             {
                 var state = State.FromType<T>().ToState();
-                AddDoublePropertiesWithAttribute(state, machine.DoubleProperties, type);
-                AddBrushPropertiesWithAttribute(state, machine.BrushProperties, type);
-                AddTransformPropertiesWithAttribute(state, machine.TransformProperties, type);
-                AddCornerRadiusPropertiesWithAttribute(state, machine.CornerRadiusProperties, type);
-                AddThicknessPropertiesWithAttribute(state, machine.ThicknessProperties, type);
-                AddPointPropertiesWithAttribute(state, machine.PointProperties, type);
-                state.StateName = $"{typeof(T).FullName}_{type.FullName}_DynamicTheme";
-                dic.Add(type, state);
+                if (StateMachine.PropertyInfos.TryGetValue(typeof(T), out var infodictionary))
+                {
+                    foreach (var info in infodictionary.Values)
+                    {
+                        var inter = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
+                        if (inter != null)
+                        {
+                            if (info.PropertyType == typeof(Brush))
+                            {
+                                var value = inter.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? Brushes.Transparent;
+                                state.AddProperty(info.Name, value);
+                            }
+                            else if (info.PropertyType == typeof(double))
+                            {
+                                state.AddProperty(info.Name, inter.Parameters?.FirstOrDefault() ?? 0.0);
+                            }
+                            else if (info.PropertyType == typeof(Transform))
+                            {
+                                var value = Transform.Parse(inter.Parameters?.FirstOrDefault()?.ToString() ?? Transform.Identity.ToString());
+                                state.AddProperty(info.Name, value);
+                            }
+                            else if (info.PropertyType == typeof(CornerRadius))
+                            {
+                                var value = Activator.CreateInstance(typeof(CornerRadius), inter.Parameters);
+                                state.AddProperty(info.Name, value);
+                            }
+                            else if (info.PropertyType == typeof(Thickness))
+                            {
+                                var value = Activator.CreateInstance(typeof(Thickness), inter.Parameters);
+                                state.AddProperty(info.Name, value);
+                            }
+                            else if (info.PropertyType == typeof(Point))
+                            {
+                                var value = Activator.CreateInstance(typeof(Point), inter.Parameters);
+                                state.AddProperty(info.Name, value);
+                            }
+                        }
+                    }
+                }
+                state.StateName = $"{typeof(T).FullName}_{attributeType.FullName}_DynamicTheme";
+                dic.Add(attributeType, state);
             }
             ThemeValues.Add(typeof(T), dic);
-        }
-
-        private static void AddDoublePropertiesWithAttribute(State state, IEnumerable<PropertyInfo> properties, Type attributeType)
-        {
-            foreach (var info in properties)
-            {
-                var inter = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                if (inter != null)
-                {
-                    state.AddProperty(info.Name, inter.Parameters?.FirstOrDefault() ?? 0.0);
-                }
-            }
-        }
-        private static void AddBrushPropertiesWithAttribute(State state, IEnumerable<PropertyInfo> properties, Type attributeType)
-        {
-            foreach (var info in properties)
-            {
-                var inter = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                if (inter != null)
-                {
-                    var value = inter.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? Brushes.Transparent;
-                    state.AddProperty(info.Name, value);
-                }
-            }
-        }
-        private static void AddTransformPropertiesWithAttribute(State state, IEnumerable<PropertyInfo> properties, Type attributeType)
-        {
-            foreach (var info in properties)
-            {
-                var inter = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                if (inter != null)
-                {
-                    var value = Transform.Parse(inter.Parameters?.FirstOrDefault()?.ToString() ?? Transform.Identity.ToString());
-                    state.AddProperty(info.Name, value);
-                }
-            }
-        }
-        private static void AddCornerRadiusPropertiesWithAttribute(State state, IEnumerable<PropertyInfo> properties, Type attributeType)
-        {
-            foreach (var info in properties)
-            {
-                var inter = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                if (inter != null)
-                {
-                    var value = Activator.CreateInstance(typeof(CornerRadius), inter.Parameters);
-                    state.AddProperty(info.Name, value);
-                }
-            }
-        }
-        private static void AddThicknessPropertiesWithAttribute(State state, IEnumerable<PropertyInfo> properties, Type attributeType)
-        {
-            foreach (var info in properties)
-            {
-                var inter = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                if (inter != null)
-                {
-                    var value = Activator.CreateInstance(typeof(Thickness), inter.Parameters);
-                    state.AddProperty(info.Name, value);
-                }
-            }
-        }
-        private static void AddPointPropertiesWithAttribute(State state, IEnumerable<PropertyInfo> properties, Type attributeType)
-        {
-            foreach (var info in properties)
-            {
-                var inter = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                if (inter != null)
-                {
-                    var value = Activator.CreateInstance(typeof(Point), inter.Parameters);
-                    state.AddProperty(info.Name, value);
-                }
-            }
         }
     }
 }
