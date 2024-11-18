@@ -28,11 +28,11 @@ namespace MinimalisticWPF
         {
             var vectorInterface = viewModel as IConditionalTransition<T> ?? throw new ArgumentException($"The [ {nameof(T)} ] Is Not A [ {nameof(IConditionalTransition<T>)} ]");
 
-            var StateFields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Static)
+            var StateFields = viewModel.GetType().GetFields(BindingFlags.Public | BindingFlags.Static)
                 .Where(x => x.FieldType == typeof(State)).ToArray();
-            var StateProperties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            var StateProperties = viewModel.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(x => x.PropertyType == typeof(State)).ToArray();
-            var StateVectorField = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            var StateVectorField = viewModel.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .FirstOrDefault(x => x.PropertyType == typeof(StateVector<T>));
 
             var FieldStates = StateFields.Select(x => (State?)x.GetValue(viewModel)).ToArray();

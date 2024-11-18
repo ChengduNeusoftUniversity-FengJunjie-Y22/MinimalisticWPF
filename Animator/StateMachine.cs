@@ -30,11 +30,22 @@ namespace MinimalisticWPF
         /// 对于任意使用Board启动动画的对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
         /// </summary>
         public static Dictionary<object, StateMachine> MachinePool { get; internal set; } = new Dictionary<object, StateMachine>();
-
         /// <summary>
         /// 类型中支持加载动画的属性
         /// </summary>
         public static Dictionary<Type, Dictionary<string, PropertyInfo>> PropertyInfos { get; internal set; } = new Dictionary<Type, Dictionary<string, PropertyInfo>>();
+        /// <summary>
+        /// 依据属性类型不同做出的划分
+        /// <para>Values</para>
+        /// <para>Item1 double</para>
+        /// <para>Item2 Brush</para>
+        /// <para>Item3 Transform</para>
+        /// <para>Item4 Point</para>
+        /// <para>Item5 CornerRadius</para>
+        /// <para>Item6 Thickness</para>
+        /// <para>Item7 ILinearInterpolation</para>
+        /// </summary>
+        public static Dictionary<Type, Tuple<Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>>> SplitedPropertyInfos = new Dictionary<Type, Tuple<Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>>>();
 
         /// <param name="viewModel">受状态机控制的实例对象</param>
         /// <param name="states">所有该对象可能具备的状态</param>
@@ -43,7 +54,7 @@ namespace MinimalisticWPF
         {
             Target = viewModel;
             Type = viewModel.GetType();
-            InitializePropertyInfos(Type);
+            InitializeTypes(Type);
             foreach (var state in states)
             {
                 States.Add(state);
@@ -268,11 +279,11 @@ namespace MinimalisticWPF
         public static List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (PropertyInfos.TryGetValue(type, out var infodictionary))
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
             {
                 foreach (var propertyname in state.Values.Keys)
                 {
-                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
+                    if (infodictionary.Item1.TryGetValue(propertyname, out var propertyinfo))
                     {
                         var currentValue = propertyinfo.GetValue(Target);
                         var newValue = state.Values[propertyname];
@@ -288,11 +299,11 @@ namespace MinimalisticWPF
         public static List<Tuple<PropertyInfo, List<object?>>> BrushComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (PropertyInfos.TryGetValue(type, out var infodictionary))
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
             {
                 foreach (var propertyname in state.Values.Keys)
                 {
-                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
+                    if (infodictionary.Item2.TryGetValue(propertyname, out var propertyinfo))
                     {
                         var currentValue = propertyinfo.GetValue(Target);
                         var newValue = state.Values[propertyname];
@@ -308,11 +319,11 @@ namespace MinimalisticWPF
         public static List<Tuple<PropertyInfo, List<object?>>> TransformComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (PropertyInfos.TryGetValue(type, out var infodictionary))
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
             {
                 foreach (var propertyname in state.Values.Keys)
                 {
-                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
+                    if (infodictionary.Item3.TryGetValue(propertyname, out var propertyinfo))
                     {
                         var currentValue = propertyinfo.GetValue(Target);
                         var newValue = state.Values[propertyname];
@@ -328,11 +339,11 @@ namespace MinimalisticWPF
         public static List<Tuple<PropertyInfo, List<object?>>> PointComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (PropertyInfos.TryGetValue(type, out var infodictionary))
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
             {
                 foreach (var propertyname in state.Values.Keys)
                 {
-                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
+                    if (infodictionary.Item4.TryGetValue(propertyname, out var propertyinfo))
                     {
                         var currentValue = propertyinfo.GetValue(Target);
                         var newValue = state.Values[propertyname];
@@ -348,11 +359,11 @@ namespace MinimalisticWPF
         public static List<Tuple<PropertyInfo, List<object?>>> CornerRadiusComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (PropertyInfos.TryGetValue(type, out var infodictionary))
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
             {
                 foreach (var propertyname in state.Values.Keys)
                 {
-                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
+                    if (infodictionary.Item5.TryGetValue(propertyname, out var propertyinfo))
                     {
                         var currentValue = propertyinfo.GetValue(Target);
                         var newValue = state.Values[propertyname];
@@ -368,11 +379,11 @@ namespace MinimalisticWPF
         public static List<Tuple<PropertyInfo, List<object?>>> ThicknessComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (PropertyInfos.TryGetValue(type, out var infodictionary))
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
             {
                 foreach (var propertyname in state.Values.Keys)
                 {
-                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
+                    if (infodictionary.Item6.TryGetValue(propertyname, out var propertyinfo))
                     {
                         var currentValue = propertyinfo.GetValue(Target);
                         var newValue = state.Values[propertyname];
@@ -388,11 +399,11 @@ namespace MinimalisticWPF
         public static List<Tuple<PropertyInfo, List<object?>>> ILinearInterpolationComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (PropertyInfos.TryGetValue(type, out var infodictionary))
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
             {
                 foreach (var propertyname in state.Values.Keys)
                 {
-                    if (infodictionary.TryGetValue(propertyname, out var propertyinfo))
+                    if (infodictionary.Item7.TryGetValue(propertyname, out var propertyinfo))
                     {
                         var currentValue = (ILinearInterpolation?)propertyinfo.GetValue(Target);
                         var newValue = (ILinearInterpolation?)state.Values[propertyname];
@@ -409,27 +420,37 @@ namespace MinimalisticWPF
         /// <summary>
         /// 初始化指定类型中受过渡系统支持的属性信息
         /// </summary>
-        /// <param name="type">指定类型</param>
-        public static void InitializePropertyInfos(Type type)
+        /// <param name="types">指定的若干类型</param>
+        public static void InitializeTypes(params Type[] types)
         {
-            if (!PropertyInfos.ContainsKey(type))
+            foreach (var type in types)
             {
-                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.CanWrite && x.CanRead &&
-                (x.PropertyType == typeof(double)
-                || x.PropertyType == typeof(Brush)
-                || x.PropertyType == typeof(Transform)
-                || x.PropertyType == typeof(Point)
-                || x.PropertyType == typeof(CornerRadius)
-                || x.PropertyType == typeof(Thickness)
-                || typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)
-                ));
-                var propdictionary = new Dictionary<string, PropertyInfo>();
-                foreach (var property in properties)
+                if (!PropertyInfos.ContainsKey(type))
                 {
-                    propdictionary.Add(property.Name, property);
+                    var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(x => x.CanWrite && x.CanRead &&
+                    (x.PropertyType == typeof(double)
+                    || x.PropertyType == typeof(Brush)
+                    || x.PropertyType == typeof(Transform)
+                    || x.PropertyType == typeof(Point)
+                    || x.PropertyType == typeof(CornerRadius)
+                    || x.PropertyType == typeof(Thickness)
+                    || typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)
+                    ));
+                    var propdictionary = new Dictionary<string, PropertyInfo>();
+                    foreach (var property in properties)
+                    {
+                        propdictionary.Add(property.Name, property);
+                    }
+                    PropertyInfos.Add(type, propdictionary);
+                    SplitedPropertyInfos.Add(type, Tuple.Create(properties.Where(x => x.PropertyType == typeof(double)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => x.PropertyType == typeof(Brush)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => x.PropertyType == typeof(Transform)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => x.PropertyType == typeof(Point)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => x.PropertyType == typeof(CornerRadius)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => x.PropertyType == typeof(Thickness)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)).ToDictionary(x => x.Name, x => x)));
                 }
-                PropertyInfos.Add(type, propdictionary);
             }
         }
         /// <summary>

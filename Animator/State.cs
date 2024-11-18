@@ -11,9 +11,9 @@ namespace MinimalisticWPF
         internal State() { }
         internal State(object Target, ICollection<string> WhileList, ICollection<string> BlackList)
         {
-            Type = Target.GetType();
-            StateMachine.InitializePropertyInfos(Type);
-            if (StateMachine.PropertyInfos.TryGetValue(Type, out var infodictionary))
+            var type = Target.GetType();
+            StateMachine.InitializeTypes(type);
+            if (StateMachine.PropertyInfos.TryGetValue(type, out var infodictionary))
             {
                 foreach (var info in infodictionary.Values.Where(x => WhileList.Count > 0 ? WhileList.Contains(x.Name) : false || BlackList.Count <= 0 || !BlackList.Contains(x.Name)))
                 {
@@ -26,10 +26,6 @@ namespace MinimalisticWPF
         /// 状态的名称
         /// </summary>
         public string StateName { get; internal set; } = string.Empty;
-        /// <summary>
-        /// 记录状态对象的真实类型
-        /// </summary>
-        public Type? Type { get; internal set; } = default;
         /// <summary>
         /// 记录的状态值
         /// </summary>
@@ -87,10 +83,9 @@ namespace MinimalisticWPF
 
     public class ObjectTempState<T>
     {
-        internal ObjectTempState(T target) { Value = target; Type = typeof(T); }
+        internal ObjectTempState(T target) { Value = target; }
 
         internal T Value { get; set; }
-        internal Type Type { get; set; }
         internal string Name { get; set; } = string.Empty;
         internal List<string> WhiteList { get; set; } = new List<string>();
         internal string[] BlackList { get; set; } = Array.Empty<string>();
@@ -302,14 +297,13 @@ namespace MinimalisticWPF
             if (!IsWhiteList) WhiteList.Clear();
             State result = new State(Value, WhiteList, BlackList);
             result.StateName = Name;
-            result.Type = Type;
             return result;
         }
     }
 
     public class TypeTempState<T>
     {
-        internal TypeTempState() { Target = new State(); Target.Type = typeof(T); }
+        internal TypeTempState() { Target = new State(); }
 
         internal State Target { get; set; }
 

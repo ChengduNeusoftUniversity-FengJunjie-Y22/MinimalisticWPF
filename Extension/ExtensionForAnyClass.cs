@@ -86,12 +86,10 @@ namespace MinimalisticWPF
         public static void BeginTransition<T>(this T source, State state, Action<TransitionParams> set) where T : class
         {
             if (state == null) return;
-            if (state.Type != typeof(T)) throw new ArgumentException("State does not match the type of the object");
             var machine = source.FindStateMachine();
             if (machine == null)
             {
-                var newMachine = StateMachine.Create(source);
-                newMachine.States.Add(state);
+                var newMachine = StateMachine.Create(source, state);
                 newMachine.Transition(state.StateName, set);
             }
             else
@@ -133,9 +131,10 @@ namespace MinimalisticWPF
         /// </summary>
         public static StateMachine? FindStateMachine<T>(this T source) where T : class
         {
-            StateMachine.MachinePool.TryGetValue(source, out var machineA);
-            if (machineA != null) return machineA;
-
+            if(StateMachine.MachinePool.TryGetValue(source, out var machineA))
+            {
+                return machineA;
+            }
 
             var Incodebehind = source.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .FirstOrDefault(x => x.CanRead && x.CanWrite && x.PropertyType == typeof(StateMachine));

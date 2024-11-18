@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -36,11 +37,6 @@ namespace MinimalisticWPF
         /// <param name="source"></param>
         public static T RunWithGlobalTheme<T>(this T source) where T : class
         {
-            if (!ThemeValues.TryGetValue(typeof(T), out _))
-            {
-                StateMachine.Create(source);
-                GenerateValue<T>();
-            }
             if (!InstanceHosts.Contains(source))
             {
                 InstanceHosts.Add(source);
@@ -66,7 +62,8 @@ namespace MinimalisticWPF
         /// <returns></returns>
         public static T ApplyTheme<T>(this T source, Type attributeType, Action<TransitionParams>? paramAction = null) where T : class
         {
-            if (ThemeValues.TryGetValue(typeof(T), out var dictionary))
+            var type = source.GetType();
+            if (ThemeValues.TryGetValue(type, out var dictionary))
             {
                 if (dictionary.TryGetValue(attributeType, out var state))
                 {
@@ -76,7 +73,7 @@ namespace MinimalisticWPF
             else
             {
                 StateMachine.Create(source);
-                GenerateValue<T>();
+                GenerateValue(type);
                 ApplyTheme(source, attributeType, paramAction);
             }
 
@@ -85,55 +82,60 @@ namespace MinimalisticWPF
         /// <summary>
         /// 生成主题State供过渡系统使用
         /// </summary>
-        private static void GenerateValue<T>() where T : class
+        private static void GenerateValue(Type type)
         {
-            var dic = new Dictionary<Type, State>();
-            foreach (var attributeType in Assemblies)
+            if (StateMachine.SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
             {
-                var state = State.FromType<T>().ToState();
-                if (StateMachine.PropertyInfos.TryGetValue(typeof(T), out var infodictionary))
+                var dic = new Dictionary<Type, State>();
+                foreach (var attributeType in Assemblies)
                 {
-                    foreach (var info in infodictionary.Values)
+                    var state = new State();
+                    foreach (var info in infodictionary.Item1.Values)
                     {
-                        var inter = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                        if (inter != null)
-                        {
-                            if (info.PropertyType == typeof(Brush))
-                            {
-                                var value = inter.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? Brushes.Transparent;
-                                state.AddProperty(info.Name, value);
-                            }
-                            else if (info.PropertyType == typeof(double))
-                            {
-                                state.AddProperty(info.Name, inter.Parameters?.FirstOrDefault() ?? 0.0);
-                            }
-                            else if (info.PropertyType == typeof(Transform))
-                            {
-                                var value = Transform.Parse(inter.Parameters?.FirstOrDefault()?.ToString() ?? Transform.Identity.ToString());
-                                state.AddProperty(info.Name, value);
-                            }
-                            else if (info.PropertyType == typeof(CornerRadius))
-                            {
-                                var value = Activator.CreateInstance(typeof(CornerRadius), inter.Parameters);
-                                state.AddProperty(info.Name, value);
-                            }
-                            else if (info.PropertyType == typeof(Thickness))
-                            {
-                                var value = Activator.CreateInstance(typeof(Thickness), inter.Parameters);
-                                state.AddProperty(info.Name, value);
-                            }
-                            else if (info.PropertyType == typeof(Point))
-                            {
-                                var value = Activator.CreateInstance(typeof(Point), inter.Parameters);
-                                state.AddProperty(info.Name, value);
-                            }
-                        }
+                        var value = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
+                        if (value == null) break;
+                        state.AddProperty(info.Name, value.Parameters?.FirstOrDefault() ?? 0.0);
                     }
+                    foreach (var info in infodictionary.Item2.Values)
+                    {
+                        var inner = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
+                        if (inner == null) break;
+                        var value = inner.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? nameof(Brushes.Transparent).ToBrush();
+                        state.AddProperty(info.Name, value);
+                    }
+                    foreach (var info in infodictionary.Item3.Values)
+                    {
+                        var inner = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
+                        if (inner == null) break;
+                        var value = Activator.CreateInstance(typeof(Transform), inner.Parameters);
+                        state.AddProperty(info.Name, value);
+                    }
+                    foreach (var info in infodictionary.Item4.Values)
+                    {
+                        var inner = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
+                        if (inner == null) break;
+                        var value = Activator.CreateInstance(typeof(Point), inner.Parameters);
+                        state.AddProperty(info.Name, value);
+                    }
+                    foreach (var info in infodictionary.Item5.Values)
+                    {
+                        var inner = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
+                        if (inner == null) break;
+                        var value = Activator.CreateInstance(typeof(CornerRadius), inner.Parameters);
+                        state.AddProperty(info.Name, value);
+                    }
+                    foreach (var info in infodictionary.Item6.Values)
+                    {
+                        var inner = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
+                        if (inner == null) break;
+                        var value = Activator.CreateInstance(typeof(Thickness), inner.Parameters);
+                        state.AddProperty(info.Name, value);
+                    }
+                    state.StateName = $"{type.FullName}_{attributeType.FullName}_DynamicTheme";
+                    dic.Add(attributeType, state);
                 }
-                state.StateName = $"{typeof(T).FullName}_{attributeType.FullName}_DynamicTheme";
-                dic.Add(attributeType, state);
+                ThemeValues.Add(type, dic);
             }
-            ThemeValues.Add(typeof(T), dic);
         }
     }
 }
