@@ -27,9 +27,20 @@ namespace MinimalisticWPF
         private static int _maxFR = 240;
 
         /// <summary>
+        /// 最大帧率限制
+        /// </summary>
+        public static int MaxFrameRate
+        {
+            get => _maxFR;
+            set
+            {
+                _maxFR = Math.Clamp(value, 1, int.MaxValue);
+            }
+        }
+        /// <summary>
         /// 对于任意使用Board启动动画的对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
         /// </summary>
-        public static Dictionary<object, StateMachine> MachinePool { get; internal set; } = new Dictionary<object, StateMachine>();
+        public static Dictionary<Type, Dictionary<object, StateMachine>> MachinePool { get; internal set; } = new Dictionary<Type, Dictionary<object, StateMachine>>();
         /// <summary>
         /// 类型中支持加载动画的属性
         /// </summary>
@@ -47,9 +58,318 @@ namespace MinimalisticWPF
         /// </summary>
         public static Dictionary<Type, Tuple<Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>>> SplitedPropertyInfos = new Dictionary<Type, Tuple<Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>>>();
 
-        /// <param name="viewModel">受状态机控制的实例对象</param>
-        /// <param name="states">所有该对象可能具备的状态</param>
-        /// <exception cref="ArgumentException"></exception>
+        /// <summary>
+        /// 创建/获取 一个用于管理指定对象过渡行为的状态机实例
+        /// </summary>
+        public static StateMachine Create(object targetObj, params State[] states)
+        {
+            var type = targetObj.GetType();
+            if (MachinePool.TryGetValue(type, out var machinedictionary))
+            {
+                if (machinedictionary.TryGetValue(targetObj, out var machine))
+                {
+                    foreach (var state in states)
+                    {
+                        machine.States.Add(state);
+                    }
+                    return machine;
+                }
+                else
+                {
+                    var newMachine = new StateMachine(targetObj, states);
+                    machinedictionary.Add(targetObj, newMachine);
+                    return newMachine;
+                }
+            }
+            else
+            {
+                var newMachine = new StateMachine(targetObj, states);
+                var newChildDic = new Dictionary<object, StateMachine>();
+                newChildDic.Add(targetObj, newMachine);
+                MachinePool.Add(type, newChildDic);
+                return newMachine;
+            }
+        }
+        /// <summary>
+        /// 预载实例对象过渡至指定State过程中的所有帧数据
+        /// </summary>
+        /// <param name="Target">目标对象</param>
+        /// <param name="state">目标State</param>
+        /// <param name="par"></param>
+        /// <returns>帧数据</returns>
+        public static List<List<Tuple<PropertyInfo, List<object?>>>>? PreloadFrames(object? Target, State state, TransitionParams par)
+        {
+            if (Target == null)
+            {
+                return null;
+            }
+            var machine = new StateMachine(Target, state);
+            machine.TransitionParams = par;
+            var result = ComputingFrames(state, machine);
+            return result;
+        }
+        /// <summary>
+        /// 计算从当前状态指向指定状态的过渡帧序列
+        /// </summary>
+        public static List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state, StateMachine machine)
+        {
+            List<List<Tuple<PropertyInfo, List<object?>>>> result = new List<List<Tuple<PropertyInfo, List<object?>>>>(7);
+
+            var count = (int)machine.FrameCount;
+            var fc = count == 0 ? 1 : count;
+            result.Add(DoubleComputing(machine.Type, state, machine.Target, fc));
+            result.Add(BrushComputing(machine.Type, state, machine.Target, fc));
+            result.Add(TransformComputing(machine.Type, state, machine.Target, fc));
+            result.Add(PointComputing(machine.Type, state, machine.Target, fc));
+            result.Add(CornerRadiusComputing(machine.Type, state, machine.Target, fc));
+            result.Add(ThicknessComputing(machine.Type, state, machine.Target, fc));
+            result.Add(ILinearInterpolationComputing(machine.Type, state, machine.Target, fc));
+
+            return result;
+        }
+        /// <summary>
+        /// 插值计算
+        /// </summary>
+        public static List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item1.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.DoubleComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        /// <summary>
+        /// 插值计算
+        /// </summary>
+        public static List<Tuple<PropertyInfo, List<object?>>> BrushComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item2.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.BrushComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        /// <summary>
+        /// 插值计算
+        /// </summary>
+        public static List<Tuple<PropertyInfo, List<object?>>> TransformComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item3.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.TransformComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        /// <summary>
+        /// 插值计算
+        /// </summary>
+        public static List<Tuple<PropertyInfo, List<object?>>> PointComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item4.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.PointComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        /// <summary>
+        /// 插值计算
+        /// </summary>
+        public static List<Tuple<PropertyInfo, List<object?>>> CornerRadiusComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item5.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.CornerRadiusComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        /// <summary>
+        /// 插值计算
+        /// </summary>
+        public static List<Tuple<PropertyInfo, List<object?>>> ThicknessComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item6.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.ThicknessComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        /// <summary>
+        /// 插值计算
+        /// </summary>
+        public static List<Tuple<PropertyInfo, List<object?>>> ILinearInterpolationComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item7.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = (ILinearInterpolation?)propertyinfo.GetValue(Target);
+                        var newValue = (ILinearInterpolation?)state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, newValue.Interpolate(currentValue?.Current, newValue.Current, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        /// <summary>
+        /// 初始化指定类型中受过渡系统支持的属性信息
+        /// </summary>
+        /// <param name="types">指定的若干类型</param>
+        public static void InitializeTypes(params Type[] types)
+        {
+            foreach (var type in types)
+            {
+                if (!PropertyInfos.ContainsKey(type))
+                {
+                    var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(x => x.CanWrite && x.CanRead &&
+                    (x.PropertyType == typeof(double)
+                    || x.PropertyType == typeof(Brush)
+                    || x.PropertyType == typeof(Transform)
+                    || x.PropertyType == typeof(Point)
+                    || x.PropertyType == typeof(CornerRadius)
+                    || x.PropertyType == typeof(Thickness)
+                    || typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)
+                    ));
+                    var propdictionary = new Dictionary<string, PropertyInfo>();
+                    foreach (var property in properties)
+                    {
+                        propdictionary.Add(property.Name, property);
+                    }
+                    PropertyInfos.Add(type, propdictionary);
+                    SplitedPropertyInfos.Add(type, Tuple.Create(properties.Where(x => x.PropertyType == typeof(double)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => x.PropertyType == typeof(Brush)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => x.PropertyType == typeof(Transform)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => x.PropertyType == typeof(Point)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => x.PropertyType == typeof(CornerRadius)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => x.PropertyType == typeof(Thickness)).ToDictionary(x => x.Name, x => x),
+                                                          properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)).ToDictionary(x => x.Name, x => x)));
+                }
+            }
+        }
+        /// <summary>
+        /// 尝试获取指定类型中指定名称的属性信息
+        /// </summary>
+        /// <param name="type">指定类型</param>
+        /// <param name="propertyname">指定属性名称</param>
+        /// <param name="result">输出属性信息</param>
+        public static bool TryGetPropertyInfo(Type type, string propertyname, out PropertyInfo? result)
+        {
+            if (PropertyInfos.TryGetValue(type, out var propdic))
+            {
+                if (propdic.TryGetValue(propertyname, out var propertyInfo))
+                {
+                    result = propertyInfo;
+                    return true;
+                }
+            }
+            result = null;
+            return false;
+        }
+        /// <summary>
+        /// 尝试获取指定实例的已有状态机
+        /// </summary>
+        public static bool TryGetMachine(object target, out StateMachine? result)
+        {
+            if (MachinePool.TryGetValue(target.GetType(), out var machinedic))
+            {
+                if (machinedic.TryGetValue(target, out var machine))
+                {
+                    result = machine;
+                    return true;
+                }
+            }
+            result = null;
+            return false;
+        }
+        /// <summary>
+        /// 释放指定类型的所有已有状态机
+        /// </summary>
+        public static void Dispose(params Type[] types)
+        {
+            foreach (var type in types)
+            {
+                MachinePool.Remove(type);
+            }
+        }
+
         private StateMachine(object viewModel, params State[] states)
         {
             Target = viewModel;
@@ -64,75 +384,15 @@ namespace MinimalisticWPF
         public object Target { get; internal set; }
         public Type Type { get; internal set; }
         public StateCollection States { get; internal set; } = new StateCollection();
-        /// <summary>
-        /// 最大帧率限制
-        /// </summary>
-        public static int MaxFrameRate
-        {
-            get => _maxFR;
-            set
-            {
-                _maxFR = Math.Clamp(value, 1, int.MaxValue);
-            }
-        }
-
         internal TransitionParams TransitionParams { get; set; } = new TransitionParams();
         internal bool IsReSet { get; set; } = false;
-
-        /// <summary>
-        /// 一帧持续的时间(单位: ms )
-        /// </summary>
         public double DeltaTime { get => 1000.0 / Math.Clamp(TransitionParams.FrameRate, 1, MaxFrameRate); }
-        /// <summary>
-        /// 总计需要的帧数
-        /// </summary>
         public double FrameCount { get => Math.Clamp(TransitionParams.Duration * Math.Clamp(TransitionParams.FrameRate, 1, MaxFrameRate), 1, int.MaxValue); }
-
-        /// <summary>
-        /// 创建/获取 一个用于管理指定对象过渡行为的状态机实例
-        /// </summary>
-        public static StateMachine Create(object targetObj, params State[] states)
-        {
-            if (MachinePool.TryGetValue(targetObj, out var machine))
-            {
-                foreach (var state in states)
-                {
-                    machine.States.Add(state);
-                }
-                return machine;
-            }
-            else
-            {
-                var newMachine = new StateMachine(targetObj, states);
-                MachinePool.Add(targetObj, newMachine);
-                return newMachine;
-            }
-        }
-
-        /// <summary>
-        /// 设置状态机中已有状态
-        /// </summary>
-        public StateMachine SetStates(params State[] states)
-        {
-            if (states.Length == 0) States.Clear();
-
-            foreach (var state in states)
-            {
-                States.Add(state);
-            }
-
-            return this;
-        }
-
         public string? CurrentState { get; internal set; }
         public TransitionInterpreter? Interpreter { get; internal set; }
         public Queue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>> Interpreters { get; internal set; } = new Queue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>>();
         public List<TransitionInterpreter> UnSafeInterpreters { get; internal set; } = new List<TransitionInterpreter>();
 
-        /// <summary>
-        /// 重置状态机
-        /// </summary>
-        /// <param name="IsStopUnsafe">是否终止已启动的Unsafe过渡</param>
         public void ReSet(bool IsStopUnsafe = false)
         {
             IsReSet = true;
@@ -148,13 +408,6 @@ namespace MinimalisticWPF
                 }
             }
         }
-        /// <summary>
-        /// 过渡至目标状态
-        /// </summary>
-        /// <param name="stateName">状态名称</param>
-        /// <param name="actionSet">细节参数</param>
-        /// <param name="preload">预载数据</param>
-        /// <exception cref="ArgumentException"></exception>
         public void Transition(string stateName, Action<TransitionParams>? actionSet, List<List<Tuple<PropertyInfo, List<object?>>>>? preload = null)
         {
             IsReSet = false;
@@ -240,237 +493,6 @@ namespace MinimalisticWPF
                 Interpreter = animationInterpreter;
             }
             var task = Task.Run(() => { animationInterpreter.Interpret(); });
-        }
-        /// <summary>
-        /// 预载实例对象过渡至指定State过程中的所有帧数据
-        /// </summary>
-        /// <param name="Target">目标对象</param>
-        /// <param name="state">目标State</param>
-        /// <param name="par"></param>
-        /// <returns>帧数据</returns>
-        internal static List<List<Tuple<PropertyInfo, List<object?>>>>? PreloadFrames(object? Target, State state, TransitionParams par)
-        {
-            if (Target == null)
-            {
-                return null;
-            }
-            var machine = new StateMachine(Target, state);
-            machine.TransitionParams = par;
-            var result = ComputingFrames(state, machine);
-            return result;
-        }
-        internal static List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state, StateMachine machine)
-        {
-            List<List<Tuple<PropertyInfo, List<object?>>>> result = new List<List<Tuple<PropertyInfo, List<object?>>>>(7);
-
-            var count = (int)machine.FrameCount;
-            var fc = count == 0 ? 1 : count;
-            result.Add(DoubleComputing(machine.Type, state, machine.Target, fc));
-            result.Add(BrushComputing(machine.Type, state, machine.Target, fc));
-            result.Add(TransformComputing(machine.Type, state, machine.Target, fc));
-            result.Add(PointComputing(machine.Type, state, machine.Target, fc));
-            result.Add(CornerRadiusComputing(machine.Type, state, machine.Target, fc));
-            result.Add(ThicknessComputing(machine.Type, state, machine.Target, fc));
-            result.Add(ILinearInterpolationComputing(machine.Type, state, machine.Target, fc));
-
-            return result;
-        }
-
-        public static List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item1.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.DoubleComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-        public static List<Tuple<PropertyInfo, List<object?>>> BrushComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item2.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.BrushComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-        public static List<Tuple<PropertyInfo, List<object?>>> TransformComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item3.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.TransformComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-        public static List<Tuple<PropertyInfo, List<object?>>> PointComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item4.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.PointComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-        public static List<Tuple<PropertyInfo, List<object?>>> CornerRadiusComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item5.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.CornerRadiusComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-        public static List<Tuple<PropertyInfo, List<object?>>> ThicknessComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item6.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.ThicknessComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-        public static List<Tuple<PropertyInfo, List<object?>>> ILinearInterpolationComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item7.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = (ILinearInterpolation?)propertyinfo.GetValue(Target);
-                        var newValue = (ILinearInterpolation?)state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, newValue.Interpolate(currentValue?.Current, newValue.Current, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-
-        /// <summary>
-        /// 初始化指定类型中受过渡系统支持的属性信息
-        /// </summary>
-        /// <param name="types">指定的若干类型</param>
-        public static void InitializeTypes(params Type[] types)
-        {
-            foreach (var type in types)
-            {
-                if (!PropertyInfos.ContainsKey(type))
-                {
-                    var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    .Where(x => x.CanWrite && x.CanRead &&
-                    (x.PropertyType == typeof(double)
-                    || x.PropertyType == typeof(Brush)
-                    || x.PropertyType == typeof(Transform)
-                    || x.PropertyType == typeof(Point)
-                    || x.PropertyType == typeof(CornerRadius)
-                    || x.PropertyType == typeof(Thickness)
-                    || typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)
-                    ));
-                    var propdictionary = new Dictionary<string, PropertyInfo>();
-                    foreach (var property in properties)
-                    {
-                        propdictionary.Add(property.Name, property);
-                    }
-                    PropertyInfos.Add(type, propdictionary);
-                    SplitedPropertyInfos.Add(type, Tuple.Create(properties.Where(x => x.PropertyType == typeof(double)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => x.PropertyType == typeof(Brush)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => x.PropertyType == typeof(Transform)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => x.PropertyType == typeof(Point)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => x.PropertyType == typeof(CornerRadius)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => x.PropertyType == typeof(Thickness)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)).ToDictionary(x => x.Name, x => x)));
-                }
-            }
-        }
-        /// <summary>
-        /// 尝试获取指定类型中指定名称的属性信息
-        /// </summary>
-        /// <param name="type">指定类型</param>
-        /// <param name="propertyname">指定属性名称</param>
-        /// <param name="result">输出属性信息</param>
-        public static bool TryGetPropertyInfo(Type type, string propertyname, out PropertyInfo? result)
-        {
-            if (PropertyInfos.TryGetValue(type, out var propdic))
-            {
-                if (propdic.TryGetValue(propertyname, out var propertyInfo))
-                {
-                    result = propertyInfo;
-                    return true;
-                }
-            }
-            result = null;
-            return false;
         }
     }
 }

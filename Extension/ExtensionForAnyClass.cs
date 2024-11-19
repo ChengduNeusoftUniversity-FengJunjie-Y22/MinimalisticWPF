@@ -131,7 +131,7 @@ namespace MinimalisticWPF
         /// </summary>
         public static StateMachine? FindStateMachine<T>(this T source) where T : class
         {
-            if(StateMachine.MachinePool.TryGetValue(source, out var machineA))
+            if (StateMachine.TryGetMachine(source, out var machineA))
             {
                 return machineA;
             }

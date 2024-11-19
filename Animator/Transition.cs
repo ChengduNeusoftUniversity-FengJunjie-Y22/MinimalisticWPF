@@ -44,12 +44,15 @@ namespace MinimalisticWPF
         /// </summary>
         public static void Dispose()
         {
-            foreach (var machine in StateMachine.MachinePool.Values)
+            foreach (var machinedic in StateMachine.MachinePool.Values)
             {
-                machine.Interpreter?.Interrupt();
-                foreach (var intor in machine.UnSafeInterpreters)
+                foreach (var machine in machinedic.Values)
                 {
-                    intor.Interrupt(true);
+                    machine.Interpreter?.Interrupt();
+                    foreach (var intor in machine.UnSafeInterpreters)
+                    {
+                        intor.Interrupt(true);
+                    }
                 }
             }
         }
