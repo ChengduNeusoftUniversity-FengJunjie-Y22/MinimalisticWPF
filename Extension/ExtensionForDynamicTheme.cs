@@ -13,33 +13,14 @@ namespace MinimalisticWPF
     public static class ExtensionForDynamicTheme
     {
         /// <summary>
-        /// 类型 => [ 主题 => 状态机动画数据 ]
-        /// </summary>
-        public static Dictionary<Type, Dictionary<Type, State>> ThemeValues { get; internal set; } = new Dictionary<Type, Dictionary<Type, State>>();
-
-        /// <summary>
-        /// 可全局切换主题的对象
-        /// </summary>
-        public static List<object> InstanceHosts { get; internal set; } = new List<object>(64);
-
-        private static Type[] _assemblies = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(a => a.GetTypes())
-                .Where(t => typeof(IThemeAttribute).IsAssignableFrom(t) && typeof(Attribute).IsAssignableFrom(t) && !t.IsAbstract)
-                .ToArray();
-        /// <summary>
-        /// 程序集中用于标注主题的全部自定义特性
-        /// </summary>
-        public static Type[] Assemblies => _assemblies;
-
-        /// <summary>
         /// 令全局主题切换可作用至该实例
         /// </summary>
         /// <param name="source"></param>
         public static T RunWithGlobalTheme<T>(this T source) where T : class
         {
-            if (!InstanceHosts.Contains(source))
+            if (!DynamicTheme.GlobalInstance.Contains(source))
             {
-                InstanceHosts.Add(source);
+                DynamicTheme.GlobalInstance.Add(source);
             }
             return source;
         }
@@ -49,7 +30,7 @@ namespace MinimalisticWPF
         /// <param name="source"></param>
         public static T RunWithOutGlobalTheme<T>(this T source) where T : class
         {
-            InstanceHosts.Remove(source);
+            DynamicTheme.GlobalInstance.Remove(source);
             return source;
         }
         /// <summary>
@@ -63,73 +44,23 @@ namespace MinimalisticWPF
         public static T ApplyTheme<T>(this T source, Type attributeType, Action<TransitionParams>? paramAction = null) where T : class
         {
             var type = source.GetType();
-            if (ThemeValues.TryGetValue(type, out var dictionary))
+            if (DynamicTheme.Source.TryGetValue(type, out var statedic))
             {
-                if (dictionary.TryGetValue(attributeType, out var state))
+                if (statedic.TryGetValue(attributeType, out var state))
                 {
                     source.BeginTransition(state, paramAction ?? TransitionParams.Theme);
+                }
+                else
+                {
+                    MessageBox.Show("未能找寻State");
                 }
             }
             else
             {
-                StateMachine.Create(source);
-                GenerateValue(type);
-                ApplyTheme(source, attributeType, paramAction);
+                MessageBox.Show("未能找寻StateDictionary");
             }
 
             return source;
-        }
-        /// <summary>
-        /// 生成主题State供过渡系统使用
-        /// </summary>
-        private static void GenerateValue(Type type)
-        {
-            if (StateMachine.SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                var dic = new Dictionary<Type, State>();
-                foreach (var attributeType in Assemblies)
-                {
-                    var state = new State();
-                    foreach (var info in infodictionary.Item1.Values)
-                    {
-                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute value) break;
-                        state.AddProperty(info.Name, value.Parameters?.FirstOrDefault() ?? 0.0);
-                    }
-                    foreach (var info in infodictionary.Item2.Values)
-                    {
-                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute inner) break;
-                        var value = inner.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? nameof(Brushes.Transparent).ToBrush();
-                        state.AddProperty(info.Name, value);
-                    }
-                    foreach (var info in infodictionary.Item3.Values)
-                    {
-                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute inner) break;
-                        var value = Activator.CreateInstance(typeof(Transform), inner.Parameters);
-                        state.AddProperty(info.Name, value);
-                    }
-                    foreach (var info in infodictionary.Item4.Values)
-                    {
-                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute inner) break;
-                        var value = Activator.CreateInstance(typeof(Point), inner.Parameters);
-                        state.AddProperty(info.Name, value);
-                    }
-                    foreach (var info in infodictionary.Item5.Values)
-                    {
-                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute inner) break;
-                        var value = Activator.CreateInstance(typeof(CornerRadius), inner.Parameters);
-                        state.AddProperty(info.Name, value);
-                    }
-                    foreach (var info in infodictionary.Item6.Values)
-                    {
-                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute inner) break;
-                        var value = Activator.CreateInstance(typeof(Thickness), inner.Parameters);
-                        state.AddProperty(info.Name, value);
-                    }
-                    state.StateName = $"{type.FullName}_{attributeType.FullName}_DynamicTheme";
-                    dic.Add(attributeType, state);
-                }
-                ThemeValues.Add(type, dic);
-            }
         }
     }
 }

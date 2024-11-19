@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -11,6 +13,32 @@ namespace MinimalisticWPF
 {
     public static class DynamicTheme
     {
+        private static bool _isloaded = false;
+
+        /// <summary>
+        /// 类型应用的动态主题
+        /// </summary>
+        public static ConcurrentDictionary<Type, ConcurrentDictionary<Type, State>> Source { get; internal set; } = new();
+        /// <summary>
+        /// 需要在全局使用动态主题的实例
+        /// </summary>
+        public static HashSet<object> GlobalInstance { get; internal set; } = new(64);
+
+        /// <summary>
+        /// 激活动态主题
+        /// </summary>
+        public static void Awake()
+        {
+            if (!_isloaded)
+            {
+                var Assemblies = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes());
+                var classAssemblies = Assemblies.Where(t => t.GetCustomAttribute(typeof(ThemeAttribute), true) != null);
+                var attributeAssemblies = Assemblies.Where(t => typeof(IThemeAttribute).IsAssignableFrom(t) && typeof(Attribute).IsAssignableFrom(t) && !t.IsAbstract);
+                KVPGeneration(classAssemblies, attributeAssemblies);
+                _isloaded = true;
+            }
+        }
+
         /// <summary>
         /// [ 全局 ] 应用主题 , 需要 object.RunWithGlobalTheme() 激活对象以在全局生效
         /// </summary>
@@ -19,7 +47,7 @@ namespace MinimalisticWPF
         /// <param name="windowBack">主窗口背景色</param>
         public static void GlobalApply(Type attributeType, Action<TransitionParams>? paramAction = null, Brush? windowBack = default)
         {
-            foreach (var item in ExtensionForDynamicTheme.InstanceHosts)
+            foreach (var item in GlobalInstance)
             {
                 item.ApplyTheme(attributeType, paramAction);
             }
@@ -40,6 +68,87 @@ namespace MinimalisticWPF
             foreach (var item in targets)
             {
                 item.ApplyTheme(attributeType, paramAction);
+            }
+        }
+
+        private static void KVPGeneration(IEnumerable<Type> classes, IEnumerable<Type> attributes)
+        {
+            foreach (var cs in classes)
+            {
+                StateMachine.InitializeTypes(cs);
+                if (!StateMachine.SplitedPropertyInfos.TryGetValue(cs, out var group)) break;
+                var unit = new ConcurrentDictionary<Type, State>();
+                foreach (var attribute in attributes)
+                {
+                    var properties = cs.GetProperties()
+                    .Select(p => new
+                    {
+                        PropertyInfo = p,
+                        Context = p.GetCustomAttribute(attribute, true) as IThemeAttribute,
+                    });
+                    var state = new State();
+                    foreach (var info in properties)
+                    {
+                        if (info.PropertyInfo.CanWrite && info.PropertyInfo.CanRead && info.Context != null)
+                        {
+                            Func<int> func = (group.Item1.TryGetValue(info.PropertyInfo.Name, out _),
+                                          group.Item2.TryGetValue(info.PropertyInfo.Name, out _),
+                                          group.Item3.TryGetValue(info.PropertyInfo.Name, out _),
+                                          group.Item4.TryGetValue(info.PropertyInfo.Name, out _),
+                                          group.Item5.TryGetValue(info.PropertyInfo.Name, out _),
+                                          group.Item6.TryGetValue(info.PropertyInfo.Name, out _))
+                            switch
+                            {
+                                (true, false, false, false, false, false) => () =>
+                                {
+                                    var value = Convert.ToDouble(info.Context.Parameters?.FirstOrDefault() ?? 0);
+                                    state.AddProperty(info.PropertyInfo.Name, value);
+                                    return 1;
+                                }
+                                ,
+                                (false, true, false, false, false, false) => () =>
+                                {
+                                    var value = info.Context.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? Brushes.Transparent;
+                                    state.AddProperty(info.PropertyInfo.Name, value);
+                                    return 2;
+                                }
+                                ,
+                                (false, false, true, false, false, false) => () =>
+                                {
+                                    var value = Transform.Parse(info.Context.Parameters?.FirstOrDefault()?.ToString() ?? Transform.Identity.ToString());
+                                    state.AddProperty(info.PropertyInfo.Name, value);
+                                    return 3;
+                                }
+                                ,
+                                (false, false, false, true, false, false) => () =>
+                                {
+                                    var value = Activator.CreateInstance(typeof(Point), info.Context.Parameters);
+                                    state.AddProperty(info.PropertyInfo.Name, value);
+                                    return 4;
+                                }
+                                ,
+                                (false, false, false, false, true, false) => () =>
+                                {
+                                    var value = Activator.CreateInstance(typeof(CornerRadius), info.Context.Parameters);
+                                    state.AddProperty(info.PropertyInfo.Name, value);
+                                    return 5;
+                                }
+                                ,
+                                (false, false, false, false, false, true) => () =>
+                                {
+                                    var value = Activator.CreateInstance(typeof(Thickness), info.Context.Parameters);
+                                    state.AddProperty(info.PropertyInfo.Name, value);
+                                    return 6;
+                                }
+                                ,
+                                _ => () => { return -1; }
+                            };
+                            func.Invoke();
+                        }
+                    }
+                    unit.TryAdd(attribute, state);
+                }
+                Source.TryAdd(cs, unit);
             }
         }
     }
