@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace MinimalisticWPF
 {
@@ -14,11 +15,19 @@ namespace MinimalisticWPF
         /// <summary>
         /// 类型在对象池中存储的实例
         /// </summary>
-        public static ConcurrentDictionary<Type, Queue<object?>> Source { get; internal set; } = new ConcurrentDictionary<Type, Queue<object?>>();
+        public static ConcurrentDictionary<Type, ConcurrentQueue<object?>> Source { get; internal set; } = new();
         /// <summary>
         /// 类型实例从对象池中存/取时需要执行的方法
         /// </summary>
-        public static ConcurrentDictionary<Type, Tuple<MethodInfo?, MethodInfo?>> Method { get; internal set; } = new ConcurrentDictionary<Type, Tuple<MethodInfo?, MethodInfo?>>();
+        public static ConcurrentDictionary<Type, Tuple<MethodInfo?, MethodInfo?>> Method { get; internal set; } = new();
+        /// <summary>
+        /// 自动回收的配置信息
+        /// </summary>
+        public static ConcurrentDictionary<Type, Tuple<int, int>> AutoDispose { get; internal set; } = new();
+        /// <summary>
+        /// 实例离开Pool的记录
+        /// </summary>
+        public static ConcurrentStack<object?> SourceToBeAutoDisposed { get; internal set; } = new();
         /// <summary>
         /// 激活对象池
         /// </summary>
@@ -37,13 +46,17 @@ namespace MinimalisticWPF
                 }).Where(r => r.Context != null);
                 foreach (var target in targets)
                 {
-                    var value = new Queue<object?>();
-                    for (int i = 0; i < target.Context?.InitialCount; i++)
+                    var value = new ConcurrentQueue<object?>();
+                    for (int i = 0; i < target.Context.InitialCount; i++)
                     {
                         value.Enqueue(Activator.CreateInstance(target.Type));
                     }
                     Source.TryAdd(target.Type, value);
                     Method.TryAdd(target.Type, Tuple.Create(target.MethodA, target.MethodB));
+                    if (target.Context.IsAutoDispose)
+                    {
+                        AutoDispose.TryAdd(target.Type, Tuple.Create(target.Context.CriticalValue, target.Context.DisposeDelta));
+                    }
                 }
                 _isloaded = true;
             }
@@ -56,11 +69,24 @@ namespace MinimalisticWPF
         public static object? Fetch(Type type, params object[] methodparams)
         {
             if (!Source.TryGetValue(type, out var que) || que == null) return null;
-            return (que.Count > 0) switch
+            var result = (que.Count > 0) switch
             {
                 true => OnlyMethod(type, que, methodparams),
                 false => Generate(type, methodparams),
             };
+            if (AutoDispose.TryGetValue(type, out var config))
+            {
+                SourceToBeAutoDisposed.Push(result);
+                if (config.Item1 == que.Count)
+                {
+                    for (int i = 0; i < config.Item2; i++)
+                    {
+                        SourceToBeAutoDisposed.TryPop(out var dis);
+                        que.Enqueue(dis);
+                    }
+                }
+            }
+            return result;
         }
         /// <summary>
         /// 归还至对象池
@@ -88,9 +114,9 @@ namespace MinimalisticWPF
             }
             return instance;
         }
-        private static object? OnlyMethod(Type type, Queue<object?> que, params object[] methodparams)
+        private static object? OnlyMethod(Type type, ConcurrentQueue<object?> que, params object[] methodparams)
         {
-            var result = que.Dequeue();
+            que.TryDequeue(out var result);
             if (Method.TryGetValue(type, out var method))
             {
                 method.Item1?.Invoke(result, methodparams);
