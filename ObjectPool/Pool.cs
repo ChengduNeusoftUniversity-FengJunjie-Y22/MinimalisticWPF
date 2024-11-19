@@ -53,13 +53,13 @@ namespace MinimalisticWPF
         /// </summary>
         /// <param name="type"></param>
         /// <param name="methodparams"></param>
-        public static T? PoolFetch<T>(this Type type, params object[] methodparams) where T : class, new()
+        public static object? Fetch(Type type, params object[] methodparams)
         {
             if (!Source.TryGetValue(type, out var que) || que == null) return null;
             return (que.Count > 0) switch
             {
-                true => que.Dequeue() as T,
-                false => Generate<T>(type, methodparams),
+                true => OnlyMethod(type, que, methodparams),
+                false => Generate(type, methodparams),
             };
         }
         /// <summary>
@@ -67,25 +67,35 @@ namespace MinimalisticWPF
         /// </summary>
         /// <param name="value"></param>
         /// <param name="methodparams"></param>
-        public static void PoolDispose<T>(this T value, params object[] methodparams) where T : class, new()
+        public static void Dispose(object? value, params object[] methodparams)
         {
+            if (value == null) return;
             Type type = value.GetType();
             if (!Source.TryGetValue(type, out var que) || que == null) return;
-            que.Enqueue(value);
             if (Method.TryGetValue(type, out var method))
             {
                 method.Item2?.Invoke(value, methodparams);
             }
+            que.Enqueue(value);
         }
 
-        private static T? Generate<T>(Type type, params object[] methodparams) where T : class, new()
+        private static object? Generate(Type type, params object[] methodparams)
         {
             var instance = Activator.CreateInstance(type);
             if (Method.TryGetValue(type, out var method))
             {
                 method.Item1?.Invoke(instance, methodparams);
             }
-            return instance as T;
+            return instance;
+        }
+        private static object? OnlyMethod(Type type, Queue<object?> que, params object[] methodparams)
+        {
+            var result = que.Dequeue();
+            if (Method.TryGetValue(type, out var method))
+            {
+                method.Item1?.Invoke(result, methodparams);
+            }
+            return result;
         }
     }
 }

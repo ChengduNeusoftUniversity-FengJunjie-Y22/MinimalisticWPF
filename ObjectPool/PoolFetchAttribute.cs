@@ -10,8 +10,8 @@ namespace MinimalisticWPF
     /// [ 特性 ]对象从对象池取出时触发
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
-    internal class PoolFetchAttribute : Attribute
+    public class PoolFetchAttribute : Attribute
     {
-
+        public PoolFetchAttribute() { }
     }
 }

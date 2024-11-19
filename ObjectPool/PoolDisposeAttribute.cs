@@ -10,8 +10,8 @@ namespace MinimalisticWPF
     /// [ 特性 ]对象归还至对象池时触发
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
-    internal class PoolDisposeAttribute : Attribute
+    public class PoolDisposeAttribute : Attribute
     {
-
+        public PoolDisposeAttribute() { }
     }
 }
