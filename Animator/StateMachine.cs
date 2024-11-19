@@ -14,6 +14,7 @@ using System.Windows.Controls;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows.Automation;
 using System.Windows.Media;
+using System.Collections.Concurrent;
 using System.Security.RightsManagement;
 
 namespace MinimalisticWPF
@@ -40,11 +41,11 @@ namespace MinimalisticWPF
         /// <summary>
         /// 对于任意使用Board启动动画的对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
         /// </summary>
-        public static Dictionary<Type, Dictionary<object, StateMachine>> MachinePool { get; internal set; } = new Dictionary<Type, Dictionary<object, StateMachine>>();
+        public static ConcurrentDictionary<Type, ConcurrentDictionary<object, StateMachine>> MachinePool { get; internal set; } = new ConcurrentDictionary<Type, ConcurrentDictionary<object, StateMachine>>();
         /// <summary>
         /// 类型中支持加载动画的属性
         /// </summary>
-        public static Dictionary<Type, Dictionary<string, PropertyInfo>> PropertyInfos { get; internal set; } = new Dictionary<Type, Dictionary<string, PropertyInfo>>();
+        public static ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>> PropertyInfos { get; internal set; } = new ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>>();
         /// <summary>
         /// 依据属性类型不同做出的划分
         /// <para>Values</para>
@@ -56,7 +57,7 @@ namespace MinimalisticWPF
         /// <para>Item6 Thickness</para>
         /// <para>Item7 ILinearInterpolation</para>
         /// </summary>
-        public static Dictionary<Type, Tuple<Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>>> SplitedPropertyInfos = new Dictionary<Type, Tuple<Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>, Dictionary<string, PropertyInfo>>>();
+        public static ConcurrentDictionary<Type, Tuple<ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>>> SplitedPropertyInfos = new ConcurrentDictionary<Type, Tuple<ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>>>();
 
         /// <summary>
         /// 创建/获取 一个用于管理指定对象过渡行为的状态机实例
@@ -77,16 +78,16 @@ namespace MinimalisticWPF
                 else
                 {
                     var newMachine = new StateMachine(targetObj, states);
-                    machinedictionary.Add(targetObj, newMachine);
+                    machinedictionary.TryAdd(targetObj, newMachine);
                     return newMachine;
                 }
             }
             else
             {
                 var newMachine = new StateMachine(targetObj, states);
-                var newChildDic = new Dictionary<object, StateMachine>();
-                newChildDic.Add(targetObj, newMachine);
-                MachinePool.Add(type, newChildDic);
+                var newChildDic = new ConcurrentDictionary<object, StateMachine>();
+                newChildDic.TryAdd(targetObj, newMachine);
+                MachinePool.TryAdd(type, newChildDic);
                 return newMachine;
             }
         }
@@ -279,7 +280,7 @@ namespace MinimalisticWPF
                     {
                         var currentValue = (ILinearInterpolation?)propertyinfo.GetValue(Target);
                         var newValue = (ILinearInterpolation?)state.Values[propertyname];
-                        if (currentValue != newValue)
+                        if (currentValue != newValue && newValue != null)
                         {
                             allFrames.Add(Tuple.Create(propertyinfo, newValue.Interpolate(currentValue?.Current, newValue.Current, FrameCount)));
                         }
@@ -308,19 +309,19 @@ namespace MinimalisticWPF
                     || x.PropertyType == typeof(Thickness)
                     || typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)
                     ));
-                    var propdictionary = new Dictionary<string, PropertyInfo>();
+                    var propdictionary = new ConcurrentDictionary<string, PropertyInfo>();
                     foreach (var property in properties)
                     {
-                        propdictionary.Add(property.Name, property);
+                        propdictionary.TryAdd(property.Name, property);
                     }
-                    PropertyInfos.Add(type, propdictionary);
-                    SplitedPropertyInfos.Add(type, Tuple.Create(properties.Where(x => x.PropertyType == typeof(double)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => x.PropertyType == typeof(Brush)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => x.PropertyType == typeof(Transform)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => x.PropertyType == typeof(Point)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => x.PropertyType == typeof(CornerRadius)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => x.PropertyType == typeof(Thickness)).ToDictionary(x => x.Name, x => x),
-                                                          properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)).ToDictionary(x => x.Name, x => x)));
+                    PropertyInfos.TryAdd(type, propdictionary);
+                    SplitedPropertyInfos.TryAdd(type, Tuple.Create(new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => x.PropertyType == typeof(double)).ToDictionary(x => x.Name, x => x)),
+                                                          new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => x.PropertyType == typeof(Brush)).ToDictionary(x => x.Name, x => x)),
+                                                          new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => x.PropertyType == typeof(Transform)).ToDictionary(x => x.Name, x => x)),
+                                                          new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => x.PropertyType == typeof(Point)).ToDictionary(x => x.Name, x => x)),
+                                                          new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => x.PropertyType == typeof(CornerRadius)).ToDictionary(x => x.Name, x => x)),
+                                                          new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => x.PropertyType == typeof(Thickness)).ToDictionary(x => x.Name, x => x)),
+                                                          new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)).ToDictionary(x => x.Name, x => x))));
                 }
             }
         }
@@ -366,7 +367,7 @@ namespace MinimalisticWPF
         {
             foreach (var type in types)
             {
-                MachinePool.Remove(type);
+                MachinePool.TryRemove(type, out _);
             }
         }
 
@@ -393,6 +394,10 @@ namespace MinimalisticWPF
         public Queue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>> Interpreters { get; internal set; } = new Queue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>>();
         public List<TransitionInterpreter> UnSafeInterpreters { get; internal set; } = new List<TransitionInterpreter>();
 
+        /// <summary>
+        /// 重置状态机数据
+        /// </summary>
+        /// <param name="IsStopUnsafe">设为true可以重置Unsafe过渡组</param>
         public void ReSet(bool IsStopUnsafe = false)
         {
             IsReSet = true;
@@ -408,6 +413,12 @@ namespace MinimalisticWPF
                 }
             }
         }
+        /// <summary>
+        /// 手动触发状态机的调度
+        /// </summary>
+        /// <param name="stateName">目标状态的名称，必须先一步存在于Machine.States中</param>
+        /// <param name="actionSet">设置过渡效果参数</param>
+        /// <param name="preload">（可选）传入预先计算的帧序列</param>
         public void Transition(string stateName, Action<TransitionParams>? actionSet, List<List<Tuple<PropertyInfo, List<object?>>>>? preload = null)
         {
             IsReSet = false;
