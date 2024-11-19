@@ -250,6 +250,27 @@ var animation = Transition.CreateBoardFromType<Grid>()
 
 </details>
 
+<details>
+<summary>V1.9.5</summary>
+
+### Ⅰ ObjectPool Support
+- Attribute
+  - PoolAttribute
+  - PoolFetchAttribute & PoolDisposeAttribute
+- Static Method
+  - Fetch
+  - Dispose
+
+### Ⅱ Changes in mechanisms
+- Dictionary __> ConcurrentDictionary
+  - Try using thread-safe dictionaries
+  - Has been applied to [ StateMahine ]
+  - Has been applied to [ Pool ]
+- Dictionary __> Grouping By Type
+  - Use struction like " Dictionary&lt;Type,Dictionary&lt;object,StateMachine>> ".You can now dispose of all statemachines of a given type by using StateMachine.Dispose()
+- State __> No check for type.Only propertyName & propertyValue
+</summary>
+
 ## Document
 
 <details>

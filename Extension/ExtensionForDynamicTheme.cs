@@ -92,42 +92,36 @@ namespace MinimalisticWPF
                     var state = new State();
                     foreach (var info in infodictionary.Item1.Values)
                     {
-                        var value = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                        if (value == null) break;
+                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute value) break;
                         state.AddProperty(info.Name, value.Parameters?.FirstOrDefault() ?? 0.0);
                     }
                     foreach (var info in infodictionary.Item2.Values)
                     {
-                        var inner = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                        if (inner == null) break;
+                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute inner) break;
                         var value = inner.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? nameof(Brushes.Transparent).ToBrush();
                         state.AddProperty(info.Name, value);
                     }
                     foreach (var info in infodictionary.Item3.Values)
                     {
-                        var inner = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                        if (inner == null) break;
+                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute inner) break;
                         var value = Activator.CreateInstance(typeof(Transform), inner.Parameters);
                         state.AddProperty(info.Name, value);
                     }
                     foreach (var info in infodictionary.Item4.Values)
                     {
-                        var inner = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                        if (inner == null) break;
+                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute inner) break;
                         var value = Activator.CreateInstance(typeof(Point), inner.Parameters);
                         state.AddProperty(info.Name, value);
                     }
                     foreach (var info in infodictionary.Item5.Values)
                     {
-                        var inner = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                        if (inner == null) break;
+                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute inner) break;
                         var value = Activator.CreateInstance(typeof(CornerRadius), inner.Parameters);
                         state.AddProperty(info.Name, value);
                     }
                     foreach (var info in infodictionary.Item6.Values)
                     {
-                        var inner = info.GetCustomAttribute(attributeType, true) as IThemeAttribute;
-                        if (inner == null) break;
+                        if (info.GetCustomAttribute(attributeType, true) is not IThemeAttribute inner) break;
                         var value = Activator.CreateInstance(typeof(Thickness), inner.Parameters);
                         state.AddProperty(info.Name, value);
                     }

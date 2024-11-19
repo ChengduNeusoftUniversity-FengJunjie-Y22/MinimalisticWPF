@@ -3,6 +3,7 @@ using System.Dynamic;
 using System.Linq.Expressions;
 using System.Windows.Media;
 using System.Windows;
+using System.Collections.Concurrent;
 
 namespace MinimalisticWPF
 {
@@ -17,7 +18,7 @@ namespace MinimalisticWPF
             {
                 foreach (var info in infodictionary.Values.Where(x => WhileList.Count > 0 ? WhileList.Contains(x.Name) : false || BlackList.Count <= 0 || !BlackList.Contains(x.Name)))
                 {
-                    Values.Add(info.Name, info.GetValue(Target));
+                    Values.TryAdd(info.Name, info.GetValue(Target));
                 }
             }
         }
@@ -29,7 +30,7 @@ namespace MinimalisticWPF
         /// <summary>
         /// 记录的状态值
         /// </summary>
-        public Dictionary<string, object?> Values { get; internal set; } = new Dictionary<string, object?>();
+        public ConcurrentDictionary<string, object?> Values { get; internal set; } = new ConcurrentDictionary<string, object?>();
         /// <summary>
         /// 获取该状态下,指定属性的具体值
         /// </summary>
@@ -53,14 +54,13 @@ namespace MinimalisticWPF
         /// </summary>
         public void AddProperty(string propertyName, object? value)
         {
-            Values.TryGetValue(propertyName, out var target);
-            if (target == null)
+            if (Values.TryGetValue(propertyName, out var ori))
             {
-                Values.Add(propertyName, value);
+                Values.TryUpdate(propertyName, value, ori);
             }
             else
             {
-                Values[propertyName] = value;
+                Values.TryAdd(propertyName, value);
             }
         }
         /// <summary>
