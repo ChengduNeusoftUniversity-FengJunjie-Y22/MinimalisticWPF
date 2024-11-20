@@ -19,7 +19,7 @@ namespace MinimalisticWPF
         {
             if (Pool.Source.TryGetValue(source, out var pool))
             {
-                return pool?.Count ?? 0;
+                return (pool?.Count ?? 0) + (Pool.AutoDisposeQueue.TryGetValue(source, out var disc) ? disc.Count : 0);
             }
             return -1;
         }
