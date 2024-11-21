@@ -253,13 +253,14 @@ var animation = Transition.CreateBoardFromType<Grid>()
 <details>
 <summary>V1.9.5</summary>
 
-### Ⅰ ObjectPool Support
+### Ⅰ ObjectPool Support - A generic object pool that supports auto-scaling
 - Attribute
   - PoolAttribute
-  - PoolFetchAttribute & PoolDisposeAttribute
+  - PoolFetchAttribute
+  - PoolDisposeAttribute
 - Static Method
-  - Fetch
-  - Dispose
+  - Pool.Fetch
+  - Pool.Dispose ( There is no need to use this method to reclaim objects when PoolAttribute is passed a 4 argument to enable automatic reclamation )
 
 ### Ⅱ Changes in mechanisms
 - Dictionary __> ConcurrentDictionary

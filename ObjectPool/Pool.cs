@@ -20,9 +20,9 @@ namespace MinimalisticWPF
         public static ConcurrentDictionary<Type, int> Counter { get; internal set; } = new();
 
         /// <summary>
-        /// 可用资源池
+        /// 可用资源栈
         /// </summary>
-        public static ConcurrentDictionary<Type, ConcurrentQueue<object?>> Source { get; internal set; } = new();
+        public static ConcurrentDictionary<Type, ConcurrentQueue<object?>> SourceQueue { get; internal set; } = new();
 
         /// <summary>
         /// 由手动释放的资源的哈希
@@ -40,9 +40,11 @@ namespace MinimalisticWPF
         public static ConcurrentDictionary<Type, Tuple<int, int, int>> AutoDisposeConfig { get; internal set; } = new();
 
         /// <summary>
-        /// 自动回收栈
+        /// 自动回收队列
         /// </summary>
         public static ConcurrentDictionary<Type, ConcurrentQueue<object?>> AutoDisposeQueue { get; internal set; } = new();
+
+        public static object? LastLoop { get; internal set; }
 
         /// <summary>
         /// 激活对象池
@@ -69,7 +71,7 @@ namespace MinimalisticWPF
                         {
                             value.Enqueue(Activator.CreateInstance(target.Type));
                         }
-                        Source.TryAdd(target.Type, value);
+                        SourceQueue.TryAdd(target.Type, value);
                         Method.TryAdd(target.Type, Tuple.Create(target.MethodA, target.MethodB));
                         if (target.Context.IsAutoDispose)
                         {
@@ -90,26 +92,27 @@ namespace MinimalisticWPF
         /// <param name="methodparams"></param>
         public static object? Fetch(Type type, params object[] methodparams)
         {
-            var isSource = Source.TryGetValue(type, out var queue);
+            Awake();
             var isMethod = Method.TryGetValue(type, out var method);
+            var isSource = SourceQueue.TryGetValue(type, out var sourcequeue);
             var isDisposeHash = DisposeHash.TryGetValue(type, out var hash);
             var isAutoDispose = AutoDisposeConfig.TryGetValue(type, out var config);
             var isAutoDisposeQueue = AutoDisposeQueue.TryGetValue(type, out var disposequeue);
             var isCounter = Counter.TryGetValue(type, out var counter);
-            if (!isSource || queue == null || disposequeue == null || config == null || hash == null) throw new ArgumentException($"MPL01 This type has an unexpected situation when initializing the object pool.\n=>{type.FullName}");
+            if (!isSource || sourcequeue == null || disposequeue == null || config == null || hash == null) throw new ArgumentException($"MPL01 This type has an unexpected situation when initializing the object pool.\n=>{type.FullName}");
             Func<object?> func = (isAutoDispose) switch
             {
                 (true) => () =>
                 {
-                    var result = GetInstance(type, queue, counter, disposequeue, config, method)
+                    var result = GetInstance(type, sourcequeue, counter, disposequeue, config, method)
                     .InstanceFetchInvoke(method, methodparams)
-                    .RunAutoDispose(type, config, hash, disposequeue, queue, method);
+                    .RunAutoDispose(type, config, hash, disposequeue, sourcequeue, method);
                     return result;
                 }
                 ,
                 (false) => () =>
                 {
-                    var result = GetInstance(type, queue, -1, disposequeue, config, method)
+                    var result = GetInstance(type, sourcequeue, -1, disposequeue, config, method)
                     .InstanceFetchInvoke(method, methodparams);
                     return result;
                 }
@@ -123,9 +126,10 @@ namespace MinimalisticWPF
         /// <param name="methodparams">触发对象回收函数时传入的参数</param>
         public static void Dispose(object? value, params object[] methodparams)
         {
+            Awake();
             if (value == null) throw new ArgumentNullException("MPL02 An null object cannot be deallocated into an object pool");
             Type type = value.GetType();
-            var isSource = Source.TryGetValue(type, out var queue);
+            var isSource = SourceQueue.TryGetValue(type, out var queue);
             Method.TryGetValue(type, out var method);
             DisposeHash.TryGetValue(type, out var hash);
             if (!isSource) throw new ArgumentException($"MPL01 This type has an unexpected situation when initializing the object pool.\n=>{type.FullName}");
@@ -137,19 +141,24 @@ namespace MinimalisticWPF
             queue?.Enqueue(value);
         }
 
-        private static object? GetInstance(Type type, ConcurrentQueue<object?> queue, int counter, ConcurrentQueue<object?> disposequeue, Tuple<int, int, int> config, Tuple<MethodInfo?, MethodInfo?>? method, params object?[] actionparams)
+        private static object? GetInstance(Type type, ConcurrentQueue<object?> sourcequeue, int counter, ConcurrentQueue<object?> disposequeue, Tuple<int, int, int> config, Tuple<MethodInfo?, MethodInfo?>? method, params object?[] actionparams)
         {
-            if (queue.TryDequeue(out var value))
+            if (sourcequeue.TryDequeue(out var value))
             {
                 disposequeue.Enqueue(value);
                 return value;
             }
             else
             {
-                if (type.GetPoolSemaphore() >= config.Item1 && disposequeue.TryDequeue(out var dis))
+                if (type.GetPoolSemaphore() >= config.Item1 && sourcequeue.TryDequeue(out var dis))
                 {
-                    method?.Item2?.Invoke(dis, actionparams);
-                    disposequeue.Enqueue(dis);
+                    if (LastLoop?.GetType() == type)
+                    {
+                        method?.Item2?.Invoke(LastLoop, null);
+                        sourcequeue.Enqueue(LastLoop);
+                    }
+                    method?.Item1?.Invoke(dis, actionparams);
+                    LastLoop = dis;
                     return dis;
                 }
                 else
@@ -179,36 +188,37 @@ namespace MinimalisticWPF
             Counter.TryUpdate(type, counter + 1, counter);
             return target;
         }
-        private static object? RunAutoDispose(this object? target, Type type, Tuple<int, int, int> config, HashSet<object?> hash, ConcurrentQueue<object?> disposequeue, ConcurrentQueue<object?> queue, Tuple<MethodInfo?, MethodInfo?>? method)
+        private static object? RunAutoDispose(this object? target, Type type, Tuple<int, int, int> config, HashSet<object?> hash, ConcurrentQueue<object?> disposequeue, ConcurrentQueue<object?> sourcequeue, Tuple<MethodInfo?, MethodInfo?>? method)
         {
             Counter.TryGetValue(type, out var counter);
             if (counter == config.Item2)
             {
                 for (int i = 0; i < config.Item3; i++)
                 {
-                    var temp = DisposeStackAndHash(hash, disposequeue, queue, method);
+                    var temp = DisposeStackAndHash(hash, disposequeue, sourcequeue, method);
                 }
-                var inc = queue.Count + config.Item3 < config.Item1 - 1 ? config.Item3 - 1 : config.Item1 - queue.Count - 1;
+                var isloop = sourcequeue.Count + config.Item3 < config.Item1;
+                var inc = isloop ? config.Item3 : config.Item1 - sourcequeue.Count;
                 for (var i = 0; i < inc; i++)
                 {
-                    queue.Enqueue(Activator.CreateInstance(type));
+                    sourcequeue.Enqueue(Activator.CreateInstance(type));
                 }
                 Counter.TryUpdate(type, 0, counter);
             }
             return target;
         }
-        private static object? DisposeStackAndHash(HashSet<object?> hash, ConcurrentQueue<object?> disposequeue, ConcurrentQueue<object?> queue, Tuple<MethodInfo?, MethodInfo?>? method)
+        private static object? DisposeStackAndHash(HashSet<object?> hash, ConcurrentQueue<object?> disposequeue, ConcurrentQueue<object?> sourcequeue, Tuple<MethodInfo?, MethodInfo?>? method)
         {
             if (disposequeue.TryDequeue(out var value))
             {
                 if (hash.Remove(value))
                 {
-                    return DisposeStackAndHash(hash, disposequeue, queue, method);
+                    return DisposeStackAndHash(hash, disposequeue, sourcequeue, method);
                 }
                 else
                 {
                     InstanceDisposeInvoke(value, method);
-                    queue.Enqueue(value);
+                    sourcequeue.Append(value);
                     return value;
                 }
             }
