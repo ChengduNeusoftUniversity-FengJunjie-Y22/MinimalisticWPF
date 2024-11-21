@@ -31,81 +31,6 @@ namespace MinimalisticWPF
         /// </summary>
         public static ConcurrentDictionary<Type, ConcurrentQueue<object>> DisposeQueue { get; internal set; } = new();
 
-        public static object Fetch(Type type)//获取一个资源
-        {
-            Awake();
-            if (FetchQueue.TryGetValue(type, out var source) && DisposeQueue.TryGetValue(type, out var dispose) && Method.TryGetValue(type, out var method) && DisposeConfig.TryGetValue(type, out var config))
-            {
-                Func<object> func = (IsSourceExsit(source, dispose, config), CanSourceAdded(source, dispose, config)) switch
-                {
-                    (1, _) => () => //资源池可用
-                    {
-                        return FetchWhileSourceExsitSource(source, dispose, method);
-                    }
-                    ,
-                    (2, false) => () => //资源池耗尽但回收池可用,不允许扩容
-                    {
-                        return FetchWhileDisposeExsitSource(source, dispose, method);
-                    }
-                    ,
-                    (2, true) => () => //资源池耗尽但回收池可用,允许扩容
-                    {
-                        AddOneSource(type, source);
-                        return FetchWhileSourceExsitSource(source, dispose, method);
-                    }
-                    ,
-                    (0, true) => () => //无资源可用但允许扩容
-                    {
-                        AddOneSource(type, source);
-                        return FetchWhileSourceExsitSource(source, dispose, method);
-                    }
-                    ,
-                    (0, false) => () => //无资源可用且不允许扩容
-                    {
-                        throw new ArgumentException($"MPL10 类型[ {type.Name} ]的对象池需要扩容,但你设置的资源最大值[ {config.Item3} ]限制了本次扩容");
-                    }
-                    ,
-                    _ => () => { throw new ArgumentException(); } //意外情况
-                };
-                return func.Invoke();
-            }
-            else
-            {
-                throw new ArgumentException($"MPL01 类型[ {type.Name} ]可能不受对象池管理,请使用[ {nameof(PoolAttribute)} ]标记它");
-            }
-        }
-        public static object Dispose(Type type)//释放一个资源
-        {
-            Awake();
-            if (FetchQueue.TryGetValue(type, out var source) && DisposeQueue.TryGetValue(type, out var dispose) && Method.TryGetValue(type, out var method) && DisposeConfig.TryGetValue(type, out var config))
-            {
-                Func<object> func = (IsSourceExsit(source, dispose, config), IsConditionOk(dispose, config)) switch
-                {
-                    (2, true) => () =>
-                    {
-                        if (dispose.TryDequeue(out var dised))
-                        {
-                            method.Item2?.Invoke(dised, null);
-                            source.Enqueue(dised);
-                            return dised;
-                        }
-                        else
-                        {
-                            throw new ArgumentException("MPL15");
-                        }
-                    }
-                    ,
-                    (2, false) => () => { throw new ArgumentException("MPL14"); }
-                    ,
-                    _ => () => { throw new ArgumentException("MPL13"); }
-                };
-                return func.Invoke();
-            }
-            else
-            {
-                throw new ArgumentException($"MPL01 类型[ {type.Name} ]可能不受对象池管理,请使用[ {nameof(PoolAttribute)} ]标记它");
-            }
-        }
         private static bool CanSourceAdded(ConcurrentQueue<object> fetchqueue, ConcurrentQueue<object> disposequeue, Tuple<int, MethodInfo?, int> config)//检查当前是否有可用资源
         {
             return fetchqueue.Count + disposequeue.Count < config.Item3;
@@ -178,9 +103,9 @@ namespace MinimalisticWPF
         }
 
         /// <summary>
-        /// 激活对象池
+        /// 初始化对象池资源 , 通常建议先一步执行该函数 , 当然 , 直接调用Fetch/Dispose方法也是会触发该函数的
         /// </summary>
-        public static void Awake()
+        public static void InitializeSource()
         {
             if (!_isloaded)
             {
@@ -223,6 +148,93 @@ namespace MinimalisticWPF
                     }
                 }
                 _isloaded = true;
+            }
+        }
+        /// <summary>
+        /// 从对象池取出对象
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static object Fetch(Type type)//获取一个资源
+        {
+            InitializeSource();
+            if (FetchQueue.TryGetValue(type, out var source) && DisposeQueue.TryGetValue(type, out var dispose) && Method.TryGetValue(type, out var method) && DisposeConfig.TryGetValue(type, out var config))
+            {
+                Func<object> func = (IsSourceExsit(source, dispose, config), CanSourceAdded(source, dispose, config)) switch
+                {
+                    (1, _) => () => //资源池可用
+                    {
+                        return FetchWhileSourceExsitSource(source, dispose, method);
+                    }
+                    ,
+                    (2, false) => () => //资源池耗尽但回收池可用,不允许扩容
+                    {
+                        return FetchWhileDisposeExsitSource(source, dispose, method);
+                    }
+                    ,
+                    (2, true) => () => //资源池耗尽但回收池可用,允许扩容
+                    {
+                        AddOneSource(type, source);
+                        return FetchWhileSourceExsitSource(source, dispose, method);
+                    }
+                    ,
+                    (0, true) => () => //无资源可用但允许扩容
+                    {
+                        AddOneSource(type, source);
+                        return FetchWhileSourceExsitSource(source, dispose, method);
+                    }
+                    ,
+                    (0, false) => () => //无资源可用且不允许扩容
+                    {
+                        throw new ArgumentException($"MPL10 类型[ {type.Name} ]的对象池需要扩容,但你设置的资源最大值[ {config.Item3} ]限制了本次扩容");
+                    }
+                    ,
+                    _ => () => { throw new ArgumentException(); } //意外情况
+                };
+                return func.Invoke();
+            }
+            else
+            {
+                throw new ArgumentException($"MPL01 类型[ {type.Name} ]可能不受对象池管理,请使用[ {nameof(PoolAttribute)} ]标记它");
+            }
+        }
+        /// <summary>
+        /// ( 不必要 ) 释放对象至对象池 ，这个步骤通常由对象池自动完成
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static object Dispose(Type type)//释放一个资源
+        {
+            InitializeSource();
+            if (FetchQueue.TryGetValue(type, out var source) && DisposeQueue.TryGetValue(type, out var dispose) && Method.TryGetValue(type, out var method) && DisposeConfig.TryGetValue(type, out var config))
+            {
+                Func<object> func = (IsSourceExsit(source, dispose, config), IsConditionOk(dispose, config)) switch
+                {
+                    (2, true) => () =>
+                    {
+                        if (dispose.TryDequeue(out var dised))
+                        {
+                            method.Item2?.Invoke(dised, null);
+                            source.Enqueue(dised);
+                            return dised;
+                        }
+                        else
+                        {
+                            throw new ArgumentException("MPL15");
+                        }
+                    }
+                    ,
+                    (2, false) => () => { throw new ArgumentException("MPL14"); }
+                    ,
+                    _ => () => { throw new ArgumentException("MPL13"); }
+                };
+                return func.Invoke();
+            }
+            else
+            {
+                throw new ArgumentException($"MPL01 类型[ {type.Name} ]可能不受对象池管理,请使用[ {nameof(PoolAttribute)} ]标记它");
             }
         }
     }

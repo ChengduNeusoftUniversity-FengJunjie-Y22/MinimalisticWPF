@@ -41,11 +41,11 @@ namespace MinimalisticWPF
         /// <summary>
         /// 对于任意使用Board启动动画的对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
         /// </summary>
-        public static ConcurrentDictionary<Type, ConcurrentDictionary<object, StateMachine>> MachinePool { get; internal set; } = new ConcurrentDictionary<Type, ConcurrentDictionary<object, StateMachine>>();
+        public static ConcurrentDictionary<Type, ConcurrentDictionary<object, StateMachine>> MachinePool { get; internal set; } = new();
         /// <summary>
         /// 类型中支持加载动画的属性
         /// </summary>
-        public static ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>> PropertyInfos { get; internal set; } = new ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>>();
+        public static ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>> PropertyInfos { get; internal set; } = new();
         /// <summary>
         /// 依据属性类型不同做出的划分
         /// <para>Values</para>
@@ -57,7 +57,7 @@ namespace MinimalisticWPF
         /// <para>Item6 Thickness</para>
         /// <para>Item7 ILinearInterpolation</para>
         /// </summary>
-        public static ConcurrentDictionary<Type, Tuple<ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>>> SplitedPropertyInfos = new ConcurrentDictionary<Type, Tuple<ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>>>();
+        public static ConcurrentDictionary<Type, Tuple<ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>>> SplitedPropertyInfos = new();
 
         /// <summary>
         /// 创建/获取 一个用于管理指定对象过渡行为的状态机实例
@@ -384,15 +384,15 @@ namespace MinimalisticWPF
 
         public object Target { get; internal set; }
         public Type Type { get; internal set; }
-        public StateCollection States { get; internal set; } = new StateCollection();
-        internal TransitionParams TransitionParams { get; set; } = new TransitionParams();
+        public StateCollection States { get; internal set; } = new();
+        internal TransitionParams TransitionParams { get; set; } = new();
         internal bool IsReSet { get; set; } = false;
         public double DeltaTime { get => 1000.0 / Math.Clamp(TransitionParams.FrameRate, 1, MaxFrameRate); }
         public double FrameCount { get => Math.Clamp(TransitionParams.Duration * Math.Clamp(TransitionParams.FrameRate, 1, MaxFrameRate), 1, int.MaxValue); }
         public string? CurrentState { get; internal set; }
         public TransitionInterpreter? Interpreter { get; internal set; }
-        public Queue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>> Interpreters { get; internal set; } = new Queue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>>();
-        public List<TransitionInterpreter> UnSafeInterpreters { get; internal set; } = new List<TransitionInterpreter>();
+        public ConcurrentQueue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>> Interpreters { get; internal set; } = new();
+        public List<TransitionInterpreter> UnSafeInterpreters { get; internal set; } = new();
 
         /// <summary>
         /// 重置状态机数据

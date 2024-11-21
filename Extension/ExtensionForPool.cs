@@ -17,7 +17,6 @@ namespace MinimalisticWPF
         /// </returns>
         public static int GetPoolSemaphore(this Type source)
         {
-            Pool.Awake();
             return (Pool.FetchQueue.TryGetValue(source, out var pool) ? pool.Count : -1) + (Pool.DisposeQueue.TryGetValue(source, out var disc) ? disc.Count : -1);
         }
     }

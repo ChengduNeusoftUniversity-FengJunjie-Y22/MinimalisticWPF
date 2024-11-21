@@ -234,10 +234,9 @@ namespace MinimalisticWPF
                 {
                     Machine.Interpreters.Clear();
                 }
-                if (Machine.Interpreters.Count > 0)
+                if (Machine.Interpreters.TryDequeue(out var source))
                 {
-                    var newAni = Machine.Interpreters.Dequeue();
-                    Machine.InterpreterScheduler(newAni.Item1, newAni.Item2, newAni.Item3);
+                    Machine.InterpreterScheduler(source.Item1, source.Item2, source.Item3);
                 }
                 Machine.CurrentState = null;
             }
