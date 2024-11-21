@@ -9,20 +9,16 @@ namespace MinimalisticWPF
     public static class ExtensionForPool
     {
         /// <summary>
-        /// 获取当前类型在对象池中的信号量
+        /// 获取当前类型在对象池中的总资源数
         /// </summary>
         /// <param name="source"></param>
         /// <returns>
-        /// -1 代表此类型不受Pool管理
+        /// int 小于0表示对象池未能正确加载此类型
         /// </returns>
         public static int GetPoolSemaphore(this Type source)
         {
             Pool.Awake();
-            if (Pool.SourceQueue.TryGetValue(source, out var pool))
-            {
-                return (pool?.Count ?? 0) + (Pool.AutoDisposeQueue.TryGetValue(source, out var disc) ? disc.Count : 0);
-            }
-            return -1;
+            return (Pool.FetchQueue.TryGetValue(source, out var pool) ? pool.Count : -1) + (Pool.DisposeQueue.TryGetValue(source, out var disc) ? disc.Count : -1);
         }
     }
 }

@@ -15,36 +15,167 @@ namespace MinimalisticWPF
         private static bool _isloaded = false;
 
         /// <summary>
-        /// 自动回收次数
+        /// 资源队列
         /// </summary>
-        public static ConcurrentDictionary<Type, int> Counter { get; internal set; } = new();
-
+        public static ConcurrentDictionary<Type, ConcurrentQueue<object>> FetchQueue { get; internal set; } = new();
         /// <summary>
-        /// 可用资源栈
-        /// </summary>
-        public static ConcurrentDictionary<Type, ConcurrentQueue<object?>> SourceQueue { get; internal set; } = new();
-
-        /// <summary>
-        /// 由手动释放的资源的哈希
-        /// </summary>
-        public static ConcurrentDictionary<Type, HashSet<object?>> DisposeHash { get; internal set; } = new();
-
-        /// <summary>
-        /// 资源存取Action
+        /// 释放与回收Action
         /// </summary>
         public static ConcurrentDictionary<Type, Tuple<MethodInfo?, MethodInfo?>> Method { get; internal set; } = new();
-
         /// <summary>
-        /// 自动回收的配置信息
+        /// 回收策略配置项
         /// </summary>
-        public static ConcurrentDictionary<Type, Tuple<int, int, int>> AutoDisposeConfig { get; internal set; } = new();
-
+        public static ConcurrentDictionary<Type, Tuple<int, MethodInfo?, int>> DisposeConfig { get; internal set; } = new();
         /// <summary>
-        /// 自动回收队列
+        /// 回收队列
         /// </summary>
-        public static ConcurrentDictionary<Type, ConcurrentQueue<object?>> AutoDisposeQueue { get; internal set; } = new();
+        public static ConcurrentDictionary<Type, ConcurrentQueue<object>> DisposeQueue { get; internal set; } = new();
 
-        public static object? LastLoop { get; internal set; }
+        public static object Fetch(Type type)//获取一个资源
+        {
+            Awake();
+            if (FetchQueue.TryGetValue(type, out var source) && DisposeQueue.TryGetValue(type, out var dispose) && Method.TryGetValue(type, out var method) && DisposeConfig.TryGetValue(type, out var config))
+            {
+                Func<object> func = (IsSourceExsit(source, dispose, config), CanSourceAdded(source, dispose, config)) switch
+                {
+                    (1, _) => () => //资源池可用
+                    {
+                        return FetchWhileSourceExsitSource(source, dispose, method);
+                    }
+                    ,
+                    (2, false) => () => //资源池耗尽但回收池可用,不允许扩容
+                    {
+                        return FetchWhileDisposeExsitSource(source, dispose, method);
+                    }
+                    ,
+                    (2, true) => () => //资源池耗尽但回收池可用,允许扩容
+                    {
+                        AddOneSource(type, source);
+                        return FetchWhileSourceExsitSource(source, dispose, method);
+                    }
+                    ,
+                    (0, true) => () => //无资源可用但允许扩容
+                    {
+                        AddOneSource(type, source);
+                        return FetchWhileSourceExsitSource(source, dispose, method);
+                    }
+                    ,
+                    (0, false) => () => //无资源可用且不允许扩容
+                    {
+                        throw new ArgumentException($"MPL10 类型[ {type.Name} ]的对象池需要扩容,但你设置的资源最大值[ {config.Item3} ]限制了本次扩容");
+                    }
+                    ,
+                    _ => () => { throw new ArgumentException(); } //意外情况
+                };
+                return func.Invoke();
+            }
+            else
+            {
+                throw new ArgumentException($"MPL01 类型[ {type.Name} ]可能不受对象池管理,请使用[ {nameof(PoolAttribute)} ]标记它");
+            }
+        }
+        public static object Dispose(Type type)//释放一个资源
+        {
+            Awake();
+            if (FetchQueue.TryGetValue(type, out var source) && DisposeQueue.TryGetValue(type, out var dispose) && Method.TryGetValue(type, out var method) && DisposeConfig.TryGetValue(type, out var config))
+            {
+                Func<object> func = (IsSourceExsit(source, dispose, config), IsConditionOk(dispose, config)) switch
+                {
+                    (2, true) => () =>
+                    {
+                        if (dispose.TryDequeue(out var dised))
+                        {
+                            method.Item2?.Invoke(dised, null);
+                            source.Enqueue(dised);
+                            return dised;
+                        }
+                        else
+                        {
+                            throw new ArgumentException("MPL15");
+                        }
+                    }
+                    ,
+                    (2, false) => () => { throw new ArgumentException("MPL14"); }
+                    ,
+                    _ => () => { throw new ArgumentException("MPL13"); }
+                };
+                return func.Invoke();
+            }
+            else
+            {
+                throw new ArgumentException($"MPL01 类型[ {type.Name} ]可能不受对象池管理,请使用[ {nameof(PoolAttribute)} ]标记它");
+            }
+        }
+        private static bool CanSourceAdded(ConcurrentQueue<object> fetchqueue, ConcurrentQueue<object> disposequeue, Tuple<int, MethodInfo?, int> config)//检查当前是否有可用资源
+        {
+            return fetchqueue.Count + disposequeue.Count < config.Item3;
+        }
+        private static void AddOneSource(Type type, ConcurrentQueue<object> fetchqueue)//新增一个资源
+        {
+            var instance = Activator.CreateInstance(type);
+            if (instance == null)
+            {
+                throw new ArgumentException($"MPL03 类型[ {type.Name} ]在实例化时发生错误");
+            }
+            else
+            {
+                fetchqueue.Enqueue(instance);
+            }
+        }
+        private static int IsSourceExsit(ConcurrentQueue<object> fetchqueue, ConcurrentQueue<object> disposequeue, Tuple<int, MethodInfo?, int> config)//检查当前是否有可用资源
+        {
+            return (fetchqueue.Count > 0, disposequeue.Count > config.Item1) switch
+            {
+                (true, _) => 1, //资源池可用
+                (false, true) => 2, //回收池可用
+                _ => 0 //资源不足
+            };
+        }
+        private static object FetchWhileSourceExsitSource(ConcurrentQueue<object> fetchqueue, ConcurrentQueue<object> disposequeue, Tuple<MethodInfo?, MethodInfo?> method)//当资源池可用
+        {
+            if (fetchqueue.TryDequeue(out var instance))
+            {
+                method.Item1?.Invoke(instance, null);
+                disposequeue.Enqueue(instance);
+                return instance;
+            }
+            else
+            {
+                throw new ArgumentException("MPL08 资源队列拒绝访问 ____> 在尝试调取资源池资源时产生异常");
+            }
+        }
+        private static object FetchWhileDisposeExsitSource(ConcurrentQueue<object> fetchqueue, ConcurrentQueue<object> disposequeue, Tuple<MethodInfo?, MethodInfo?> method)//当回收池可用
+        {
+            if (disposequeue.TryDequeue(out var instance))
+            {
+                method.Item2?.Invoke(instance, null);
+                method.Item1?.Invoke(instance, null);
+                disposequeue.Enqueue(instance);
+                return instance;
+            }
+            else
+            {
+                throw new ArgumentException("MPL09 回收队列拒绝访问 ____> 在尝试自动回收资源并重新作为被调出的资源时产生异常");
+            }
+        }
+        private static bool IsConditionOk(ConcurrentQueue<object> disposequeue, Tuple<int, MethodInfo?, int> config)
+        {
+            if (disposequeue.TryPeek(out var instance))
+            {
+                if (config.Item2?.Invoke(instance, null) is bool condition)
+                {
+                    return condition;
+                }
+                else
+                {
+                    throw new ArgumentException("MPL12 ");
+                }
+            }
+            else
+            {
+                throw new ArgumentException("MPL11 ");
+            }
+        }
 
         /// <summary>
         /// 激活对象池
@@ -60,171 +191,38 @@ namespace MinimalisticWPF
                     Type = c,
                     Context = c.GetCustomAttribute(typeof(PoolAttribute), true) as PoolAttribute,
                     MethodA = c.GetMethods().FirstOrDefault(m => m.GetCustomAttribute(typeof(PoolFetchAttribute), true) != null),
-                    MethodB = c.GetMethods().FirstOrDefault(m => m.GetCustomAttribute(typeof(PoolDisposeAttribute), true) != null)
+                    MethodB = c.GetMethods().FirstOrDefault(m => m.GetCustomAttribute(typeof(PoolDisposeAttribute), true) != null),
+                    MethodC = c.GetMethods().FirstOrDefault(m => m.GetCustomAttribute(typeof(PoolDisposeConditionAttribute), true) != null),
                 });
                 foreach (var target in targets)
                 {
                     if (target.Context != null)
                     {
-                        var value = new ConcurrentQueue<object?>();
-                        for (int i = 0; i < target.Context.InitialCount; i++)
+                        var value = new ConcurrentQueue<object>();
+                        for (int i = 0; i < target.Context.Initial; i++)
                         {
-                            value.Enqueue(Activator.CreateInstance(target.Type));
+                            var instance = Activator.CreateInstance(target.Type);
+                            if (instance == null)
+                            {
+                                throw new Exception($"MPL03 类型[ {target.Type.Name} ]在实例化时发生错误");
+                            }
+                            else
+                            {
+                                value.Enqueue(instance);
+                            }
                         }
-                        SourceQueue.TryAdd(target.Type, value);
-                        Method.TryAdd(target.Type, Tuple.Create(target.MethodA, target.MethodB));
-                        if (target.Context.IsAutoDispose)
+                        var condition = true;
+                        condition &= FetchQueue.TryAdd(target.Type, value);
+                        condition &= Method.TryAdd(target.Type, Tuple.Create(target.MethodA, target.MethodB));
+                        condition &= DisposeConfig.TryAdd(target.Type, Tuple.Create(target.Context.Critical, target.MethodC, target.Context.Max));
+                        condition &= DisposeQueue.TryAdd(target.Type, new ConcurrentQueue<object>());
+                        if (!condition)
                         {
-                            Counter.TryAdd(target.Type, 0);
-                            AutoDisposeConfig.TryAdd(target.Type, Tuple.Create(target.Context.Maximum, target.Context.CriticalDelta, target.Context.DisposeDelta));
-                            AutoDisposeQueue.TryAdd(target.Type, new ConcurrentQueue<object?>());
-                            DisposeHash.TryAdd(target.Type, new HashSet<object?>());
+                            throw new Exception($"MPL04 类型[ {target.Type.Name} ]在试图初始化对象池时发生错误");
                         }
                     }
                 }
                 _isloaded = true;
-            }
-        }
-        /// <summary>
-        /// 从对象池取出
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="methodparams"></param>
-        public static object? Fetch(Type type, params object[] methodparams)
-        {
-            Awake();
-            var isMethod = Method.TryGetValue(type, out var method);
-            var isSource = SourceQueue.TryGetValue(type, out var sourcequeue);
-            var isDisposeHash = DisposeHash.TryGetValue(type, out var hash);
-            var isAutoDispose = AutoDisposeConfig.TryGetValue(type, out var config);
-            var isAutoDisposeQueue = AutoDisposeQueue.TryGetValue(type, out var disposequeue);
-            var isCounter = Counter.TryGetValue(type, out var counter);
-            if (!isSource || sourcequeue == null || disposequeue == null || config == null || hash == null) throw new ArgumentException($"MPL01 This type has an unexpected situation when initializing the object pool.\n=>{type.FullName}");
-            Func<object?> func = (isAutoDispose) switch
-            {
-                (true) => () =>
-                {
-                    var result = GetInstance(type, sourcequeue, counter, disposequeue, config, method)
-                    .InstanceFetchInvoke(method, methodparams)
-                    .RunAutoDispose(type, config, hash, disposequeue, sourcequeue, method);
-                    return result;
-                }
-                ,
-                (false) => () =>
-                {
-                    var result = GetInstance(type, sourcequeue, -1, disposequeue, config, method)
-                    .InstanceFetchInvoke(method, methodparams);
-                    return result;
-                }
-            };
-            return func.Invoke();
-        }
-        /// <summary>
-        /// （ 手动 ）释放资源至对象池
-        /// </summary>
-        /// <param name="value">需要释放的对象</param>
-        /// <param name="methodparams">触发对象回收函数时传入的参数</param>
-        public static void Dispose(object? value, params object[] methodparams)
-        {
-            Awake();
-            if (value == null) throw new ArgumentNullException("MPL02 An null object cannot be deallocated into an object pool");
-            Type type = value.GetType();
-            var isSource = SourceQueue.TryGetValue(type, out var queue);
-            Method.TryGetValue(type, out var method);
-            DisposeHash.TryGetValue(type, out var hash);
-            if (!isSource) throw new ArgumentException($"MPL01 This type has an unexpected situation when initializing the object pool.\n=>{type.FullName}");
-            if (AutoDisposeConfig.ContainsKey(type))
-            {
-                hash?.Add(value);
-            }
-            method?.Item2?.Invoke(value, methodparams);
-            queue?.Enqueue(value);
-        }
-
-        private static object? GetInstance(Type type, ConcurrentQueue<object?> sourcequeue, int counter, ConcurrentQueue<object?> disposequeue, Tuple<int, int, int> config, Tuple<MethodInfo?, MethodInfo?>? method, params object?[] actionparams)
-        {
-            if (sourcequeue.TryDequeue(out var value))
-            {
-                disposequeue.Enqueue(value);
-                return value;
-            }
-            else
-            {
-                if (type.GetPoolSemaphore() >= config.Item1 && sourcequeue.TryDequeue(out var dis))
-                {
-                    if (LastLoop?.GetType() == type)
-                    {
-                        method?.Item2?.Invoke(LastLoop, null);
-                        sourcequeue.Enqueue(LastLoop);
-                    }
-                    method?.Item1?.Invoke(dis, actionparams);
-                    LastLoop = dis;
-                    return dis;
-                }
-                else
-                {
-                    return CreateNew(type, counter, disposequeue);
-                }
-            }
-        }
-        private static object? CreateNew(Type type, int counter, ConcurrentQueue<object?> disposequeue)
-        {
-            var result = Activator.CreateInstance(type).AddCounter(type, counter);
-            disposequeue.Enqueue(result);
-            return result;
-        }
-        private static object? InstanceFetchInvoke(this object? target, Tuple<MethodInfo?, MethodInfo?>? method, params object?[] values)
-        {
-            method?.Item1?.Invoke(target, values);
-            return target;
-        }
-        private static object? InstanceDisposeInvoke(this object? target, Tuple<MethodInfo?, MethodInfo?>? method, params object?[] values)
-        {
-            method?.Item2?.Invoke(target, values);
-            return target;
-        }
-        private static object? AddCounter(this object? target, Type type, int counter)
-        {
-            Counter.TryUpdate(type, counter + 1, counter);
-            return target;
-        }
-        private static object? RunAutoDispose(this object? target, Type type, Tuple<int, int, int> config, HashSet<object?> hash, ConcurrentQueue<object?> disposequeue, ConcurrentQueue<object?> sourcequeue, Tuple<MethodInfo?, MethodInfo?>? method)
-        {
-            Counter.TryGetValue(type, out var counter);
-            if (counter == config.Item2)
-            {
-                for (int i = 0; i < config.Item3; i++)
-                {
-                    var temp = DisposeStackAndHash(hash, disposequeue, sourcequeue, method);
-                }
-                var isloop = sourcequeue.Count + config.Item3 < config.Item1;
-                var inc = isloop ? config.Item3 : config.Item1 - sourcequeue.Count;
-                for (var i = 0; i < inc; i++)
-                {
-                    sourcequeue.Enqueue(Activator.CreateInstance(type));
-                }
-                Counter.TryUpdate(type, 0, counter);
-            }
-            return target;
-        }
-        private static object? DisposeStackAndHash(HashSet<object?> hash, ConcurrentQueue<object?> disposequeue, ConcurrentQueue<object?> sourcequeue, Tuple<MethodInfo?, MethodInfo?>? method)
-        {
-            if (disposequeue.TryDequeue(out var value))
-            {
-                if (hash.Remove(value))
-                {
-                    return DisposeStackAndHash(hash, disposequeue, sourcequeue, method);
-                }
-                else
-                {
-                    InstanceDisposeInvoke(value, method);
-                    sourcequeue.Append(value);
-                    return value;
-                }
-            }
-            else
-            {
-                return null;
             }
         }
     }
