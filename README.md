@@ -271,6 +271,7 @@ var animation = Transition.CreateBoardFromType<Grid>()
   - Use struction like " Dictionary&lt;Type,Dictionary&lt;object,StateMachine>> ".You can now dispose of all statemachines of a given type by using StateMachine.Dispose()
 - State __> No check for type.Only propertyName & propertyValue
 </summary>
+</details>
 
 ## Document
 
