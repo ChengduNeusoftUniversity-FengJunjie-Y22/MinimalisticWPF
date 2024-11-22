@@ -3,7 +3,8 @@
 #### Easier animation construction √
 #### Support for conditional animation loading within the MVVM design pattern √
 #### Aspect-oriented Programming simplification √
-#### Dynamic theme support [ Beta… ]
+#### Dynamic Theme √
+#### ObjectPool [ Beta…… ]
 
 - [github](https://github.com/Axvser/MinimalisticWPF)
 - [中文文档](https://axvser.github.io/MinimalisticWPFDoc/)
