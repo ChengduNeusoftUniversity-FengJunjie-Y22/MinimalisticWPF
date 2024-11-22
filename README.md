@@ -251,16 +251,65 @@ var animation = Transition.CreateBoardFromType<Grid>()
 </details>
 
 <details>
-<summary>V1.9.5</summary>
+<summary>V1.9.5 - [ Beta ] - ObjectPool that support aotumiclly dispose</summary>
 
-### Ⅰ ObjectPool Support - A generic object pool that supports auto-scaling
+### Ⅰ ObjectPool Support
 - Attribute
   - PoolAttribute
   - PoolFetchAttribute
   - PoolDisposeAttribute
+  - PoolDisposeConditionAttribute
+  ```csharp
+    [Pool(5, 10)] //The initial number of units is 5. If resources are insufficient, the system automatically expands to a maximum of 10 units
+    public class Unit
+    {
+        public static int count = 1;
+
+        public Unit() { Value = count; count++; }
+
+        public int Value { get; set; } = 1;
+
+        [PoolFetch] //Triggered when the object is removed from the pool
+        public void WhileFetch()
+        {
+            MessageBox.Show($"Fetch {Value}");
+        }
+
+        [PoolDispose] //Triggered when the object pool is automatically reclaimed
+        public void WhileDispose()
+        {
+            MessageBox.Show($"Dispose {Value}");
+        }
+
+        [PoolDisposeCondition] //If the return value is true, the resource can be reclaimed automatically
+        public bool CanDisposed()
+        {
+            return Value % 2 == 0 ? true : false;
+        }
+    }
+  ```
 - Static Method
-  - Pool.Fetch
-  - Pool.Dispose ( There is no need to use this method to reclaim objects when PoolAttribute is passed a 4 argument to enable automatic reclamation )
+  - Get Instance
+  ```csharp
+  var unit = Pool.Fetch(typeof(Unit)) as Unit;
+  if (Pool.TryFetch(typeof(Unit), out var result))
+  {
+      var unit = result as Unit;
+  }
+  ```
+  - Start Auto Dispose
+  ```csharp
+  Pool.RunAutoDispose(typeof(Unit), 5000);
+  ```
+  - End Auto Dispose
+  ```csharp
+  Pool.StopAutoDispose(typeof(Unit));
+  ```
+  - Force resource release
+  ```csharp
+  var unit = Pool.Fetch(typeof(Unit)) as Unit;
+  unit.PoolDispose();
+  ```
 
 ### Ⅱ Changes in mechanisms
 - Dictionary __> ConcurrentDictionary
@@ -272,6 +321,8 @@ var animation = Transition.CreateBoardFromType<Grid>()
 - State __> No check for type.Only propertyName & propertyValue
 </summary>
 </details>
+
+---
 
 ## Document
 

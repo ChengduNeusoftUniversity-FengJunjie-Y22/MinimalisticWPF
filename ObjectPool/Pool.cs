@@ -2,11 +2,13 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace MinimalisticWPF
 {
@@ -15,95 +17,7 @@ namespace MinimalisticWPF
         private static bool _isloaded = false;
 
         /// <summary>
-        /// 资源队列
-        /// </summary>
-        public static ConcurrentDictionary<Type, ConcurrentQueue<object>> FetchQueue { get; internal set; } = new();
-        /// <summary>
-        /// 释放与回收Action
-        /// </summary>
-        public static ConcurrentDictionary<Type, Tuple<MethodInfo?, MethodInfo?>> Method { get; internal set; } = new();
-        /// <summary>
-        /// 回收策略配置项
-        /// </summary>
-        public static ConcurrentDictionary<Type, Tuple<int, MethodInfo?, int>> DisposeConfig { get; internal set; } = new();
-        /// <summary>
-        /// 回收队列
-        /// </summary>
-        public static ConcurrentDictionary<Type, ConcurrentQueue<object>> DisposeQueue { get; internal set; } = new();
-
-        private static bool CanSourceAdded(ConcurrentQueue<object> fetchqueue, ConcurrentQueue<object> disposequeue, Tuple<int, MethodInfo?, int> config)//检查当前是否有可用资源
-        {
-            return fetchqueue.Count + disposequeue.Count < config.Item3;
-        }
-        private static void AddOneSource(Type type, ConcurrentQueue<object> fetchqueue)//新增一个资源
-        {
-            var instance = Activator.CreateInstance(type);
-            if (instance == null)
-            {
-                throw new ArgumentException($"MPL03 类型[ {type.Name} ]在实例化时发生错误");
-            }
-            else
-            {
-                fetchqueue.Enqueue(instance);
-            }
-        }
-        private static int IsSourceExsit(ConcurrentQueue<object> fetchqueue, ConcurrentQueue<object> disposequeue, Tuple<int, MethodInfo?, int> config)//检查当前是否有可用资源
-        {
-            return (fetchqueue.Count > 0, disposequeue.Count > config.Item1) switch
-            {
-                (true, _) => 1, //资源池可用
-                (false, true) => 2, //回收池可用
-                _ => 0 //资源不足
-            };
-        }
-        private static object FetchWhileSourceExsitSource(ConcurrentQueue<object> fetchqueue, ConcurrentQueue<object> disposequeue, Tuple<MethodInfo?, MethodInfo?> method)//当资源池可用
-        {
-            if (fetchqueue.TryDequeue(out var instance))
-            {
-                method.Item1?.Invoke(instance, null);
-                disposequeue.Enqueue(instance);
-                return instance;
-            }
-            else
-            {
-                throw new ArgumentException("MPL08 资源队列拒绝访问 ____> 在尝试调取资源池资源时产生异常");
-            }
-        }
-        private static object FetchWhileDisposeExsitSource(ConcurrentQueue<object> fetchqueue, ConcurrentQueue<object> disposequeue, Tuple<MethodInfo?, MethodInfo?> method)//当回收池可用
-        {
-            if (disposequeue.TryDequeue(out var instance))
-            {
-                method.Item2?.Invoke(instance, null);
-                method.Item1?.Invoke(instance, null);
-                disposequeue.Enqueue(instance);
-                return instance;
-            }
-            else
-            {
-                throw new ArgumentException("MPL09 回收队列拒绝访问 ____> 在尝试自动回收资源并重新作为被调出的资源时产生异常");
-            }
-        }
-        private static bool IsConditionOk(ConcurrentQueue<object> disposequeue, Tuple<int, MethodInfo?, int> config)
-        {
-            if (disposequeue.TryPeek(out var instance))
-            {
-                if (config.Item2?.Invoke(instance, null) is bool condition)
-                {
-                    return condition;
-                }
-                else
-                {
-                    throw new ArgumentException("MPL12 ");
-                }
-            }
-            else
-            {
-                throw new ArgumentException("MPL11 ");
-            }
-        }
-
-        /// <summary>
-        /// 初始化对象池资源 , 通常建议先一步执行该函数 , 当然 , 直接调用Fetch/Dispose方法也是会触发该函数的
+        /// 初始化对象池资源
         /// </summary>
         public static void InitializeSource()
         {
@@ -129,7 +43,7 @@ namespace MinimalisticWPF
                             var instance = Activator.CreateInstance(target.Type);
                             if (instance == null)
                             {
-                                throw new Exception($"MPL03 类型[ {target.Type.Name} ]在实例化时发生错误");
+                                throw new Exception($"MPL01 类型[ {target.Type.FullName} ]在试图初始化对象池时发生错误");
                             }
                             else
                             {
@@ -137,105 +51,265 @@ namespace MinimalisticWPF
                             }
                         }
                         var condition = true;
-                        condition &= FetchQueue.TryAdd(target.Type, value);
-                        condition &= Method.TryAdd(target.Type, Tuple.Create(target.MethodA, target.MethodB));
-                        condition &= DisposeConfig.TryAdd(target.Type, Tuple.Create(target.Context.Critical, target.MethodC, target.Context.Max));
-                        condition &= DisposeQueue.TryAdd(target.Type, new ConcurrentQueue<object>());
+                        condition &= Source.TryAdd(target.Type, value);
+                        condition &= Config.TryAdd(target.Type, Tuple.Create(target.Context.Max, target.MethodA, target.MethodB, target.MethodC));
+                        condition &= Dispose.TryAdd(target.Type, new HashSet<object>(target.Context.Max));
                         if (!condition)
                         {
-                            throw new Exception($"MPL04 类型[ {target.Type.Name} ]在试图初始化对象池时发生错误");
+                            throw new Exception($"MPL01 类型[ {target.Type.FullName} ]在试图初始化对象池时发生错误");
                         }
                     }
                 }
                 _isloaded = true;
             }
         }
+
         /// <summary>
-        /// 从对象池取出对象
+        /// 可用资源
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
-        public static object Fetch(Type type)//获取一个资源
+        public static ConcurrentDictionary<Type, ConcurrentQueue<object>> Source { get; internal set; } = new();
+        /// <summary>
+        /// 配置
+        /// </summary>
+        public static ConcurrentDictionary<Type, Tuple<int, MethodInfo?, MethodInfo?, MethodInfo?>> Config { get; internal set; } = new();
+        /// <summary>
+        /// 占用资源
+        /// </summary>
+        public static ConcurrentDictionary<Type, HashSet<object>> Dispose { get; internal set; } = new();
+        /// <summary>
+        /// 当前执行中的扫描
+        /// </summary>
+        public static ConcurrentDictionary<Type, Task> Monitor { get; internal set; } = new();
+        private static ConcurrentDictionary<Type, CancellationTokenSource> Tokens { get; } = new();
+
+        /// <summary>
+        /// 取出资源
+        /// </summary>
+        /// <param name="type">资源类型</param>
+        public static object Fetch(Type type)
         {
             InitializeSource();
-            if (FetchQueue.TryGetValue(type, out var source) && DisposeQueue.TryGetValue(type, out var dispose) && Method.TryGetValue(type, out var method) && DisposeConfig.TryGetValue(type, out var config))
+            if (Source.TryGetValue(type, out var source) && Dispose.TryGetValue(type, out var dispose) && Config.TryGetValue(type, out var config))
             {
-                Func<object> func = (IsSourceExsit(source, dispose, config), CanSourceAdded(source, dispose, config)) switch
+                var sem = source.Count + dispose.Count;
+                var isSourceExsit = sem > 0;
+                var canSourceAdd = sem < config.Item1;
+                Func<object> func = (isSourceExsit, canSourceAdd) switch
                 {
-                    (1, _) => () => //资源池可用
+                    (true, _) => () =>
                     {
-                        return FetchWhileSourceExsitSource(source, dispose, method);
-                    }
-                    ,
-                    (2, false) => () => //资源池耗尽但回收池可用,不允许扩容
-                    {
-                        return FetchWhileDisposeExsitSource(source, dispose, method);
-                    }
-                    ,
-                    (2, true) => () => //资源池耗尽但回收池可用,允许扩容
-                    {
-                        AddOneSource(type, source);
-                        return FetchWhileSourceExsitSource(source, dispose, method);
-                    }
-                    ,
-                    (0, true) => () => //无资源可用但允许扩容
-                    {
-                        AddOneSource(type, source);
-                        return FetchWhileSourceExsitSource(source, dispose, method);
-                    }
-                    ,
-                    (0, false) => () => //无资源可用且不允许扩容
-                    {
-                        throw new ArgumentException($"MPL10 类型[ {type.Name} ]的对象池需要扩容,但你设置的资源最大值[ {config.Item3} ]限制了本次扩容");
-                    }
-                    ,
-                    _ => () => { throw new ArgumentException(); } //意外情况
-                };
-                return func.Invoke();
-            }
-            else
-            {
-                throw new ArgumentException($"MPL01 类型[ {type.Name} ]可能不受对象池管理,请使用[ {nameof(PoolAttribute)} ]标记它");
-            }
-        }
-        /// <summary>
-        /// ( 不必要 ) 释放对象至对象池 ，这个步骤通常由对象池自动完成
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
-        public static object Dispose(Type type)//释放一个资源
-        {
-            InitializeSource();
-            if (FetchQueue.TryGetValue(type, out var source) && DisposeQueue.TryGetValue(type, out var dispose) && Method.TryGetValue(type, out var method) && DisposeConfig.TryGetValue(type, out var config))
-            {
-                Func<object> func = (IsSourceExsit(source, dispose, config), IsConditionOk(dispose, config)) switch
-                {
-                    (2, true) => () =>
-                    {
-                        if (dispose.TryDequeue(out var dised))
+                        if (source.TryDequeue(out var obj))
                         {
-                            method.Item2?.Invoke(dised, null);
-                            source.Enqueue(dised);
-                            return dised;
+                            dispose.Add(obj);
+                            config.Item2?.Invoke(obj, null);
+                            return obj;
                         }
                         else
                         {
-                            throw new ArgumentException("MPL15");
+                            throw new ArgumentException($"MPL02 [ {type.FullName} ]资源队列为空或拒绝了本次调取");
                         }
                     }
                     ,
-                    (2, false) => () => { throw new ArgumentException("MPL14"); }
+                    (false, true) => () =>
+                    {
+                        var newValue = Activator.CreateInstance(type);
+                        if (newValue == null)
+                        {
+                            throw new ArgumentException($"MPL03 [ {type.FullName} ]扩容时未能成功创建实例");
+                        }
+                        else
+                        {
+                            config.Item2?.Invoke(newValue, null);
+                            dispose.Add(newValue);
+                            return newValue;
+                        }
+                    }
                     ,
-                    _ => () => { throw new ArgumentException("MPL13"); }
+                    (false, false) => () =>
+                    {
+                        var previewdisposed = dispose.FirstOrDefault(x => config.Item4?.Invoke(x, null) is bool condition && condition);
+                        if (previewdisposed == null)
+                        {
+                            throw new ArgumentException($"MPL04 [ {type.FullName} ]资源需求溢出,请考虑增加最大资源数或加快扫描频率");
+                        }
+                        else
+                        {
+                            config.Item3?.Invoke(previewdisposed, null);
+                            config.Item2?.Invoke(previewdisposed, null);
+                            return previewdisposed;
+                        }
+                    }
                 };
                 return func.Invoke();
             }
             else
             {
-                throw new ArgumentException($"MPL01 类型[ {type.Name} ]可能不受对象池管理,请使用[ {nameof(PoolAttribute)} ]标记它");
+                throw new ArgumentException($"MPL01 类型[ {type.FullName} ]在试图初始化对象池时发生错误");
             }
+        }
+        /// <summary>
+        /// 试图从对象池取出一个资源
+        /// </summary>
+        /// <param name="type">资源类型</param>
+        /// <param name="result">可能的资源</param>
+        /// <returns>bool 是否成功取出资源</returns>
+        public static bool TryFetch(Type type, out object result)
+        {
+            InitializeSource();
+            result = string.Empty;
+            if (Source.TryGetValue(type, out var source) && Dispose.TryGetValue(type, out var dispose) && Config.TryGetValue(type, out var config))
+            {
+                var sem = source.Count + dispose.Count;
+                var isSourceExsit = sem > 0;
+                var canSourceAdd = sem < config.Item1;
+                object? temp = null;
+                Func<bool> func = (isSourceExsit, canSourceAdd) switch
+                {
+                    (true, _) => () =>
+                    {
+                        if (source.TryDequeue(out var obj))
+                        {
+                            dispose.Add(obj);
+                            config.Item2?.Invoke(obj, null);
+                            temp = obj;
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    ,
+                    (false, true) => () =>
+                    {
+                        var newValue = Activator.CreateInstance(type);
+                        if (newValue == null)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            config.Item2?.Invoke(newValue, null);
+                            dispose.Add(newValue);
+                            temp = newValue;
+                            return true;
+                        }
+                    }
+                    ,
+                    (false, false) => () =>
+                    {
+                        var previewdisposed = dispose.FirstOrDefault(x => config.Item4?.Invoke(x, null) is bool condition && condition);
+                        if (previewdisposed == null)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            config.Item3?.Invoke(previewdisposed, null);
+                            config.Item2?.Invoke(previewdisposed, null);
+                            temp = previewdisposed;
+                            return true;
+                        }
+                    }
+                };
+                var invoked = func.Invoke();
+                if (temp != null)
+                {
+                    result = temp;
+                }
+                return invoked;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        /// <summary>
+        /// 启用自动回收
+        /// </summary>
+        /// <param name="type">类型</param>
+        /// <param name="scanspan">扫描间隔（毫秒）</param>
+        public static void RunAutoDispose(Type type, int scanspan)
+        {
+            InitializeSource();
+            if (!Monitor.TryGetValue(type, out _) && Source.TryGetValue(type, out var source) && Dispose.TryGetValue(type, out var dispose) && Config.TryGetValue(type, out var config))
+            {
+                var cts = new CancellationTokenSource();
+                Tokens[type] = cts;
+                var token = cts.Token;
+
+                var task = Task.Run(async () =>
+                {
+                    while (!token.IsCancellationRequested)
+                    {
+                        var target = new List<object>(dispose.Count);
+                        foreach (object item in dispose.Where(o => config.Item4?.Invoke(o, null) is bool condition && condition))
+                        {
+                            target.Add(item);
+                        }
+                        foreach (object item in target)
+                        {
+                            dispose.Remove(item);
+                            source.Enqueue(item);
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                config.Item3?.Invoke(item, null);
+                            });
+                        }
+                        await Task.Delay(scanspan, token);
+                    }
+                }, token);
+
+                Monitor[type] = task;
+            }
+            else
+            {
+                throw new InvalidOperationException($"MPL05 [ {type.FullName} ]未启用自动回收或没有挂载[ {nameof(PoolAttribute)} ]");
+            }
+        }
+        /// <summary>
+        /// 停止自动回收
+        /// </summary>
+        /// <param name="type">类型</param>
+        public static void StopAutoDispose(Type type)
+        {
+            if (Monitor.TryGetValue(type, out var task) && Tokens.TryGetValue(type, out var cts))
+            {
+                cts.Cancel();
+                Monitor.TryRemove(type, out _);
+                Tokens.TryRemove(type, out _);
+            }
+        }
+        /// <summary>
+        /// 获取当前类型在对象池中的总资源数
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns>
+        /// int 小于0表示对象池未能正确加载此类型
+        /// </returns>
+        public static int GetPoolSemaphore(this Type source)
+        {
+            return (Source.TryGetValue(source, out var pool) ? pool.Count : -1) + (Dispose.TryGetValue(source, out var disc) ? disc.Count : -1);
+        }
+        /// <summary>
+        /// 强制回收
+        /// </summary>
+        /// <param name="local"></param>
+        /// <returns>bool 是否成功回收</returns>
+        public static bool PoolDispose(this object local)
+        {
+            var type = local.GetType();
+            if (Source.TryGetValue(type, out var source) && Dispose.TryGetValue(type, out var dispose) && Config.TryGetValue(type, out var config))
+            {
+                if (dispose.Remove(local))
+                {
+                    config.Item2?.Invoke(local, null);
+                    source.Enqueue(local);
+                    return true;
+                }
+                return false;
+            }
+            return false;
         }
     }
 }
