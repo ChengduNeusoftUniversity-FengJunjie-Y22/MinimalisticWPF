@@ -19,7 +19,7 @@ namespace MinimalisticWPF
         /// <param name="max">最大数量</param>
         public PoolAttribute(int initial, int max)
         {
-            if (!(max > initial) || initial < 0) throw new ArgumentException($"MPL01 传入的对象池参数不可用\n初始: {initial}\n最大: {max}");
+            if (!(max > initial) || initial < 0) throw new ArgumentException($"MPL06 传入的对象池参数不可用\n初始: {initial}\n最大: {max}");
             Initial = initial;
             Max = max;
         }
