@@ -22,12 +22,12 @@ namespace MinimalisticWPF
         /// <para>Item2 满足条件时自动切换到的状态</para>
         /// <para>Item3 此次切换状态的过渡参数</para>
         /// </summary>
-        public List<Tuple<Func<T, bool>, State, Action<TransitionParams>?>> Conditions { get; internal set; } = new List<Tuple<Func<T, bool>, State, Action<TransitionParams>?>>();
+        public List<Tuple<Func<T, bool>, Func<State>, Action<TransitionParams>?>> Conditions { get; internal set; } = new List<Tuple<Func<T, bool>, Func<State>, Action<TransitionParams>?>>();
 
         /// <summary>
         /// 添加[Condition=>State+TransitionParams]的条件切换关系映射
         /// </summary>
-        public StateVector<T> AddCondition(Expression<Func<T, bool>> condition, State targetState, Action<TransitionParams>? setTransitionParams)
+        public StateVector<T> AddCondition(Expression<Func<T, bool>> condition, Func<State> targetState, Action<TransitionParams>? setTransitionParams)
         {
             var checker = condition.Compile();
 
@@ -41,15 +41,26 @@ namespace MinimalisticWPF
         /// <summary>
         /// 启用委托对Target检测条件
         /// </summary>
-        public void Check(T target, StateMachine stateMachine)
+        public void Check(object target, StateMachine? stateMachine)
         {
-            for (int i = 0; i < Conditions.Count; i++)
+            stateMachine ??= StateMachine.Create(target);
+
+            if (target is T value)
             {
-                if (Conditions[i].Item1(target))
+                for (int i = 0; i < Conditions.Count; i++)
                 {
-                    stateMachine.Transition(Conditions[i].Item2.StateName, Conditions[i].Item3);
-                    return;
+                    if (Conditions[i].Item1(value))
+                    {
+                        var st = Conditions[i].Item2.Invoke();
+                        stateMachine.States.Add(st);
+                        stateMachine.Transition(st.StateName, Conditions[i].Item3);
+                        return;
+                    }
                 }
+            }
+            else
+            {
+                throw new InvalidOperationException($"SV01 [ {target.GetType().FullName} ]与[ {nameof(T)} ]类型不一致,不允许执行条件检查");
             }
         }
 

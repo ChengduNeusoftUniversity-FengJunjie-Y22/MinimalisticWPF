@@ -1,121 +1,42 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
 
 namespace MinimalisticWPF
 {
-    public partial class MButton : UserControl
+    public partial class MButton : Button
     {
         public MButton()
         {
             InitializeComponent();
-            this.StateMachineLoading(ViewModel);
         }
 
-        private static TransitionBoard<Border> _selected = Transition.CreateBoardFromType<Border>()
-            .SetProperty(x => x.Opacity, 1)
-            .SetParams((x) => { x.Duration = 0.5; });
-        private static TransitionBoard<Border> _noselected = Transition.CreateBoardFromType<Border>()
-            .SetProperty(x => x.Opacity, 0)
-            .SetParams((x) => { x.Duration = 0.5; });
-
-        private bool _iseol = false;
-        public bool IsAnimationLocked
+        public object Text
         {
-            get => _iseol;
-            set
-            {
-                if (_iseol != value)
-                {
-                    _iseol = value;
-                    if (value)
-                    {
-                        FixedBorder.Opacity = 1;
-                    }
-                }
-            }
+            get { return GetValue(TextProperty); }
+            set { SetValue(TextProperty, value); }
+        }
+        public static readonly DependencyProperty TextProperty =
+            DependencyProperty.Register("Text", typeof(object), typeof(MButton), new PropertyMetadata(string.Empty, OnTextChanged));
+        public static void OnTextChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            (sender as MButton).VM.Text = e.NewValue.ToString() ?? string.Empty;
         }
 
-        public double WiseHeight
+        private void UpdateHoverInfo(object sender, MouseEventArgs e)
         {
-            get => ViewModel.Height;
-            set => ViewModel.Height = value;
-        }
-
-        public double WiseWidth
-        {
-            get => ViewModel.Width;
-            set => ViewModel.Width = value;
-        }
-
-        public event MouseButtonEventHandler? Click
-        {
-            add { BackgroundBorder.PreviewMouseLeftButtonDown += value; }
-            remove { BackgroundBorder.PreviewMouseLeftButtonDown -= value; }
-        }
-
-        public string Text
-        {
-            get => ViewModel.Text;
-            set => ViewModel.Text = value;
-        }
-
-        public double FontSizeRatio
-        {
-            get => ViewModel.FontSizeConvertRate;
-            set => ViewModel.FontSizeConvertRate = value;
-        }
-
-        public Brush TextBrush
-        {
-            get => ViewModel.TextBrush;
-            set => ViewModel.TextBrush = value;
-        }
-
-        public Brush HoverBrush
-        {
-            get => ViewModel.HoverBackground;
-            set => ViewModel.HoverBackground = value;
-        }
-
-        public Brush EdgeBrush
-        {
-            get => ViewModel.EdgeBrush;
-            set => ViewModel.EdgeBrush = value;
-        }
-
-        public Thickness EdgeThickness
-        {
-            get => ViewModel.EdgeThickness;
-            set => ViewModel.EdgeThickness = value;
-        }
-
-        public CornerRadius CornerRadius
-        {
-            get => ViewModel.CornerRadius;
-            set => ViewModel.CornerRadius = value;
-        }
-
-        public double HoverOpacity
-        {
-            get => ViewModel.HoverBackgroundOpacity;
-            internal set => ViewModel.HoverBackgroundOpacity = value;
-        }
-
-        private void BackgroundBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (IsAnimationLocked) return;
-            ViewModel.IsMouseInside = true;
-            FixedBorder.BeginTransition(_selected);
-        }
-
-        private void BackgroundBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (IsAnimationLocked) return;
-            ViewModel.IsMouseInside = false;
-            FixedBorder.BeginTransition(_noselected);
+            VM.OnHoverChanged();
         }
     }
 }

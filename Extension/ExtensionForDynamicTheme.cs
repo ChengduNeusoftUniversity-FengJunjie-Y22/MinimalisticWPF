@@ -50,16 +50,7 @@ namespace MinimalisticWPF
                 {
                     source.BeginTransition(state, paramAction ?? TransitionParams.Theme);
                 }
-                else
-                {
-                    MessageBox.Show("未能找寻State");
-                }
             }
-            else
-            {
-                MessageBox.Show("未能找寻StateDictionary");
-            }
-
             return source;
         }
     }

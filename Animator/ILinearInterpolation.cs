@@ -86,7 +86,8 @@ namespace MinimalisticWPF
                 var r = (byte)(color1.Value.R + t * (color2.Value.R - color1.Value.R));
                 var g = (byte)(color1.Value.G + t * (color2.Value.G - color1.Value.G));
                 var b = (byte)(color1.Value.B + t * (color2.Value.B - color1.Value.B));
-                result.Add(new SolidColorBrush(Color.FromRgb(r, g, b)));
+                var a = (byte)(color1.Value.A + t * (color2.Value.A - color1.Value.A));
+                result.Add(new SolidColorBrush(Color.FromArgb(a, r, g, b)));
             }
 
             return result;

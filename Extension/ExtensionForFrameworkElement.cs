@@ -59,7 +59,6 @@ namespace MinimalisticWPF
 
             return machine;
         }
-
         /// <summary>
         /// 加载指向父级容器尺寸的过渡动画
         /// </summary>
@@ -74,10 +73,8 @@ namespace MinimalisticWPF
                 .SetProperty(x => x.Height, newHeight)
                 .SetParams(set)
                 .Start();
-            Notification.Message("启动完成");
             return element;
         }
-
         /// <summary>
         /// 加载指向父级容器高度的过渡动画
         /// </summary>
@@ -92,7 +89,6 @@ namespace MinimalisticWPF
                 .Start();
             return element;
         }
-
         /// <summary>
         /// 加载指向父级容器宽度的过渡动画
         /// </summary>
