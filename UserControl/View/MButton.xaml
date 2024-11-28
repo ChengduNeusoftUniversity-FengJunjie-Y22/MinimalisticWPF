@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:MinimalisticWPF"
              mc:Ignorable="d" 
              x:Name="main"
-             d:DesignHeight="100" d:DesignWidth="310" Background="Transparent" Content="{Binding Text,RelativeSource={RelativeSource Mode=Self}}" Foreground="{Binding TextBrush}" BorderBrush="{Binding BorderBrush}" BorderThickness="{Binding BorderThickness}" MouseEnter="UpdateHoverInfo" MouseLeave="UpdateHoverInfo">
+             d:DesignHeight="100" d:DesignWidth="310" Background="Transparent" Cursor="Hand" Content="{Binding Text,RelativeSource={RelativeSource Mode=Self}}" Foreground="{Binding TextBrush}" BorderBrush="{Binding BorderBrush}" BorderThickness="{Binding BorderThickness}" MouseEnter="UpdateHoverInfo" MouseLeave="UpdateHoverInfo">
     <Button.Resources>
         <local:DoubleCvt x:Key="FSCvt" ConvertRate="0.7"/>
     </Button.Resources>

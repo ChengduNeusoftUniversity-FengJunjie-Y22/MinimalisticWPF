@@ -13,20 +13,10 @@ namespace MinimalisticWPF
 {
     public static class DynamicTheme
     {
-        private static bool _isloaded = false;
-
-        /// <summary>
-        /// 类型应用的动态主题
-        /// </summary>
-        public static ConcurrentDictionary<Type, ConcurrentDictionary<Type, State>> Source { get; internal set; } = new();
-        /// <summary>
-        /// 需要在全局使用动态主题的实例
-        /// </summary>
+        public static ConcurrentDictionary<Type, ConcurrentDictionary<Type, State>> TransitionSource { get; internal set; } = new();
         public static HashSet<object> GlobalInstance { get; internal set; } = new(64);
 
-        /// <summary>
-        /// 激活动态主题
-        /// </summary>
+        private static bool _isloaded = false;
         public static void Awake()
         {
             if (!_isloaded)
@@ -47,6 +37,7 @@ namespace MinimalisticWPF
         /// <param name="windowBack">主窗口背景色</param>
         public static void GlobalApply(Type attributeType, Action<TransitionParams>? paramAction = null, Brush? windowBack = default)
         {
+            Awake();
             foreach (var item in GlobalInstance)
             {
                 item.ApplyTheme(attributeType, paramAction);
@@ -56,7 +47,6 @@ namespace MinimalisticWPF
                 .SetParams(paramAction ?? TransitionParams.Theme)
                 .Start();
         }
-
         /// <summary>
         /// [ 局部 ] 应用主题 , 无需激活
         /// </summary>
@@ -65,12 +55,12 @@ namespace MinimalisticWPF
         /// <param name="targets">目标实例</param>
         public static void PartialApply(Type attributeType, Action<TransitionParams>? paramAction = null, params object[] targets)
         {
+            Awake();
             foreach (var item in targets)
             {
                 item.ApplyTheme(attributeType, paramAction);
             }
         }
-
         private static void KVPGeneration(IEnumerable<Type> classes, IEnumerable<Type> attributes)
         {
             foreach (var cs in classes)
@@ -148,7 +138,7 @@ namespace MinimalisticWPF
                     }
                     unit.TryAdd(attribute, state);
                 }
-                Source.TryAdd(cs, unit);
+                TransitionSource.TryAdd(cs, unit);
             }
         }
     }

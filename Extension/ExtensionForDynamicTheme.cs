@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
@@ -18,6 +19,7 @@ namespace MinimalisticWPF
         /// <param name="source"></param>
         public static T RunWithGlobalTheme<T>(this T source) where T : class
         {
+            DynamicTheme.Awake();
             if (!DynamicTheme.GlobalInstance.Contains(source))
             {
                 DynamicTheme.GlobalInstance.Add(source);
@@ -30,6 +32,7 @@ namespace MinimalisticWPF
         /// <param name="source"></param>
         public static T RunWithOutGlobalTheme<T>(this T source) where T : class
         {
+            DynamicTheme.Awake();
             DynamicTheme.GlobalInstance.Remove(source);
             return source;
         }
@@ -43,8 +46,9 @@ namespace MinimalisticWPF
         /// <returns></returns>
         public static T ApplyTheme<T>(this T source, Type attributeType, Action<TransitionParams>? paramAction = null) where T : class
         {
+            DynamicTheme.Awake();
             var type = source.GetType();
-            if (DynamicTheme.Source.TryGetValue(type, out var statedic))
+            if (DynamicTheme.TransitionSource.TryGetValue(type, out var statedic))
             {
                 if (statedic.TryGetValue(attributeType, out var state))
                 {

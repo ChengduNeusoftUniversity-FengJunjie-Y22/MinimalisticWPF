@@ -15,7 +15,7 @@ namespace MinimalisticWPF
         public ButtonVM() { this.RunWithGlobalTheme(); }
 
         private string _text = "MButton";
-        private Brush _textbrush = Brushes.Wheat;
+        private Brush _textbrush = Brushes.White;
         private Brush _borderbrush = Brushes.White;
         private Thickness _borderthickness = new Thickness(1);
         private CornerRadius _cornerradius = new CornerRadius(5);
@@ -111,6 +111,14 @@ namespace MinimalisticWPF
                 if (value != _isPressed)
                 {
                     _isPressed = value;
+                    if (value)
+                    {
+                        WhileHover();
+                    }
+                    else
+                    {
+                        WhileNoHover();
+                    }
                     OnConditionsChecked();
                 }
             }
@@ -122,11 +130,17 @@ namespace MinimalisticWPF
         }
         public void WhileHover()
         {
-
+            this.Transition()
+                .SetProperty(x => x.TextBrush, Brushes.Black.ToRGB().Delta(0, -100,0, 0).Brush)
+                .SetParams(TransitionParams.Theme)
+                .Start();
         }
         public void WhileNoHover()
         {
-
+            this.Transition()
+                .SetProperty(x => x.TextBrush, Brushes.Black.ToRGB().Delta(0, 100, 0, 0).Brush)
+                .SetParams(TransitionParams.Theme)
+                .Start();
         }
     }
 }

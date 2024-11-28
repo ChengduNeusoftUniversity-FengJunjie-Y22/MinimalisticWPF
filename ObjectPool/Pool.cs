@@ -234,10 +234,8 @@ namespace MinimalisticWPF
             InitializeSource();
             if (!Monitor.TryGetValue(type, out _) && Source.TryGetValue(type, out var source) && Dispose.TryGetValue(type, out var dispose) && Config.TryGetValue(type, out var config))
             {
-                var cts = new CancellationTokenSource();
-                Tokens[type] = cts;
+                var cts = new CancellationTokenSource();               
                 var token = cts.Token;
-
                 var task = Task.Run(async () =>
                 {
                     while (!token.IsCancellationRequested)
@@ -259,8 +257,8 @@ namespace MinimalisticWPF
                         await Task.Delay(scanspan, token);
                     }
                 }, token);
-
-                Monitor[type] = task;
+                Tokens.TryAdd(type, cts);
+                Monitor.TryAdd(type, task);
             }
             else
             {
@@ -292,24 +290,50 @@ namespace MinimalisticWPF
             return (Source.TryGetValue(source, out var pool) ? pool.Count : -1) + (Dispose.TryGetValue(source, out var disc) ? disc.Count : -1);
         }
         /// <summary>
-        /// 强制回收
+        /// 强制回收指定资源
         /// </summary>
-        /// <param name="local"></param>
-        /// <returns>bool 是否成功回收</returns>
-        public static bool PoolDispose(this object local)
+        /// <param name="sources"></param>
+        /// <returns>int 回收数</returns>
+        public static int ForceDispose(params object[] sources)
         {
-            var type = local.GetType();
-            if (Source.TryGetValue(type, out var source) && Dispose.TryGetValue(type, out var dispose) && Config.TryGetValue(type, out var config))
+            var count = 0;
+            foreach (var local in sources)
             {
-                if (dispose.Remove(local))
+                var type = local.GetType();
+                if (Source.TryGetValue(type, out var source) && Dispose.TryGetValue(type, out var dispose) && Config.TryGetValue(type, out var config))
                 {
-                    config.Item2?.Invoke(local, null);
-                    source.Enqueue(local);
-                    return true;
+                    if (dispose.Remove(local))
+                    {
+                        config.Item2?.Invoke(local, null);
+                        source.Enqueue(local);
+                        count++;
+                    }
                 }
-                return false;
             }
-            return false;
+            return count;
+        }
+        /// <summary>
+        /// 强制回收指定类型的所有资源
+        /// </summary>
+        /// <param name="types"></param>
+        /// <returns>int 回收数</returns>s
+        public static int ForceDispose(params Type[] types)
+        {
+            var count = 0;
+            foreach (var type in types)
+            {
+                if (Source.TryGetValue(type, out var source) && Dispose.TryGetValue(type, out var dispose) && Config.TryGetValue(type, out var config))
+                {
+                    foreach (var item in dispose)
+                    {
+                        config.Item2?.Invoke(item, null);
+                        source.Enqueue(item);
+                        count++;
+                    }
+                    dispose.Clear();
+                }
+            }
+            return count;
         }
     }
 }

@@ -68,5 +68,30 @@ namespace MinimalisticWPF
             int newA = Math.Clamp((int)(A * rateRGBA), 0, 255);
             return new RGB(newR, newG, newB, newA);
         }
+
+        public RGB Delta(double deltaR, double deltaG, double deltaB, double deltaA)
+        {
+            int newR = Math.Clamp((int)(R + deltaR), 0, 255);
+            int newG = Math.Clamp((int)(G + deltaG), 0, 255);
+            int newB = Math.Clamp((int)(B + deltaB), 0, 255);
+            int newA = Math.Clamp((int)(A + deltaA), 0, 255);
+            return new RGB(newR, newG, newB, newA);
+        }
+        public RGB Delta(double deltaRGB, double deltaA)
+        {
+            int newR = Math.Clamp((int)(R + deltaRGB), 0, 255);
+            int newG = Math.Clamp((int)(G + deltaRGB), 0, 255);
+            int newB = Math.Clamp((int)(B + deltaRGB), 0, 255);
+            int newA = Math.Clamp((int)(A + deltaA), 0, 255);
+            return new RGB(newR, newG, newB, newA);
+        }
+        public RGB Delta(double deltaRGBA)
+        {
+            int newR = Math.Clamp((int)(R + deltaRGBA), 0, 255);
+            int newG = Math.Clamp((int)(G + deltaRGBA), 0, 255);
+            int newB = Math.Clamp((int)(B + deltaRGBA), 0, 255);
+            int newA = Math.Clamp((int)(A + deltaRGBA), 0, 255);
+            return new RGB(newR, newG, newB, newA);
+        }
     }
 }
