@@ -11,10 +11,6 @@ namespace MinimalisticWPF
 {
     public static class ExtensionForProxy
     {
-        /// <summary>
-        /// 创建实例对象的代理
-        /// </summary>
-        /// <typeparam name="T">实例对象的接口抽象</typeparam>
         public static T CreateProxy<T>(this T target) where T : IProxy
         {
             var type = typeof(T);
@@ -24,15 +20,6 @@ namespace MinimalisticWPF
             ProxyIDs.Add(proxy, proxy._localid);
             return proxy;
         }
-
-        /// <summary>
-        /// 设置属性getter器切面逻辑
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="propertyName"></param>
-        /// <param name="start"></param>
-        /// <param name="coverage"></param>
-        /// <param name="end"></param>
         public static T SetPropertyGetter<T>(this T source, string propertyName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end) where T : IProxy
         {
             if (!ProxyIDs.TryGetValue(source, out var id))
@@ -53,15 +40,6 @@ namespace MinimalisticWPF
             }
             return source;
         }
-
-        /// <summary>
-        /// 设置属性setter器切面逻辑
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="propertyName"></param>
-        /// <param name="start"></param>
-        /// <param name="coverage"></param>
-        /// <param name="end"></param>
         public static T SetPropertySetter<T>(this T source, string propertyName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end) where T : IProxy
         {
             if (!ProxyIDs.TryGetValue(source, out var id))
@@ -82,15 +60,6 @@ namespace MinimalisticWPF
             }
             return source;
         }
-
-        /// <summary>
-        /// 设置方法切面逻辑
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="methodName"></param>
-        /// <param name="start"></param>
-        /// <param name="coverage"></param>
-        /// <param name="end"></param>
         public static T SetMethod<T>(this T source, string methodName, ProxyHandler? start, ProxyHandler? coverage, ProxyHandler? end) where T : IProxy
         {
             if (!ProxyIDs.TryGetValue(source, out var id))

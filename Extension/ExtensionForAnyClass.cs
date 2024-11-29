@@ -13,9 +13,6 @@ namespace MinimalisticWPF
 {
     public static class ExtensionForAnyClass
     {
-        /// <summary>
-        /// 开始创建过渡效果,可直接启动 ( IsStatic == false )
-        /// </summary>
         public static TransitionBoard<T> Transition<T>(this T element) where T : class
         {
             TransitionBoard<T> tempStoryBoard = new TransitionBoard<T>(element);
@@ -53,36 +50,15 @@ namespace MinimalisticWPF
             return result;
         }
 
-        /// <summary>
-        /// 启动过渡
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source"></param>
-        /// <param name="transfer">动画效果</param>
         public static void BeginTransition<T>(this T source, TransitionBoard<T> transfer) where T : class
         {
             transfer.Start(source);
         }
-        /// <summary>
-        /// 启动过渡
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source"></param>
-        /// <param name="transfer">动画效果</param>
-        /// <param name="set">效果参数</param>
         public static void BeginTransition<T>(this T source, TransitionBoard<T> transfer, Action<TransitionParams> set) where T : class
         {
             transfer.TransitionParams = set;
             transfer.Start(source);
         }
-        /// <summary>
-        /// 启动过渡
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source"></param>
-        /// <param name="state">状态信息</param>
-        /// <param name="set">效果参数</param>
-        /// <exception cref="ArgumentException"></exception>
         public static void BeginTransition<T>(this T source, State state, Action<TransitionParams> set) where T : class
         {
             if (state == null) return;
@@ -99,13 +75,6 @@ namespace MinimalisticWPF
                 machine.Transition(state.StateName, set);
             }
         }
-
-        /// <summary>
-        /// 打断过渡
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="IsStopSafe">是否停止Safe过渡</param>
-        /// <param name="IsStopUnSafe">是否停止UnSafe过渡</param>
         public static T StopTransition<T>(this T source, bool IsStopSafe = true, bool IsStopUnSafe = false) where T : class
         {
             var machine = StateMachine.Create(source);

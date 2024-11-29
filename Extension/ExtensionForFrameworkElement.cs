@@ -16,14 +16,6 @@ namespace MinimalisticWPF
 {
     public static class ExtensionForFrameworkElement
     {
-        /// <summary>
-        /// MVVM模式下,在控件初始化时加载状态机条件切换功能块
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source"></param>
-        /// <param name="viewModel">控件DataContext</param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
         public static StateMachine StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class
         {
             var vectorInterface = viewModel as IConditionalTransition<T> ?? throw new ArgumentException($"The [ {nameof(T)} ] Is Not A [ {nameof(IConditionalTransition<T>)} ]");
@@ -59,9 +51,6 @@ namespace MinimalisticWPF
 
             return machine;
         }
-        /// <summary>
-        /// 加载指向父级容器尺寸的过渡动画
-        /// </summary>
         public static T TransitionToParentSize<T>(this T element, double rate, Action<TransitionParams> set) where T : FrameworkElement
         {
             var Parent = element.Parent as FrameworkElement;
@@ -75,9 +64,6 @@ namespace MinimalisticWPF
                 .Start();
             return element;
         }
-        /// <summary>
-        /// 加载指向父级容器高度的过渡动画
-        /// </summary>
         public static T TransitionToParentHeight<T>(this T element, double rate, Action<TransitionParams> set) where T : FrameworkElement
         {
             var Parent = element.Parent as FrameworkElement;
@@ -89,9 +75,6 @@ namespace MinimalisticWPF
                 .Start();
             return element;
         }
-        /// <summary>
-        /// 加载指向父级容器宽度的过渡动画
-        /// </summary>
         public static T TransitionToParentWidth<T>(this T element, double rate, Action<TransitionParams> set) where T : FrameworkElement
         {
             var Parent = element.Parent as FrameworkElement;

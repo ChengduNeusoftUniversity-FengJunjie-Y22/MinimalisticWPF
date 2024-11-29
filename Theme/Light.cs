@@ -7,17 +7,23 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
-    /// <summary>
-    /// [ 特性 ]亮色主题
-    /// </summary>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public class Light : Attribute, IThemeAttribute
+    public sealed class Light : Attribute, IThemeAttribute
     {
         public Light(params object?[] param)
         {
             Parameters = param;
         }
+        public Light(LightBrushPackage brushenum)
+        {
+            BrushPackage = brushenum;
+            ispackagebrush = true;
+        }
 
+        private bool ispackagebrush = false;
         public object?[]? Parameters { get; set; }
+        public LightBrushPackage BrushPackage { get; set; }
+
+        public object? Value => ispackagebrush ? LightBrushes.Select(BrushPackage) : null;
     }
 }

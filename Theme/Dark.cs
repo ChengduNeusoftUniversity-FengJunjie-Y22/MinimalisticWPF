@@ -7,9 +7,6 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
-    /// <summary>
-    /// [ 特性 ]暗色主题
-    /// </summary>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class Dark : Attribute, IThemeAttribute
     {
@@ -17,7 +14,16 @@ namespace MinimalisticWPF
         {
             Parameters = param;
         }
+        public Dark(DarkBrushPackage brushenum)
+        {
+            BrushPackage = brushenum;
+            ispackagebrush = true;
+        }
 
+        private bool ispackagebrush = false;
         public object?[]? Parameters { get; set; }
+        public DarkBrushPackage BrushPackage { get; set; }
+
+        public object? Value => ispackagebrush ? DarkBrushes.Select(BrushPackage) : null;
     }
 }

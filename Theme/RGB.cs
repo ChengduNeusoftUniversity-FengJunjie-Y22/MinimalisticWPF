@@ -69,29 +69,34 @@ namespace MinimalisticWPF
             return new RGB(newR, newG, newB, newA);
         }
 
-        public RGB Delta(double deltaR, double deltaG, double deltaB, double deltaA)
+        public RGB Delta(int deltaR, int deltaG, int deltaB, int deltaA)
         {
-            int newR = Math.Clamp((int)(R + deltaR), 0, 255);
-            int newG = Math.Clamp((int)(G + deltaG), 0, 255);
-            int newB = Math.Clamp((int)(B + deltaB), 0, 255);
-            int newA = Math.Clamp((int)(A + deltaA), 0, 255);
+            int newR = Math.Clamp((R + deltaR), 0, 255);
+            int newG = Math.Clamp((G + deltaG), 0, 255);
+            int newB = Math.Clamp((B + deltaB), 0, 255);
+            int newA = Math.Clamp((A + deltaA), 0, 255);
             return new RGB(newR, newG, newB, newA);
         }
-        public RGB Delta(double deltaRGB, double deltaA)
+        public RGB Delta(int deltaRGB, int deltaA)
         {
-            int newR = Math.Clamp((int)(R + deltaRGB), 0, 255);
-            int newG = Math.Clamp((int)(G + deltaRGB), 0, 255);
-            int newB = Math.Clamp((int)(B + deltaRGB), 0, 255);
-            int newA = Math.Clamp((int)(A + deltaA), 0, 255);
+            int newR = Math.Clamp((R + deltaRGB), 0, 255);
+            int newG = Math.Clamp((G + deltaRGB), 0, 255);
+            int newB = Math.Clamp((B + deltaRGB), 0, 255);
+            int newA = Math.Clamp((A + deltaA), 0, 255);
             return new RGB(newR, newG, newB, newA);
         }
-        public RGB Delta(double deltaRGBA)
+        public RGB Delta(int deltaRGBA)
         {
-            int newR = Math.Clamp((int)(R + deltaRGBA), 0, 255);
-            int newG = Math.Clamp((int)(G + deltaRGBA), 0, 255);
-            int newB = Math.Clamp((int)(B + deltaRGBA), 0, 255);
-            int newA = Math.Clamp((int)(A + deltaRGBA), 0, 255);
+            int newR = Math.Clamp((R + deltaRGBA), 0, 255);
+            int newG = Math.Clamp((G + deltaRGBA), 0, 255);
+            int newB = Math.Clamp((B + deltaRGBA), 0, 255);
+            int newA = Math.Clamp((A + deltaRGBA), 0, 255);
             return new RGB(newR, newG, newB, newA);
+        }
+
+        public override string ToString()
+        {
+            return $"RGBA [{R},{G},{B},{A}]";
         }
     }
 }

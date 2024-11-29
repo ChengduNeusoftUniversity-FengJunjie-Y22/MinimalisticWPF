@@ -10,9 +10,6 @@ namespace MinimalisticWPF
 {
     public static class ExtensionForstring
     {
-        /// <summary>
-        /// 简易检查密码强度
-        /// </summary>
         public static int CheckPasswordStrength(this string password, int MinLength = 8)
         {
             if (string.IsNullOrEmpty(password))
@@ -40,9 +37,6 @@ namespace MinimalisticWPF
             return score;
         }
 
-        /// <summary>
-        /// Levenshtein距离(长文本匹配)
-        /// </summary>
         public static int LevenshteinDistance(this string source, string target)
         {
             int n = source.Length;
@@ -66,10 +60,6 @@ namespace MinimalisticWPF
 
             return d[n, m];
         }
-
-        /// <summary>
-        /// Jaro-Winkler距离(短文本匹配)
-        /// </summary>
         public static double JaroWinklerDistance(this string source, string target)
         {
             if (source == target) return 1.0;
@@ -116,16 +106,9 @@ namespace MinimalisticWPF
             double jw = jt + (0.1 * Math.Min(s1Len, s2Len) * (1 - jt));
             return jw;
         }
-
-        /// <summary>
-        /// 最佳匹配
-        /// </summary>
-        /// <param name="target">匹配源</param>
-        /// <param name="similarity">Levenshtein距离(int) OR JaroWinkler距离(double)</param>
-        /// <returns>int? 匹配结果在集合中的索引</returns>
-        public static int? BestMatch(this string source, ICollection<string> target, object similarity)
+        public static int BestMatch(this string source, ICollection<string> target, object similarity)
         {
-            int? result = null;
+            int result = -1;
 
             if (similarity is int LD)
             {
@@ -169,9 +152,6 @@ namespace MinimalisticWPF
             return result;
         }
 
-        /// <summary>
-        /// 转为颜色
-        /// </summary>
         public static Brush ToBrush(this string source)
         {
             try
@@ -184,10 +164,31 @@ namespace MinimalisticWPF
                 return Brushes.Transparent;
             }
         }
+        public static Color ToColor(this string source)
+        {
+            try
+            {
+                var color = (Color)ColorConverter.ConvertFromString(source);
+                return color;
+            }
+            catch (FormatException)
+            {
+                return Color.FromArgb(0, 0, 0, 0);
+            }
+        }
+        public static RGB ToRGB(this string source)
+        {
+            try
+            {
+                var color = (Color)ColorConverter.ConvertFromString(source);
+                return new RGB(color.R, color.G, color.B, color.A);
+            }
+            catch (FormatException)
+            {
+                return new RGB(0, 0, 0, 0);
+            }
+        }
 
-        /// <summary>
-        /// 转为int
-        /// </summary>
         public static int? ToInt(this string source)
         {
             int? result = null;
@@ -198,10 +199,6 @@ namespace MinimalisticWPF
             }
             return result;
         }
-
-        /// <summary>
-        /// 转为double
-        /// </summary>
         public static double ToDouble(this string source)
         {
             double? result = null;
@@ -212,10 +209,6 @@ namespace MinimalisticWPF
             }
             return result == null ? double.NaN : (double)result;
         }
-
-        /// <summary>
-        /// 转为float
-        /// </summary>
         public static float? ToFloat(this string source)
         {
             float? result = null;
@@ -226,10 +219,6 @@ namespace MinimalisticWPF
             }
             return result;
         }
-
-        /// <summary>
-        /// 转为bool
-        /// </summary>
         public static bool? ToBool(this string source)
         {
             if (source.Length < 4 || source.Length > 5)
@@ -254,12 +243,6 @@ namespace MinimalisticWPF
             return null;
         }
 
-        /// <summary>
-        /// 对字符串采用AES加密
-        /// </summary>
-        /// <param name="plaintext">原始字符串</param>
-        /// <param name="key">密钥</param>
-        /// <returns>string 加密字符串</returns>
         public static string AES(this string source, string key)
         {
             if (key.Length != 16 && key.Length != 24 && key.Length != 32)
@@ -292,13 +275,6 @@ namespace MinimalisticWPF
 
             return Convert.ToBase64String(IV) + "|" + Convert.ToBase64String(encryptedBytes);
         }
-
-        /// <summary>
-        /// 对AES加密字符串解密
-        /// </summary>
-        /// <param name="ciphertext">加密字符串</param>
-        /// <param name="key">密钥</param>
-        /// <returns>string 解密字符串</returns>
         public static string AESParse(this string source, string key)
         {
             if (key.Length != 16 && key.Length != 24 && key.Length != 32)
@@ -332,12 +308,6 @@ namespace MinimalisticWPF
             return plaintext;
         }
 
-        /// <summary>
-        /// 依据左右标识符捕获文本段
-        /// </summary>
-        /// <param name="left">左标识</param>
-        /// <param name="right">右标识</param>
-        /// <returns>List</returns>
         public static List<string> CaptureBetween(this string source, string left, string right)
         {
             if (string.IsNullOrEmpty(source))
@@ -370,13 +340,6 @@ namespace MinimalisticWPF
 
             return result;
         }
-
-        /// <summary>
-        /// 依据有序特征集合，捕获文本段
-        /// </summary>
-        /// <param name="source">源字符串</param>
-        /// <param name="features">特征字符串集合</param>
-        /// <returns>捕获的文本段列表</returns>
         public static List<string> CaptureLike(this string source, params string[] features)
         {
             if (string.IsNullOrEmpty(source))
@@ -407,11 +370,6 @@ namespace MinimalisticWPF
             return result;
         }
 
-        /// <summary>
-        /// 从.exe所在位置开始,创建一个文件夹
-        /// </summary>
-        /// <returns>成功创建文件夹的路径</returns>
-        /// <exception cref="ArgumentException"></exception>
         public static string CreatFolder(this string source)
         {
             if (string.IsNullOrEmpty(source))
@@ -433,13 +391,6 @@ namespace MinimalisticWPF
 
             return result;
         }
-
-        /// <summary>
-        /// 从.exe所在位置开始,创建多级嵌套关系的文件夹
-        /// </summary>
-        /// <param name="nodes">有序父节点</param>
-        /// <returns>成功创建文件夹的路径</returns>
-        /// <exception cref="ArgumentException"></exception>
         public static string CreatFolder(this string source, params string[] nodes)
         {
             if (string.IsNullOrEmpty(source))
@@ -466,15 +417,6 @@ namespace MinimalisticWPF
 
             return result;
         }
-
-        /// <summary>
-        /// 作为文件名,存储指定对象为XML文件
-        /// </summary>
-        /// <param name="folderPath">文件夹路径</param>
-        /// <param name="targetObject">待存储对象</param>
-        /// <returns>存储路径</returns>
-        /// <exception cref="ArgumentException"></exception>
-        /// <exception cref="Exception"></exception>
         public static string CreatXmlFile<T>(this string source, string folderPath, T targetObject)
         {
             if (!IsPathValid(folderPath) || !Directory.Exists(folderPath))
@@ -500,15 +442,6 @@ namespace MinimalisticWPF
                 throw new Exception($"Error creating XML file '{filePath}': {ex.Message}");
             }
         }
-
-        /// <summary>
-        /// 作为文件名,存储指定对象为JSON文件
-        /// </summary>
-        /// <param name="folderPath">文件夹路径</param>
-        /// <param name="targetObject">待存储对象</param>
-        /// <returns>存储路径</returns>
-        /// <exception cref="ArgumentException"></exception>
-        /// <exception cref="Exception"></exception>
         public static string CreatJsonFile<T>(this string source, string folderPath, T targetObject)
         {
             if (!IsPathValid(folderPath) || !Directory.Exists(folderPath))
@@ -533,14 +466,6 @@ namespace MinimalisticWPF
                 throw new Exception($"Error creating JSON file '{filePath}': {ex.Message}");
             }
         }
-
-        /// <summary>
-        /// Xml数据解析为指定类型的对象
-        /// </summary>
-        /// <param name="source">XML文件路径</param>
-        /// <returns>T? 解析结果</returns>
-        /// <exception cref="ArgumentException">无效的文件路径</exception>
-        /// <exception cref="Exception">解析错误</exception>
         public static T? XmlParse<T>(this string source)
         {
             if (string.IsNullOrEmpty(source))
@@ -561,11 +486,6 @@ namespace MinimalisticWPF
                 throw new Exception($"Error parsing XML file '{source}': {ex.Message}", ex);
             }
         }
-
-        /// <summary>
-        /// Json数据解析为指定类型的对象
-        /// </summary>
-        /// <returns>T? 解析结果</returns>
         public static T? JsonParse<T>(this string source)
         {
             if (string.IsNullOrEmpty(source))
@@ -582,11 +502,6 @@ namespace MinimalisticWPF
                 throw new Exception($"Error parsing JSON file '{source}': {ex.Message}");
             }
         }
-
-        /// <summary>
-        /// 检查绝对路径是否合法
-        /// </summary>
-        /// <returns>bool 检查结果</returns>
         public static bool IsPathValid(this string source)
         {
             bool isAbsolutePath = Path.IsPathRooted(source);

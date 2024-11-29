@@ -65,8 +65,8 @@ namespace MinimalisticWPF
                 }
             }
         }
-        [Light("#1e1e1e")]
-        [Dark(nameof(Brushes.White))]
+        [Light(LightBrushPackage.H1)]
+        [Dark(DarkBrushPackage.H1)]
         public Brush BorderBrush
         {
             get => _borderbrush;
@@ -131,14 +131,14 @@ namespace MinimalisticWPF
         public void WhileHover()
         {
             this.Transition()
-                .SetProperty(x => x.TextBrush, Brushes.Black.ToRGB().Delta(0, -100,0, 0).Brush)
+                .SetProperty(x => x.TextBrush, TextBrush.ToRGB().Delta(100, 0, 100, 0).Brush)
                 .SetParams(TransitionParams.Theme)
                 .Start();
         }
         public void WhileNoHover()
         {
             this.Transition()
-                .SetProperty(x => x.TextBrush, Brushes.Black.ToRGB().Delta(0, 100, 0, 0).Brush)
+                .SetProperty(x => x.TextBrush, TextBrush.ToRGB().Delta(-100, 0, -100, 0).Brush)
                 .SetParams(TransitionParams.Theme)
                 .Start();
         }

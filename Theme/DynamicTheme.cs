@@ -11,6 +11,40 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
+    /// <summary>
+    /// 深色主题Brush包
+    /// <para>Default >> 默认无色</para>
+    /// <para>H ( Heading ) >> 标题文本色</para>
+    /// <para>P ( Paragraph ) >> 段落文本色</para>
+    /// <para>B ( Background ) >> 背景色</para>
+    /// <para>E ( EdgeBrush ) >> 边界涂色</para>
+    /// </summary>
+    public enum DarkBrushPackage : int
+    {
+        Default,
+        H1, H2, H3, H4, H5,
+        P1, P2, P3, P4, P5,
+        B1, B2, B3, B4, B5,
+        E1, E2, E3, E4, E5,
+    }
+
+    /// <summary>
+    /// 浅色主题Brush包
+    /// <para>Default >> 默认无色</para>
+    /// <para>H ( Heading ) >> 标题文本色</para>
+    /// <para>P ( Paragraph ) >> 段落文本色</para>
+    /// <para>B ( Background ) >> 背景色</para>
+    /// <para>E ( EdgeBrush ) >> 边界涂色</para>
+    /// </summary>
+    public enum LightBrushPackage : int
+    {
+        Default,
+        H1, H2, H3, H4, H5,
+        P1, P2, P3, P4, P5,
+        B1, B2, B3, B4, B5,
+        E1, E2, E3, E4, E5,
+    }
+
     public static class DynamicTheme
     {
         public static ConcurrentDictionary<Type, ConcurrentDictionary<Type, State>> TransitionSource { get; internal set; } = new();
@@ -28,13 +62,6 @@ namespace MinimalisticWPF
                 _isloaded = true;
             }
         }
-
-        /// <summary>
-        /// [ 全局 ] 应用主题 , 需要 object.RunWithGlobalTheme() 激活对象以在全局生效
-        /// </summary>
-        /// <param name="attributeType">主题特性类型</param>
-        /// <param name="paramAction">过渡参数构造</param>
-        /// <param name="windowBack">主窗口背景色</param>
         public static void GlobalApply(Type attributeType, Action<TransitionParams>? paramAction = null, Brush? windowBack = default)
         {
             Awake();
@@ -47,12 +74,6 @@ namespace MinimalisticWPF
                 .SetParams(paramAction ?? TransitionParams.Theme)
                 .Start();
         }
-        /// <summary>
-        /// [ 局部 ] 应用主题 , 无需激活
-        /// </summary>
-        /// <param name="attributeType">主题特性类型</param>
-        /// <param name="paramAction">过渡参数构造</param>
-        /// <param name="targets">目标实例</param>
         public static void PartialApply(Type attributeType, Action<TransitionParams>? paramAction = null, params object[] targets)
         {
             Awake();
@@ -98,7 +119,7 @@ namespace MinimalisticWPF
                                 ,
                                 (false, true, false, false, false, false) => () =>
                                 {
-                                    var value = info.Context.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? Brushes.Transparent;
+                                    var value = info.Context.Value ?? info.Context.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? Brushes.Transparent;
                                     state.AddProperty(info.PropertyInfo.Name, value);
                                     return 2;
                                 }
