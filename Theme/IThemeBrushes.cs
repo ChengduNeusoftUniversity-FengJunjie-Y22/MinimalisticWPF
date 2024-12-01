@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
-    public interface IThemeAttribute
+    public interface IThemeBrushes
     {
-        object?[]? Parameters { get; }
-        object? Value { get; }
-        object? FocusValue { get; }
+        Brush Select(BrushTags brushenum);
     }
 }

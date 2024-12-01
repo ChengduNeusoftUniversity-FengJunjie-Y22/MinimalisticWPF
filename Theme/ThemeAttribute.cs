@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// [ 特性 ]可应用动态主题的
+    /// [ 特性 ]可应用动态主题的Class
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public class ThemeAttribute : Attribute

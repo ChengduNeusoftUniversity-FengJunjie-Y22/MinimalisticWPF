@@ -8,22 +8,33 @@ using System.Windows.Media;
 namespace MinimalisticWPF
 {
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public class Dark : Attribute, IThemeAttribute
+    public sealed class Dark : Attribute, IThemeAttribute
     {
         public Dark(params object?[] param)
         {
             Parameters = param;
         }
-        public Dark(DarkBrushPackage brushenum)
+        public Dark(BrushTags noselected)
         {
-            BrushPackage = brushenum;
+            BrushPackage = noselected;
             ispackagebrush = true;
+        }
+        public Dark(BrushTags noselected, BrushTags selected)
+        {
+            BrushPackage = noselected;
+            HoverBrushPackage = selected;
+            ispackagebrush = true;
+            ishoverpackagebrush = true;
         }
 
         private bool ispackagebrush = false;
-        public object?[]? Parameters { get; set; }
-        public DarkBrushPackage BrushPackage { get; set; }
+        private bool ishoverpackagebrush = false;
 
-        public object? Value => ispackagebrush ? DarkBrushes.Select(BrushPackage) : null;
+        internal BrushTags BrushPackage { get; set; }
+        internal BrushTags HoverBrushPackage { get; set; }
+
+        public object?[]? Parameters { get; set; }
+        public object? Value => ispackagebrush ? DarkBrushes.Selector.Select(BrushPackage) : null;
+        public object? FocusValue => ishoverpackagebrush ? DarkBrushes.Selector.Select(HoverBrushPackage) : null;
     }
 }

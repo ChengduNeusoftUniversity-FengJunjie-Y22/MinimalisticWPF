@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,43 +13,29 @@ using System.Windows.Media;
 namespace MinimalisticWPF
 {
     /// <summary>
-    /// 深色主题Brush包
-    /// <para>Default >> 默认无色</para>
-    /// <para>H ( Heading ) >> 标题文本色</para>
-    /// <para>P ( Paragraph ) >> 段落文本色</para>
+    /// <para>H ( Heading )    >> 标题文本色</para>
+    /// <para>P ( Paragraph )  >> 段落文本色</para>
     /// <para>B ( Background ) >> 背景色</para>
-    /// <para>E ( EdgeBrush ) >> 边界涂色</para>
+    /// <para>E ( EdgeBrush )  >> 边界涂色</para>
+    /// <para>F ( Focus )      >> 悬停色</para>
     /// </summary>
-    public enum DarkBrushPackage : int
+    public enum BrushTags : int
     {
         Default,
         H1, H2, H3, H4, H5,
         P1, P2, P3, P4, P5,
         B1, B2, B3, B4, B5,
         E1, E2, E3, E4, E5,
-    }
-
-    /// <summary>
-    /// 浅色主题Brush包
-    /// <para>Default >> 默认无色</para>
-    /// <para>H ( Heading ) >> 标题文本色</para>
-    /// <para>P ( Paragraph ) >> 段落文本色</para>
-    /// <para>B ( Background ) >> 背景色</para>
-    /// <para>E ( EdgeBrush ) >> 边界涂色</para>
-    /// </summary>
-    public enum LightBrushPackage : int
-    {
-        Default,
-        H1, H2, H3, H4, H5,
-        P1, P2, P3, P4, P5,
-        B1, B2, B3, B4, B5,
-        E1, E2, E3, E4, E5,
+        F1, F2, F3, F4, F5,
     }
 
     public static class DynamicTheme
     {
-        public static ConcurrentDictionary<Type, ConcurrentDictionary<Type, State>> TransitionSource { get; internal set; } = new();
-        public static HashSet<object> GlobalInstance { get; internal set; } = new(64);
+        internal static ConcurrentDictionary<Type, ConcurrentDictionary<Type, State>> TransitionSource { get; set; } = new();
+        internal static ConcurrentDictionary<Type, ConcurrentDictionary<Type, HoverActionManager>> HoverSource { get; set; } = new();
+        internal static ConcurrentDictionary<object, Type> CurrentTheme { get; set; } = new();
+        internal static HashSet<object> GlobalInstance { get; set; } = new(64);
+        public static Type InitialTheme { get; set; } = typeof(Dark);
 
         private static bool _isloaded = false;
         public static void Awake()
@@ -58,11 +45,12 @@ namespace MinimalisticWPF
                 var Assemblies = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes());
                 var classAssemblies = Assemblies.Where(t => t.GetCustomAttribute(typeof(ThemeAttribute), true) != null);
                 var attributeAssemblies = Assemblies.Where(t => typeof(IThemeAttribute).IsAssignableFrom(t) && typeof(Attribute).IsAssignableFrom(t) && !t.IsAbstract);
-                KVPGeneration(classAssemblies, attributeAssemblies);
+                var themebrushesAssemblies = Assemblies.Where(t => typeof(IThemeBrushes).IsAssignableFrom(t) && !t.IsAbstract);
+                KVPGeneration(classAssemblies, attributeAssemblies, themebrushesAssemblies);
                 _isloaded = true;
             }
         }
-        public static void GlobalApply(Type attributeType, Action<TransitionParams>? paramAction = null, Brush? windowBack = default)
+        public static void Apply(Type attributeType, Action<TransitionParams>? paramAction = null, Brush? windowBack = default)
         {
             Awake();
             foreach (var item in GlobalInstance)
@@ -74,21 +62,14 @@ namespace MinimalisticWPF
                 .SetParams(paramAction ?? TransitionParams.Theme)
                 .Start();
         }
-        public static void PartialApply(Type attributeType, Action<TransitionParams>? paramAction = null, params object[] targets)
-        {
-            Awake();
-            foreach (var item in targets)
-            {
-                item.ApplyTheme(attributeType, paramAction);
-            }
-        }
-        private static void KVPGeneration(IEnumerable<Type> classes, IEnumerable<Type> attributes)
+        private static void KVPGeneration(IEnumerable<Type> classes, IEnumerable<Type> attributes, IEnumerable<Type> brushselectors)
         {
             foreach (var cs in classes)
             {
                 StateMachine.InitializeTypes(cs);
                 if (!StateMachine.SplitedPropertyInfos.TryGetValue(cs, out var group)) break;
                 var unit = new ConcurrentDictionary<Type, State>();
+                var hoverunit = new ConcurrentDictionary<Type, HoverActionManager>();
                 foreach (var attribute in attributes)
                 {
                     var properties = cs.GetProperties()
@@ -98,6 +79,7 @@ namespace MinimalisticWPF
                         Context = p.GetCustomAttribute(attribute, true) as IThemeAttribute,
                     });
                     var state = new State();
+                    var hovermanager = new HoverActionManager();
                     foreach (var info in properties)
                     {
                         if (info.PropertyInfo.CanWrite && info.PropertyInfo.CanRead && info.Context != null)
@@ -120,6 +102,9 @@ namespace MinimalisticWPF
                                 (false, true, false, false, false, false) => () =>
                                 {
                                     var value = info.Context.Value ?? info.Context.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? Brushes.Transparent;
+                                    var focus = info.Context.FocusValue ?? value;
+                                    hovermanager.ToTheme.AddProperty(info.PropertyInfo.Name, value);
+                                    hovermanager.ToHover.AddProperty(info.PropertyInfo.Name, focus);
                                     state.AddProperty(info.PropertyInfo.Name, value);
                                     return 2;
                                 }
@@ -158,8 +143,10 @@ namespace MinimalisticWPF
                         }
                     }
                     unit.TryAdd(attribute, state);
+                    hoverunit.TryAdd(attribute, hovermanager);
                 }
                 TransitionSource.TryAdd(cs, unit);
+                HoverSource.TryAdd(cs, hoverunit);
             }
         }
     }

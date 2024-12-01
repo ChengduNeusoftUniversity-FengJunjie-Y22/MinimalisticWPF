@@ -14,16 +14,27 @@ namespace MinimalisticWPF
         {
             Parameters = param;
         }
-        public Light(LightBrushPackage brushenum)
+        public Light(BrushTags noselected)
         {
-            BrushPackage = brushenum;
+            BrushPackage = noselected;
             ispackagebrush = true;
+        }
+        public Light(BrushTags noselected, BrushTags selected)
+        {
+            BrushPackage = noselected;
+            HoverBrushPackage = selected;
+            ispackagebrush = true;
+            ishoverpackagebrush = true;
         }
 
         private bool ispackagebrush = false;
-        public object?[]? Parameters { get; set; }
-        public LightBrushPackage BrushPackage { get; set; }
+        private bool ishoverpackagebrush = false;
 
-        public object? Value => ispackagebrush ? LightBrushes.Select(BrushPackage) : null;
+        internal BrushTags BrushPackage { get; set; }
+        internal BrushTags HoverBrushPackage { get; set; }
+
+        public object?[]? Parameters { get; set; }
+        public object? Value => ispackagebrush ? LightBrushes.Selector.Select(BrushPackage) : null;
+        public object? FocusValue => ishoverpackagebrush ? LightBrushes.Selector.Select(HoverBrushPackage) : null;
     }
 }

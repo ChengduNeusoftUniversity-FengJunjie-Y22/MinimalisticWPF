@@ -30,12 +30,20 @@ namespace MinimalisticWPF
         /// </summary>
         public static bool DefaultIsBeginInvoke { get; set; } = false;
         /// <summary>
-        /// 主题切换默认参数
+        /// 主题切换参数
         /// </summary>
         public static Action<TransitionParams> Theme { get; set; } = (x) =>
         {
             x.FrameRate = DefaultFrameRate;
             x.Duration = 0.5;
+        };
+        /// <summary>
+        /// 悬停特效参数
+        /// </summary>
+        public static Action<TransitionParams> Hover { get; set; } = (x) =>
+        {
+            x.FrameRate = DefaultFrameRate;
+            x.Duration = 0.2;
         };
 
         /// <summary>

@@ -371,7 +371,7 @@ namespace MinimalisticWPF
             }
         }
 
-        private StateMachine(object viewModel, params State[] states)
+        internal StateMachine(object viewModel, params State[] states)
         {
             Target = viewModel;
             Type = viewModel.GetType();

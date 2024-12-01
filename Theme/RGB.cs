@@ -94,6 +94,23 @@ namespace MinimalisticWPF
             return new RGB(newR, newG, newB, newA);
         }
 
+        public RGB SubA(int newValue)
+        {
+            return new RGB(R, G, B, Math.Clamp(newValue, 0, 255));
+        }
+        public RGB SubR(int newValue)
+        {
+            return new RGB(Math.Clamp(newValue, 0, 255), G, B, A);
+        }
+        public RGB SubG(int newValue)
+        {
+            return new RGB(R, Math.Clamp(newValue, 0, 255), B, A);
+        }
+        public RGB SubB(int newValue)
+        {
+            return new RGB(R, G, Math.Clamp(newValue, 0, 255), A);
+        }
+
         public override string ToString()
         {
             return $"RGBA [{R},{G},{B},{A}]";

@@ -12,11 +12,12 @@ namespace MinimalisticWPF
     [Theme]
     public class ButtonVM : INotifyPropertyChanged
     {
-        public ButtonVM() { this.RunWithGlobalTheme(); }
+        public ButtonVM() { this.ApplyGlobalTheme(); }
 
         private string _text = "MButton";
-        private Brush _textbrush = Brushes.White;
-        private Brush _borderbrush = Brushes.White;
+        private Brush _textbrush = DarkBrushes.Selector.Select(BrushTags.P1);
+        private Brush _borderbrush = DarkBrushes.Selector.Select(BrushTags.E1);
+        private Brush _background = DarkBrushes.Selector.Select(BrushTags.B1);
         private Thickness _borderthickness = new Thickness(1);
         private CornerRadius _cornerradius = new CornerRadius(5);
         private bool _isPressed = false;
@@ -51,8 +52,9 @@ namespace MinimalisticWPF
                 }
             }
         }
-        [Light("#1e1e1e")]
-        [Dark(nameof(Brushes.White))]
+
+        [Light(BrushTags.P1, BrushTags.F1)]
+        [Dark(BrushTags.P1, BrushTags.F1)]
         public Brush TextBrush
         {
             get => _textbrush;
@@ -65,8 +67,9 @@ namespace MinimalisticWPF
                 }
             }
         }
-        [Light(LightBrushPackage.H1)]
-        [Dark(DarkBrushPackage.H1)]
+
+        [Light(BrushTags.E1, BrushTags.F1)]
+        [Dark(BrushTags.E1, BrushTags.F1)]
         public Brush BorderBrush
         {
             get => _borderbrush;
@@ -79,6 +82,22 @@ namespace MinimalisticWPF
                 }
             }
         }
+
+        [Light(BrushTags.B1, BrushTags.F5)]
+        [Dark(BrushTags.B1, BrushTags.F5)]
+        public Brush Background
+        {
+            get => _background;
+            set
+            {
+                if (_background != value)
+                {
+                    _background = value;
+                    OnPropertyChanged(nameof(Background));
+                }
+            }
+        }
+
         public Thickness BorderThickness
         {
             get => _borderthickness;
@@ -103,6 +122,7 @@ namespace MinimalisticWPF
                 }
             }
         }
+
         public bool IsPressed
         {
             get => _isPressed;
@@ -123,24 +143,17 @@ namespace MinimalisticWPF
                 }
             }
         }
-
         public void OnHoverChanged()
         {
             IsPressed = !IsPressed;
         }
         public void WhileHover()
         {
-            this.Transition()
-                .SetProperty(x => x.TextBrush, TextBrush.ToRGB().Delta(100, 0, 100, 0).Brush)
-                .SetParams(TransitionParams.Theme)
-                .Start();
+            this.ApplyThemeHover(TransitionParams.Hover);
         }
         public void WhileNoHover()
         {
-            this.Transition()
-                .SetProperty(x => x.TextBrush, TextBrush.ToRGB().Delta(-100, 0, -100, 0).Brush)
-                .SetParams(TransitionParams.Theme)
-                .Start();
+            this.ApplyThemeNoHover(TransitionParams.Hover);
         }
     }
 }
