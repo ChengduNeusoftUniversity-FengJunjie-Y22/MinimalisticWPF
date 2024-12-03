@@ -19,11 +19,11 @@
 		<IncludeSymbols>False</IncludeSymbols>
 		<Description>It simplifies the process of visual effect realization, and provides special functions for MVVM and AOP. In summary, it is dedicated to the application of minimalism concepts in WPF development</Description>
 		<RepositoryType>git</RepositoryType>
-		<Version>2.0.0</Version>
+		<Version>2.1.0</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MinimalisticWPF.Generator" Version="1.0.3" />
+		<PackageReference Include="MinimalisticWPF.Generator" Version="1.0.4" />
 		<PackageReference Include="NetCore5.0.Microsoft.Expression.Drawing" Version="1.0.0" />
 	</ItemGroup>
 
