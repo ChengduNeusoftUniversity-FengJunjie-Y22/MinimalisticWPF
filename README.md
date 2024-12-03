@@ -62,197 +62,7 @@
 </details>
 
 <details>
-<summary>V1.9.0 - [ Beta ] - Try to support dynamic themes</summary>
-
-#### Page1 is a control that requires a dynamic theme
-- Global theme effect
-- Render theme effects based on the Color property
-```csharp
-public partial class Page1 : UserControl
-    {
-        public Page1()
-        {
-            InitializeComponent();
-
-            this.RunWithGlobalTheme(); //Global theme effect
-        }
-
-        [WhenDark(typeof(Brush), nameof(Brushes.Tomato))]   //For dark themes, the value should be Tomato
-        [WhenLight(typeof(Brush), nameof(Brushes.Yellow))]  //For light themes, this value should be Yellow
-        public Brush Color
-        {
-            get => txt.Foreground;
-            set => txt.Foreground = value;
-        }
-    }
-```
-#### Apply theme for Page1
-##### （1）Global Apply
-- RunWithGlobalTheme method must be run to take effect globally
-- windowBack represents the background color of the main window
-```csharp
-DynamicTheme.GlobalApply(typeof(WhenLight), windowBack: Brushes.White);
-```
-##### （2）Partial Apply
-- The first argument indicates the concrete type of the feature
-- The second argument is the delegate that will be used to construct the animation parameters.Otherwise, TransitionParams.Theme is called
-- Finally, you pass in a number of object instances that you want to switch to the given theme
-```csharp
-var page1 = new Page1();
-var page2 = new Page1();
-DynamicTheme.PartialApply(typeof(WhenLight),null,page1,page2);
-```
-##### （3）Self Starting
-- The first argument indicates the concrete type of the feature
-- The second argument is the delegate that will be used to construct the animation parameters.Otherwise, TransitionParams.Theme is called
-```csharp
-var page = new Page1();
-page.ApplyTheme(typeof(WhenDark),null);
-```
-
-#### Declare a custom theme
-- Inheriting from Attribute
-- Implement IThemeAttribute
-  - Requires an object property to represent the value of the property under the Theme
-- Once you've completed these steps, you've defined your own theme, which can be used in the same way as the default themes provided by the library
-- Example
-```csharp
-    [AttributeUsage(AttributeTargets.Property)]
-    public abstract class GlassTheme : Attribute, IThemeAttribute
-    {
-        public GlassTheme() { }
-
-        public object? Target { get; set; }
-    }
-```
-- When dealing with colors, you can do something like this
-```csharp
-        public WhenLight(Type type, params object?[] param)
-        {
-            if (type == typeof(Brush))
-            {
-                var value = param.FirstOrDefault()?.ToString()?.ToBrush();
-                Target = value ?? Brushes.Transparent;
-            }
-            else
-            {
-                Target = Activator.CreateInstance(type, param);
-            }
-        }
-```
-- In fact, the theme switch is mainly a gradient of Brush values, but the library also provides 7 supported data types, as long as the data types are supported by the animation module, the dynamic theme is also applicable
-
-</details>
-
-<details>
-<summary>V1.9.1 - [ Beta ] - Improvements</summary>
-
-### Ⅰ Dynamic Theme
-- Now [ IThemeAttribute ] requires you to implement an array representing the parameters needed to construct a new value
-- You no longer need to specify the type; you just need to pass in the arguments needed to construct the new value
-- [ WhenDark ] => [ Dark ]
-- [ WhenLight] => [ Light ]
-```csharp
-        [Dark(nameof(Brushes.Tomato))]
-        [Light("#1e1e1e")]
-        public Brush Color
-        {
-            get => txt.Foreground;
-            set => txt.Foreground = value;
-        }
-
-        [Dark(6)]
-        [Light(16,1,2,0)]
-        public CornerRadius CornerRadius
-        {
-            get => bor.CornerRadius;
-            set => bor.CornerRadius = value;
-        }
-
-        [Dark(0.0)]
-        [Light(1.0)]
-        public double ThemeOpacity
-        {
-            get => Opacity;
-            set => Opacity = value;
-        }
-
-        [Dark(1,1,1,1)]
-        [Light(5)]
-        public Thickness ThemeThickness
-        {
-            get => bor.BorderThickness;
-            set => bor.BorderThickness = value;
-        }
-```
-
-### Ⅱ Flexible termination
-- Extension method
-```csharp
-gd.StopTransition(IsStopSafe: true, IsStopUnSafe: false);
-gd.StopTransition(true,false);
-//The bool value indicates whether to terminate the Safe/UnSafe transition being performed by the object
-```
-- Static methods
-```csharp
-Transition.Dispose();           // All transitions
-Transition.Stop(gd,gd2);        // Only transitions of the selected object
-Transition.StopSafe(gd,gd2);    // Only Safe transitions
-Transition.StopUnSafe(gd,gd2);  // Only UnSafe transitions
-```
-
-### Ⅲ Navigate
-- The new version only requires that you attach the [ Navigable ] attribute to the control
-  - You can pass an enumeration value to indicate whether singleton mode is enabled or not
-  - By default, the singleton pattern is used
-  ```csharp
-    [Navigable(ConstructionModes.Singleton)]
-    public partial class Page2 : UserControl
-    {
-        public Page2()
-        {
-            InitializeComponent();
-        }
-    }
-  ```
-- The container has been changed from [ MPageBox ] to [ MNavigateBox ]
-
-### Ⅳ StateMachine
-- The frequency of reflection operation in instantiation of StateMachine is reduced
-- When [ Statemachine.Create() ] is used, it first looks up if a StateMachine already exists in the object pool and then chooses to return an existing StateMachine or a new one
-- [ ReSet() ] adds an optional bool argument that indicates whether the Unsafe transition should be interrupted when the state machine is reset
-
-</details>
-
-<details>
-<summary>V1.9.2</summary>
-
-### Ⅰ Transition System
-- For UI refresh in transition system, you can now select [ BeginInvoke/Invoke ]
-- For UI refresh in transition system, you can now set [ DispatcherPriority ]
-- (1) Set them globally
-```csharp
-TransitionParams.DefaultUIPriority = DispatcherPriority.Render;
-TransitionParams.DefaultIsBeginInvoke = true;
-```
-- (2) Set them partially
-```csharp
-var animation = Transition.CreateBoardFromType<Grid>()
-                .SetProperty(x => x.Margin, new Thickness(0))
-                .SetParams((p) =>
-                {
-                    p.IsBeginInvoke = true;
-                    p.UIPriority = DispatcherPriority.Normal;
-                });
-```
-
-### Ⅱ Additional Notes
-- The user controls provided by this library are not perfect, and usually they only exist as simple examples.Even though these user controls will be gradually optimized in future versions
-
-</details>
-
-<details>
-<summary>V1.9.5 - [ Beta ] - ObjectPool that support aotumiclly dispose</summary>
+<summary>V1.9.5 - [ Release ] - ObjectPool And DynamicTheme</summary>
 
 ### Ⅰ ObjectPool Support
 - Attribute
@@ -323,12 +133,52 @@ var animation = Transition.CreateBoardFromType<Grid>()
 </summary>
 </details>
 
+<details>
+<summary>V2.0.0 - [ Beta ] - ★ Roslyn Support - ★ This is a starting point, and as versions evolve, more and more features will be used in a way that will be simplified by using source generators</summary>
+
+### Attribute => Generating source code
+- This is the first version that uses the source generator
+  - 1.Simplifies ViewModel creation
+  - 2.Simple aspect-oriented programming implementation
+  ```csharp
+  using MinimalisticWPF;
+
+  namespace WpfApp3
+  { 
+    [AspectOriented] //Use [ AspectOriented ] for the class
+    internal partial class Class1 //Make sure it is [ partial ]
+    {
+        [VMProperty]
+        private int _id = 1; //Use [ VMProperty ] for the field
+    }
+  }
+  ```
+  - After regenerating, you can use it like this
+  ```csharp
+            var c1 = new Class1();
+            MessageBox.Show(c1.Id.ToString()); //The source generator has created the Id property for your _id field
+
+            c1.Proxy.SetMethod(nameof(c1.TestMethod),
+                (p, last) => { MessageBox.Show("before method"); return null; },
+                null,
+                null); //Intercepting method calls
+            c1.Proxy.SetPropertyGetter(nameof(c1.Id),
+                (p, last) => { MessageBox.Show("before getter"); return null; },
+                null,
+                null); //Intercept property Getter calls
+
+            c1.Proxy.TestMethod(-1);//The source generator has created a Proxy property for you to access Class1's properties and methods, so the above interception takes effect
+            var a = c1.Proxy.Id;
+  ```
+
+</details>
+
 ---
 
 ## Document
 
 <details>
-<summary>V1.9.x - [ Writing ] - Testing phase, no documentation, specific information please check the history of version changes [ Version ]</summary>
+<summary>V2.0.x - [ Writing ] - Testing phase, no documentation, specific information please check the history of version changes [ Version ]</summary>
 
 ###
 
