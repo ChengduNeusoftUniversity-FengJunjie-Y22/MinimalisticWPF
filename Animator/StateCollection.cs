@@ -9,24 +9,11 @@ using System.Xml.Linq;
 
 namespace MinimalisticWPF
 {
-    /// <summary>
-    /// 状态的合集
-    /// <para>特性 :</para>
-    /// <para>1.可将StateName作为索引,查询集合中指定的State</para>
-    /// <para>2.Add()方法会替换同名State以确保唯一性</para>
-    /// </summary>
     public class StateCollection : ICollection<State>
     {
         private List<State> _nodes = new List<State>();
 
         public State this[int index] { get => _nodes[index < _nodes.Count && index > -1 ? index : throw new ArgumentOutOfRangeException($"Index value [ {index} ] is out of collection range")]; }
-
-        /// <summary>
-        /// 通过状态名称访问状态信息
-        /// </summary>
-        /// <param name="stateName">状态名称</param>
-        /// <returns>State 状态信息</returns>
-        /// <exception cref="ArgumentException"></exception>
         public State this[string stateName]
         {
             get

@@ -19,17 +19,10 @@ using System.Security.RightsManagement;
 
 namespace MinimalisticWPF
 {
-    /// <summary>
-    /// 状态机
-    /// <para>对于一个实例对象,状态机记录其属性信息,并且调度动画的生成、启动操作</para>
-    /// </summary>
     public class StateMachine
     {
         private static int _maxFR = 240;
 
-        /// <summary>
-        /// 最大帧率限制
-        /// </summary>
         public static int MaxFrameRate
         {
             get => _maxFR;
@@ -38,30 +31,10 @@ namespace MinimalisticWPF
                 _maxFR = Math.Clamp(value, 1, int.MaxValue);
             }
         }
-        /// <summary>
-        /// 对于任意使用Board启动动画的对象实例,全局只允许存在一台StateMachine用于为其加载过渡效果
-        /// </summary>
         public static ConcurrentDictionary<Type, ConcurrentDictionary<object, StateMachine>> MachinePool { get; internal set; } = new();
-        /// <summary>
-        /// 类型中支持加载动画的属性
-        /// </summary>
         public static ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>> PropertyInfos { get; internal set; } = new();
-        /// <summary>
-        /// 依据属性类型不同做出的划分
-        /// <para>Values</para>
-        /// <para>Item1 double</para>
-        /// <para>Item2 Brush</para>
-        /// <para>Item3 Transform</para>
-        /// <para>Item4 Point</para>
-        /// <para>Item5 CornerRadius</para>
-        /// <para>Item6 Thickness</para>
-        /// <para>Item7 ILinearInterpolation</para>
-        /// </summary>
-        public static ConcurrentDictionary<Type, Tuple<ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>>> SplitedPropertyInfos = new();
+        public static ConcurrentDictionary<Type, Tuple<ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>>> SplitedPropertyInfos { get; internal set; } = new();
 
-        /// <summary>
-        /// 创建/获取 一个用于管理指定对象过渡行为的状态机实例
-        /// </summary>
         public static StateMachine Create(object targetObj, params State[] states)
         {
             var type = targetObj.GetType();
@@ -91,13 +64,7 @@ namespace MinimalisticWPF
                 return newMachine;
             }
         }
-        /// <summary>
-        /// 预载实例对象过渡至指定State过程中的所有帧数据
-        /// </summary>
-        /// <param name="Target">目标对象</param>
-        /// <param name="state">目标State</param>
-        /// <param name="par"></param>
-        /// <returns>帧数据</returns>
+
         public static List<List<Tuple<PropertyInfo, List<object?>>>>? PreloadFrames(object? Target, State state, TransitionParams par)
         {
             if (Target == null)
@@ -109,9 +76,7 @@ namespace MinimalisticWPF
             var result = ComputingFrames(state, machine);
             return result;
         }
-        /// <summary>
-        /// 计算从当前状态指向指定状态的过渡帧序列
-        /// </summary>
+
         public static List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state, StateMachine machine)
         {
             List<List<Tuple<PropertyInfo, List<object?>>>> result = new List<List<Tuple<PropertyInfo, List<object?>>>>(7);
@@ -128,9 +93,7 @@ namespace MinimalisticWPF
 
             return result;
         }
-        /// <summary>
-        /// 插值计算
-        /// </summary>
+
         public static List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
@@ -151,9 +114,7 @@ namespace MinimalisticWPF
             }
             return allFrames;
         }
-        /// <summary>
-        /// 插值计算
-        /// </summary>
+
         public static List<Tuple<PropertyInfo, List<object?>>> BrushComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
@@ -174,9 +135,7 @@ namespace MinimalisticWPF
             }
             return allFrames;
         }
-        /// <summary>
-        /// 插值计算
-        /// </summary>
+
         public static List<Tuple<PropertyInfo, List<object?>>> TransformComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
@@ -197,9 +156,7 @@ namespace MinimalisticWPF
             }
             return allFrames;
         }
-        /// <summary>
-        /// 插值计算
-        /// </summary>
+
         public static List<Tuple<PropertyInfo, List<object?>>> PointComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
@@ -220,9 +177,7 @@ namespace MinimalisticWPF
             }
             return allFrames;
         }
-        /// <summary>
-        /// 插值计算
-        /// </summary>
+
         public static List<Tuple<PropertyInfo, List<object?>>> CornerRadiusComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
@@ -243,9 +198,7 @@ namespace MinimalisticWPF
             }
             return allFrames;
         }
-        /// <summary>
-        /// 插值计算
-        /// </summary>
+
         public static List<Tuple<PropertyInfo, List<object?>>> ThicknessComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
@@ -266,9 +219,7 @@ namespace MinimalisticWPF
             }
             return allFrames;
         }
-        /// <summary>
-        /// 插值计算
-        /// </summary>
+
         public static List<Tuple<PropertyInfo, List<object?>>> ILinearInterpolationComputing(Type type, State state, object Target, int FrameCount)
         {
             List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
@@ -289,10 +240,7 @@ namespace MinimalisticWPF
             }
             return allFrames;
         }
-        /// <summary>
-        /// 初始化指定类型中受过渡系统支持的属性信息
-        /// </summary>
-        /// <param name="types">指定的若干类型</param>
+
         public static void InitializeTypes(params Type[] types)
         {
             foreach (var type in types)
@@ -325,12 +273,7 @@ namespace MinimalisticWPF
                 }
             }
         }
-        /// <summary>
-        /// 尝试获取指定类型中指定名称的属性信息
-        /// </summary>
-        /// <param name="type">指定类型</param>
-        /// <param name="propertyname">指定属性名称</param>
-        /// <param name="result">输出属性信息</param>
+
         public static bool TryGetPropertyInfo(Type type, string propertyname, out PropertyInfo? result)
         {
             if (PropertyInfos.TryGetValue(type, out var propdic))
@@ -344,9 +287,7 @@ namespace MinimalisticWPF
             result = null;
             return false;
         }
-        /// <summary>
-        /// 尝试获取指定实例的已有状态机
-        /// </summary>
+
         public static bool TryGetMachine(object target, out StateMachine? result)
         {
             if (MachinePool.TryGetValue(target.GetType(), out var machinedic))
@@ -360,9 +301,7 @@ namespace MinimalisticWPF
             result = null;
             return false;
         }
-        /// <summary>
-        /// 释放指定类型的所有已有状态机
-        /// </summary>
+
         public static void Dispose(params Type[] types)
         {
             foreach (var type in types)
@@ -394,10 +333,6 @@ namespace MinimalisticWPF
         public ConcurrentQueue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>> Interpreters { get; internal set; } = new();
         public List<TransitionInterpreter> UnSafeInterpreters { get; internal set; } = new();
 
-        /// <summary>
-        /// 重置状态机数据
-        /// </summary>
-        /// <param name="IsStopUnsafe">设为true可以重置Unsafe过渡组</param>
         public void ReSet(bool IsStopUnsafe = false)
         {
             IsReSet = true;
@@ -413,12 +348,7 @@ namespace MinimalisticWPF
                 }
             }
         }
-        /// <summary>
-        /// 手动触发状态机的调度
-        /// </summary>
-        /// <param name="stateName">目标状态的名称，必须先一步存在于Machine.States中</param>
-        /// <param name="actionSet">设置过渡效果参数</param>
-        /// <param name="preload">（可选）传入预先计算的帧序列</param>
+
         public void Transition(string stateName, Action<TransitionParams>? actionSet, List<List<Tuple<PropertyInfo, List<object?>>>>? preload = null)
         {
             IsReSet = false;

@@ -9,34 +9,11 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
-    /// <summary>
-    /// 使得自定义类型支持状态机过渡
-    /// <para>提供的基础插值计算 :</para>
-    /// <para>Double</para>
-    /// <para>Brush</para>
-    /// <para>Transform</para>
-    /// <para>Point</para>
-    /// <para>Thickness</para>
-    /// <para>CornerRadius</para>
-    /// </summary>
     public interface ILinearInterpolation
     {
-        /// <summary>
-        /// 具体实现类的实例
-        /// </summary>
         object Current { get; set; }
-
-        /// <summary>
-        /// 计算线性插值
-        /// </summary>
-        /// <param name="current">当前状态</param>
-        /// <param name="target">最终状态</param>
-        /// <param name="steps">插值数量</param>
         List<object?> Interpolate(object? current, object? target, int steps);
 
-        /// <summary>
-        /// double插值
-        /// </summary>
         public static List<object?> DoubleComputing(object? start, object? end, int steps)
         {
             List<object?> result = new List<object?>(steps);
@@ -61,10 +38,6 @@ namespace MinimalisticWPF
 
             return result;
         }
-
-        /// <summary>
-        /// Brush插值
-        /// </summary>
         public static List<object?> BrushComputing(object? start, object? end, int steps)
         {
             List<object?> result = new List<object?>(steps);
@@ -92,10 +65,6 @@ namespace MinimalisticWPF
 
             return result;
         }
-
-        /// <summary>
-        /// Transform插值
-        /// </summary>
         public static List<object?> TransformComputing(object? start, object? end, int steps)
         {
             List<object?> result = new List<object?>(steps);
@@ -127,10 +96,6 @@ namespace MinimalisticWPF
 
             return result;
         }
-
-        /// <summary>
-        /// Point插值
-        /// </summary>
         public static List<object?> PointComputing(object? start, object? end, int steps)
         {
             List<object?> result = new List<object?>(steps);
@@ -154,10 +119,6 @@ namespace MinimalisticWPF
 
             return result;
         }
-
-        /// <summary>
-        /// Thickness插值
-        /// </summary>
         public static List<object?> ThicknessComputing(object? start, object? end, int steps)
         {
             List<object?> result = new List<object?>(steps);
@@ -183,10 +144,6 @@ namespace MinimalisticWPF
 
             return result;
         }
-
-        /// <summary>
-        /// CornerRadius插值
-        /// </summary>
         public static List<object?> CornerRadiusComputing(object? start, object? end, int steps)
         {
             List<object?> result = new List<object?>(steps);
@@ -211,14 +168,6 @@ namespace MinimalisticWPF
             }
 
             return result;
-        }
-        private static Color InterpolateColor(Color colorA, Color colorB, double ratio)
-        {
-            byte r = (byte)(colorA.R + (colorB.R - colorA.R) * ratio);
-            byte g = (byte)(colorA.G + (colorB.G - colorA.G) * ratio);
-            byte b = (byte)(colorA.B + (colorB.B - colorA.B) * ratio);
-            byte a = (byte)(colorA.A + (colorB.A - colorA.A) * ratio);
-            return Color.FromArgb(a, r, g, b);
         }
     }
 }

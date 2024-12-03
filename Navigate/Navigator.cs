@@ -24,7 +24,6 @@ namespace MinimalisticWPF
                 IsInitialized = !IsInitialized;
             }
         }
-
         private static void AttributeRead()
         {
             var result = AppDomain.CurrentDomain.GetAssemblies()
@@ -43,13 +42,6 @@ namespace MinimalisticWPF
                 NavigableAttributes.Add(item.Type, item.Attribute);
             }
         }
-
-        /// <summary>
-        /// [ Navigable ] 标记的类型可使用此方法获取实例
-        /// </summary>
-        /// <param name="pageType">页面类型</param>
-        /// <param name="value">实例化所需参数</param>
-        /// <returns>object? 尝试获取的实例</returns>
         public static object? GetInstance(Type pageType, params object?[]? value)
         {
             Scan();

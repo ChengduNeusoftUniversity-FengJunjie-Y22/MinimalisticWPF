@@ -9,24 +9,15 @@ using System.Windows.Threading;
 
 namespace MinimalisticWPF
 {
-    /// <summary>
-    /// 动画解释器
-    /// </summary>
     public class TransitionInterpreter
     {
         internal TransitionInterpreter(StateMachine machine) { Machine = machine; }
 
         internal StateMachine Machine { get; set; }
         internal List<List<Tuple<PropertyInfo, List<object?>>>> Frams { get; set; } = new List<List<Tuple<PropertyInfo, List<object?>>>>();
-        /// <summary>
-        /// 解释器描述对象指向的State的名称
-        /// </summary>
         public string StateName { get; internal set; } = string.Empty;
         internal int DeltaTime { get; set; } = 0;
         internal bool IsLast { get; set; } = true;
-        /// <summary>
-        /// 解释器是否处于运行中
-        /// </summary>
         public bool IsRunning { get; internal set; } = false;
         internal bool IsStop { get; set; } = false;
         public Action? Update { get; set; }
@@ -42,9 +33,6 @@ namespace MinimalisticWPF
         internal DispatcherPriority UIPriority { get; set; } = DispatcherPriority.Render;
         internal bool IsBeginInvoke { get; set; } = false;
 
-        /// <summary>
-        /// 执行动画
-        /// </summary>
         public async void Interpret()
         {
             if (IsStop || IsRunning) { WhileEnded(); return; }
@@ -186,20 +174,11 @@ namespace MinimalisticWPF
 
             WhileEnded();
         }
-
-        /// <summary>
-        /// 打断动画
-        /// </summary>
-        /// <param name="IsUnsafeOver">终止Unsafe时需要为true</param>
         public void Interrupt(bool IsUnsafeOver = false)
         {
             if (IsUnSafe && !IsUnsafeOver) return;
             IsStop = IsRunning;
         }
-
-        /// <summary>
-        /// 当动画终止时
-        /// </summary>
         internal async void WhileEnded()
         {
             if (IsUnSafe)
@@ -241,10 +220,6 @@ namespace MinimalisticWPF
                 Machine.CurrentState = null;
             }
         }
-
-        /// <summary>
-        /// 计算应用加速度后的时间间隔
-        /// </summary>
         internal List<int> GetAccDeltaTime(int Steps)
         {
             List<int> result = new List<int>();
@@ -262,10 +237,6 @@ namespace MinimalisticWPF
 
             return result;
         }
-
-        /// <summary>
-        /// 判断当前循环步骤是否可以正确访问帧序列
-        /// </summary>
         internal bool IsFrameIndexRight(int i, int j, int k)
         {
             if (Frams.Count > 0 && j >= 0 && j < Frams.Count)

@@ -23,20 +23,8 @@ namespace MinimalisticWPF
             }
         }
 
-        /// <summary>
-        /// 状态的名称
-        /// </summary>
         public string StateName { get; internal set; } = string.Empty;
-        /// <summary>
-        /// 记录的状态值
-        /// </summary>
         public ConcurrentDictionary<string, object?> Values { get; internal set; } = new ConcurrentDictionary<string, object?>();
-        /// <summary>
-        /// 获取该状态下,指定属性的具体值
-        /// </summary>
-        /// <param name="propertyName">属性的名称</param>
-        /// <returns>double 具体值</returns>
-        /// <exception cref="ArgumentException"></exception>
         public object? this[string propertyName]
         {
             get
@@ -49,9 +37,6 @@ namespace MinimalisticWPF
                 return Values[propertyName];
             }
         }
-        /// <summary>
-        /// 增加/替换 State存储的属性值
-        /// </summary>
         public void AddProperty(string propertyName, object? value)
         {
             if (Values.TryGetValue(propertyName, out var ori))
@@ -63,17 +48,11 @@ namespace MinimalisticWPF
                 Values.TryAdd(propertyName, value);
             }
         }
-        /// <summary>
-        /// 具备额外的反射开销,可自动记录对象当前所有满足条件的属性及其值到Values中
-        /// </summary>
         public static ObjectTempState<T> FromObject<T>(T Target) where T : class
         {
             ObjectTempState<T> result = new ObjectTempState<T>(Target);
             return result;
         }
-        /// <summary>
-        /// 不具备额外的反射开销,直接为Values添加键值对
-        /// </summary>
         public static TypeTempState<T> FromType<T>() where T : class
         {
             TypeTempState<T> state = new TypeTempState<T>();
@@ -90,18 +69,12 @@ namespace MinimalisticWPF
         internal List<string> WhiteList { get; set; } = new List<string>();
         internal string[] BlackList { get; set; } = Array.Empty<string>();
 
-        /// <summary>
-        /// 记录该状态的名称
-        /// </summary>
         public ObjectTempState<T> SetName(string stateName)
         {
             Name = stateName;
             return this;
         }
 
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public ObjectTempState<T> SetProperty(
             Expression<Func<T, double>> propertyLambda,
             double newValue)
@@ -124,9 +97,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public ObjectTempState<T> SetProperty(
             Expression<Func<T, Brush>> propertyLambda,
             Brush newValue)
@@ -149,9 +119,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public ObjectTempState<T> SetProperty(
             Expression<Func<T, Transform>> propertyLambda,
             params Transform[] newValue)
@@ -179,9 +146,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public ObjectTempState<T> SetProperty(
             Expression<Func<T, Point>> propertyLambda,
             Point newValue)
@@ -204,9 +168,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public ObjectTempState<T> SetProperty(
             Expression<Func<T, CornerRadius>> propertyLambda,
             CornerRadius newValue)
@@ -229,9 +190,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public ObjectTempState<T> SetProperty(
             Expression<Func<T, Thickness>> propertyLambda,
             Thickness newValue)
@@ -254,9 +212,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public ObjectTempState<T> SetProperty(
             Expression<Func<T, ILinearInterpolation>> propertyLambda,
             ILinearInterpolation newValue)
@@ -285,11 +240,7 @@ namespace MinimalisticWPF
             BlackList = properties.Select(p => ((MemberExpression)p.Body).Member.Name).ToArray();
             return this;
         }
-
-        /// <summary>
-        /// 完成记录
-        /// </summary>
-        /// <param name="IsWhiteList">若为false,则反射记录对象所有受支持的属性,默认为true只记录传入了的值</param>
+      
         public State ToState(bool IsWhiteList = true)
         {
             if (Value == null) throw new ArgumentNullException("Target object loss");
@@ -312,9 +263,6 @@ namespace MinimalisticWPF
             Target.StateName = name;
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public TypeTempState<T> SetProperty(
             Expression<Func<T, double>> propertyLambda,
             double newValue)
@@ -338,9 +286,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public TypeTempState<T> SetProperty(
             Expression<Func<T, Brush>> propertyLambda,
             Brush newValue)
@@ -364,9 +309,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public TypeTempState<T> SetProperty(
             Expression<Func<T, CornerRadius>> propertyLambda,
             CornerRadius newValue)
@@ -390,9 +332,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public TypeTempState<T> SetProperty(
             Expression<Func<T, Point>> propertyLambda,
             Point newValue)
@@ -416,9 +355,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public TypeTempState<T> SetProperty(
             Expression<Func<T, Thickness>> propertyLambda,
             Thickness newValue)
@@ -442,9 +378,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public TypeTempState<T> SetProperty(
             Expression<Func<T, Transform>> propertyLambda,
             params Transform[] newValue)
@@ -473,9 +406,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-        /// <summary>
-        /// 记录新状态对应的属性值
-        /// </summary>
         public TypeTempState<T> SetProperty(
             Expression<Func<T, ILinearInterpolation>> propertyLambda,
             ILinearInterpolation newValue)
@@ -499,10 +429,6 @@ namespace MinimalisticWPF
 
             return this;
         }
-
-        /// <summary>
-        /// 记录完成
-        /// </summary>
         public State ToState()
         {
             return Target;

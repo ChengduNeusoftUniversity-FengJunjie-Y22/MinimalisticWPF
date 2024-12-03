@@ -18,9 +18,6 @@ namespace MinimalisticWPF
             Target = target;
             Machine = StateMachine.Create(target);
         }
-        /// <summary>
-        /// 是否由Transition静态方法创建,若为true,代表该TransitionBoard无法直接使用Start(),需要改用AnyClass.BeginTransition()
-        /// </summary>
         public bool IsStatic { get; internal set; } = false;
         internal T? Target { get; set; }
         internal StateMachine? Machine { get; set; }
@@ -28,9 +25,6 @@ namespace MinimalisticWPF
         public Action<TransitionParams>? TransitionParams { get; set; }
         public List<List<Tuple<PropertyInfo, List<object?>>>>? Preload { get; set; }
 
-        /// <summary>
-        /// 设置指定属性过渡后的最终值
-        /// </summary>
         public TransitionBoard<T> SetProperty(Expression<Func<T, double>> propertyLambda, double newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
@@ -44,9 +38,6 @@ namespace MinimalisticWPF
             }
             return this;
         }
-        /// <summary>
-        /// 设置指定属性过渡后的最终值
-        /// </summary>
         public TransitionBoard<T> SetProperty(Expression<Func<T, Brush>> propertyLambda, Brush newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
@@ -60,9 +51,6 @@ namespace MinimalisticWPF
             }
             return this;
         }
-        /// <summary>
-        /// 设置指定属性过渡后的最终值
-        /// </summary>
         public TransitionBoard<T> SetProperty(Expression<Func<T, Transform>> propertyLambda, params Transform[] newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
@@ -79,9 +67,6 @@ namespace MinimalisticWPF
             }
             return this;
         }
-        /// <summary>
-        /// 设置指定属性过渡后的最终值
-        /// </summary>
         public TransitionBoard<T> SetProperty(Expression<Func<T, Point>> propertyLambda, Point newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
@@ -95,9 +80,6 @@ namespace MinimalisticWPF
             }
             return this;
         }
-        /// <summary>
-        /// 设置指定属性过渡后的最终值
-        /// </summary>
         public TransitionBoard<T> SetProperty(Expression<Func<T, CornerRadius>> propertyLambda, CornerRadius newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
@@ -111,9 +93,6 @@ namespace MinimalisticWPF
             }
             return this;
         }
-        /// <summary>
-        /// 设置指定属性过渡后的最终值
-        /// </summary>
         public TransitionBoard<T> SetProperty(Expression<Func<T, Thickness>> propertyLambda, Thickness newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
@@ -127,9 +106,6 @@ namespace MinimalisticWPF
             }
             return this;
         }
-        /// <summary>
-        /// 设置指定属性过渡后的最终值
-        /// </summary>
         public TransitionBoard<T> SetProperty(Expression<Func<T, ILinearInterpolation>> propertyLambda, ILinearInterpolation newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
@@ -143,29 +119,17 @@ namespace MinimalisticWPF
             }
             return this;
         }
-        /// <summary>
-        /// 设置本次过渡的参数
-        /// </summary>
         public TransitionBoard<T> SetParams(Action<TransitionParams> modifyParams)
         {
             TransitionParams = modifyParams;
             return this;
         }
-        /// <summary>
-        /// 反射特定对象[全部]受支持的属性，注意会覆盖SetProperty步骤（反之则不会）
-        /// </summary>
-        /// <param name="reflected">被反射的对象实例</param>
         public TransitionBoard<T> ReflectAny(T reflected)
         {
             TempState = new State(reflected, Array.Empty<string>(), Array.Empty<string>());
             TempState.StateName = Transition.TempName;
             return this;
         }
-        /// <summary>
-        /// 反射特定对象[部分]受支持的属性，注意会覆盖SetProperty步骤（反之则不会）
-        /// </summary>
-        /// <param name="reflected">被反射的对象实例</param>
-        /// <param name="blackList">黑名单,不参与反射记录的属性</param>
         public TransitionBoard<T> ReflectExcept(T reflected, params Expression<Func<T, string>>[] blackList)
         {
             var propertyNames = blackList.Select(p => ((MemberExpression)p.Body).Member.Name).ToArray();
@@ -173,9 +137,6 @@ namespace MinimalisticWPF
             TempState.StateName = Transition.TempName;
             return this;
         }
-        /// <summary>
-        /// 预载帧数据以降低状态机调度动画执行时的计算量,内置目标时( IsStatic == false )
-        /// </summary>
         public TransitionBoard<T> PreLoad()
         {
             var par = new TransitionParams();
@@ -183,9 +144,6 @@ namespace MinimalisticWPF
             Preload = StateMachine.PreloadFrames(Target, TempState, par);
             return this;
         }
-        /// <summary>
-        /// 预载帧数据以降低状态机调度动画执行时的计算量,不是内置目标时( IsStatic == true )
-        /// </summary>
         public TransitionBoard<T> PreLoad(T target)
         {
             var par = new TransitionParams();
@@ -193,9 +151,6 @@ namespace MinimalisticWPF
             Preload = StateMachine.PreloadFrames(target, TempState, par);
             return this;
         }
-        /// <summary>
-        /// 启动过渡,内置目标对象( IsStatic == false )
-        /// </summary>
         public void Start()
         {
             if (IsStatic) throw new InvalidOperationException("This method cannot be used under Type-based creation, instead use an overloaded version of the Start () method");
@@ -206,10 +161,6 @@ namespace MinimalisticWPF
             Machine.States.Add(TempState);
             Machine.Transition(TempState.StateName, TransitionParams, Preload);
         }
-        /// <summary>
-        /// 启动过渡,不是内置目标对象( IsStatic == true )
-        /// </summary>
-        /// <param name="target">新的目标对象</param>
         public void Start(T target)
         {
             Machine = StateMachine.Create(target);

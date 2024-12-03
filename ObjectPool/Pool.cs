@@ -16,9 +16,6 @@ namespace MinimalisticWPF
     {
         private static bool _isloaded = false;
 
-        /// <summary>
-        /// 初始化对象池资源
-        /// </summary>
         public static void InitializeSource()
         {
             if (!_isloaded)
@@ -64,28 +61,12 @@ namespace MinimalisticWPF
             }
         }
 
-        /// <summary>
-        /// 可用资源
-        /// </summary>
         public static ConcurrentDictionary<Type, ConcurrentQueue<object>> Source { get; internal set; } = new();
-        /// <summary>
-        /// 配置
-        /// </summary>
         public static ConcurrentDictionary<Type, Tuple<int, MethodInfo?, MethodInfo?, MethodInfo?>> Config { get; internal set; } = new();
-        /// <summary>
-        /// 占用资源
-        /// </summary>
         public static ConcurrentDictionary<Type, HashSet<object>> Dispose { get; internal set; } = new();
-        /// <summary>
-        /// 当前执行中的扫描
-        /// </summary>
         public static ConcurrentDictionary<Type, Task> Monitor { get; internal set; } = new();
         private static ConcurrentDictionary<Type, CancellationTokenSource> Tokens { get; } = new();
 
-        /// <summary>
-        /// 取出资源
-        /// </summary>
-        /// <param name="type">资源类型</param>
         public static object Fetch(Type type)
         {
             InitializeSource();
@@ -147,12 +128,6 @@ namespace MinimalisticWPF
                 throw new ArgumentException($"MPL01 类型[ {type.FullName} ]在试图初始化对象池时发生错误");
             }
         }
-        /// <summary>
-        /// 试图从对象池取出一个资源
-        /// </summary>
-        /// <param name="type">资源类型</param>
-        /// <param name="result">可能的资源</param>
-        /// <returns>bool 是否成功取出资源</returns>
         public static bool TryFetch(Type type, out object result)
         {
             InitializeSource();
@@ -224,11 +199,6 @@ namespace MinimalisticWPF
                 return false;
             }
         }
-        /// <summary>
-        /// 启用自动回收
-        /// </summary>
-        /// <param name="type">类型</param>
-        /// <param name="scanspan">扫描间隔（毫秒）</param>
         public static void RunAutoDispose(Type type, int scanspan)
         {
             InitializeSource();
@@ -265,10 +235,6 @@ namespace MinimalisticWPF
                 throw new InvalidOperationException($"MPL05 [ {type.FullName} ]未启用自动回收或没有挂载[ {nameof(PoolAttribute)} ]");
             }
         }
-        /// <summary>
-        /// 停止自动回收
-        /// </summary>
-        /// <param name="type">类型</param>
         public static void StopAutoDispose(Type type)
         {
             if (Monitor.TryGetValue(type, out var task) && Tokens.TryGetValue(type, out var cts))
@@ -278,22 +244,10 @@ namespace MinimalisticWPF
                 Tokens.TryRemove(type, out _);
             }
         }
-        /// <summary>
-        /// 获取当前类型在对象池中的总资源数
-        /// </summary>
-        /// <param name="source"></param>
-        /// <returns>
-        /// int 小于0表示对象池未能正确加载此类型
-        /// </returns>
         public static int GetPoolSemaphore(this Type source)
         {
             return (Source.TryGetValue(source, out var pool) ? pool.Count : -1) + (Dispose.TryGetValue(source, out var disc) ? disc.Count : -1);
         }
-        /// <summary>
-        /// 强制回收指定资源
-        /// </summary>
-        /// <param name="sources"></param>
-        /// <returns>int 回收数</returns>
         public static int ForceDispose(params object[] sources)
         {
             var count = 0;
@@ -312,11 +266,6 @@ namespace MinimalisticWPF
             }
             return count;
         }
-        /// <summary>
-        /// 强制回收指定类型的所有资源
-        /// </summary>
-        /// <param name="types"></param>
-        /// <returns>int 回收数</returns>s
         public static int ForceDispose(params Type[] types)
         {
             var count = 0;
