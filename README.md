@@ -170,6 +170,7 @@
             c1.Proxy.TestMethod(-1);//The source generator has created a Proxy property for you to access Class1's properties and methods, so the above interception takes effect
             var a = c1.Proxy.Id;
   ```
+- Also, the library does not support user controls yet, as dynamic themes, animations, and many other features need a transformative upgrade that will be addressed within the next five releases
 
 </details>
 
