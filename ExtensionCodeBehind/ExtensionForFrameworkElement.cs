@@ -16,41 +16,6 @@ namespace MinimalisticWPF
 {
     public static class ExtensionForFrameworkElement
     {
-        public static StateMachine StateMachineLoading<T>(this FrameworkElement source, T viewModel) where T : class
-        {
-            var vectorInterface = viewModel as IConditionalTransition<T> ?? throw new ArgumentException($"The [ {nameof(T)} ] Is Not A [ {nameof(IConditionalTransition<T>)} ]");
-
-            var StateFields = viewModel.GetType().GetFields(BindingFlags.Public | BindingFlags.Static)
-                .Where(x => x.FieldType == typeof(State)).ToArray();
-            var StateProperties = viewModel.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.PropertyType == typeof(State)).ToArray();
-            var StateVectorField = viewModel.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .FirstOrDefault(x => x.PropertyType == typeof(StateVector<T>));
-
-            var FieldStates = StateFields.Select(x => (State?)x.GetValue(viewModel)).ToArray();
-            var PropertyStates = StateProperties.Select(x => (State?)x.GetValue(viewModel)).ToArray();
-            var States = PropertyStates.Concat(FieldStates);
-            var StateVector = (StateVector<T>?)StateVectorField?.GetValue(viewModel);
-
-            var machine = StateMachine.Create(viewModel);
-            vectorInterface.StateMachine = machine;
-            if (States != null)
-            {
-                foreach (var state in States)
-                {
-                    if (state != null)
-                    {
-                        vectorInterface.StateMachine.States.Add(state);
-                    }
-                }
-            }
-            if (StateVector != null)
-            {
-                vectorInterface.StateVector = StateVector;
-            }
-
-            return machine;
-        }
         public static T TransitionToParentSize<T>(this T element, double rate, Action<TransitionParams> set) where T : FrameworkElement
         {
             var Parent = element.Parent as FrameworkElement;

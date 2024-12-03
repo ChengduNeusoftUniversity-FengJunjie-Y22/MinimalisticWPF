@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 
@@ -31,13 +26,6 @@ namespace MinimalisticWPF
         public void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public StateMachine? StateMachine { get; set; }
-        public StateVector<ButtonVM>? StateVector { get; set; } = new StateVector<ButtonVM>();
-        public void OnConditionsChecked()
-        {
-            StateVector?.Check(this, StateMachine);
         }
 
         public string Text
@@ -139,7 +127,6 @@ namespace MinimalisticWPF
                     {
                         WhileNoHover();
                     }
-                    OnConditionsChecked();
                 }
             }
         }
