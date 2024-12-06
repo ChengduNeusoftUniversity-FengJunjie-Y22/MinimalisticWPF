@@ -11,7 +11,7 @@ namespace MinimalisticWPF
     /// </summary>
     public class WatcherEventArgs : EventArgs
     {
-        internal WatcherEventArgs(object oldValue, object newValue)
+        public WatcherEventArgs(object oldValue, object newValue)
         {
             OldValue = oldValue;
             NewValue = newValue;
