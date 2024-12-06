@@ -11,13 +11,13 @@ namespace MinimalisticWPF
     /// </summary>
     public class WatcherEventArgs : EventArgs
     {
-        public WatcherEventArgs(object oldValue, object newValue)
+        public WatcherEventArgs(object? oldValue, object? newValue)
         {
             OldValue = oldValue;
             NewValue = newValue;
         }
 
-        public object OldValue { get; private set; }
-        public object NewValue { get; private set; }
+        public object? OldValue { get; private set; }
+        public object? NewValue { get; private set; }
     }
 }
