@@ -9,8 +9,8 @@ namespace MinimalisticWPF
     /// <para>2. 请确保字段由小写字母开头</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
-    public class VMProperty : Attribute
+    public class VMPropertyAttribute : Attribute
     {
-        public VMProperty() { }
+        public VMPropertyAttribute() { }
     }
 }

@@ -174,6 +174,14 @@
 
 </details>
 
+<details>
+<summary>V2.2.0 - [ Beta ] - Property listener support & generation detail optimization</summary>
+
+### Ⅰ W
+
+
+</details>
+
 ---
 
 ## Document
