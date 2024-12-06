@@ -175,10 +175,43 @@
 </details>
 
 <details>
-<summary>V2.2.0 - [ Beta ] - Property listener support & generation detail optimization</summary>
+<summary>V2.2.1 - [ Beta ] - Property listener support & generation detail optimization</summary>
 
-### Ⅰ W
+### Ⅰ Watcher
+- Makes a custom method act as a listener for the specified property
+  - Make sure the method has a unique parameter (WatcherEventArgs e)
+  - Make sure the method name includes the field/property name, e.g. _id => OnIdChanged(WatcherEventArgs e)/On_idChanged(WatcherEventArgs e)
+  ```csharp
+        [VMProperty]
+        private int _id = -1;
 
+        [VMWatcher]
+        private void OnIdChanged(WatcherEventArgs e)
+        {
+            MessageBox.Show(e.OldValue.ToString());
+            MessageBox.Show(e.NewValue.ToString());
+        }
+  ```
+
+### Ⅱ Initialization
+- Make the specified method part of a no-argument constructor
+  - The function should not have any parameters
+  - At least one VMProperty must be included for the source generator to produce the ViewModel
+  - ⚠ In non-AOP mode, the source generator does not generate a no-argument constructor, so define it manually instead of using this feature
+  ```csharp
+    [AspectOriented]
+    internal partial class Class1
+    {
+        [VMProperty]
+        private int _id = -1;
+
+        [VMInitialization]
+        private void Action()
+        {
+
+        }
+    }
+  ```
 
 </details>
 
