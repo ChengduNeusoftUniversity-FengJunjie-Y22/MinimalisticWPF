@@ -1,1055 +1,296 @@
 ﻿# MinimalisticWPF
 
-#### Easier visual effects construction √
-#### Aspect-oriented Programming simplification √
-#### Dynamic Theme √
-#### ObjectPool √
-#### Roslyn [ Beta ]
+<h3 style="color:Violet">What can this project do for you ?</h3>
+<p style="color:White">（1）Backend, simple, flexible animation implementation</p>
+<p style="color:White">（2）Easy design pattern implementation</p>
+<p style="color:White">（3）Other small components that speed up WPF development</p>
 
-- [github](https://github.com/Axvser/MinimalisticWPF)
-- [中文文档](https://axvser.github.io/MinimalisticWPFDoc/)
+[github √](https://github.com/Axvser/MinimalisticWPF) 
+
+[nuget √](https://www.nuget.org/packages/MinimalisticWPF/)
 
 ---
 
-## Version
-<details>
-<summary>V1.5.6 - [ Release ] - Basic animation implementation component</summary>
+## Important Notice
 
-  - Repair it.
-    - Gradient results may be distorted when the frame rate is between 57 and 61
-    - When the frame rate is lower than 100, high-speed State switching may cause startup failure of the state machine
-    - When the frame rate is 0, an error occurs
-    - An error occurs when the duration is 0
-  - Adjust
-    - The default frame rate is set to 120Hz
-    - Frame rate is limited from 1 to 240, out of range will be corrected automatically
-  - New
-    - class.IsSatisfy() allows you to decide whether to initiate a pre-described transition based on whether the instance object meets a specified condition
-    ```csharp
-            var board = GD.Transition()
-                .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
-                .SetParams((x) =>
-                {
-                    x.Duration = 3;
-                    x.Acceleration = 1;
-                });
+2024 - 12 - 9 : 
 
-            var result = GD.IsSatisfy(x => x.Width < 1000, board, true);
-            // Parameter 1. Condition (required)
-            // Parameter 2. Perform this transition if the conditions are met (optional)
-            // Parameter 3. If the transition effect is object-based, whether to enable the whitelist mechanism (optional)
-    ```
-  - 2.0.0 version preview
-    - ★ Greatly optimize the document
-    - ★ Open up more functions that can only operate inside the state machine system
-    - Fix more potential issues
-    - Try to optimize performance further
-    - Add more common extension methods
-    - ⚠ Remove all non-core components
-</details>
+Versions below 2.0.0 will be deprecated at the end of this month.
 
-<details>
-<summary>V1.8.9 - [ Release ] - Animation system optimization and aspect-oriented programming support</summary>
+---
 
-  - [ AOP ] Add a delegate parameter to get the return value of the previous method
-  ```csharp
-  proxy.SetMethod(nameof(pro.GetName),
-                object? (args, last) => { MessageBox.Show($"before default method"); return "AOP before\n"; },
-                object? (args, last) => { return $"{last}AOP Coverage \n"; },
-                object? (args, last) => { MessageBox.Show($"results :\n{last}AOP after\n"); return null; });
-  ```
+## Document 
 
-</details>
+<h3 style="color:Cyan">Ⅰ Animation </h3>Property-Based Transition System
 
-<details>
-<summary>V1.9.5 - [ Release ] - ObjectPool And DynamicTheme</summary>
+<h4 style="color:white">Take the following two controls as examples to demonstrate some animation operations</h4>
 
-### Ⅰ ObjectPool Support
-- Attribute
-  - PoolAttribute
-  - PoolFetchAttribute
-  - PoolDisposeAttribute
-  - PoolDisposeConditionAttribute
-  ```csharp
-    [Pool(5, 10)] //The initial number of units is 5. If resources are insufficient, the system automatically expands to a maximum of 10 units
-    public class Unit
+```xml
+    <Grid>
+        <TextBlock x:Name="box" Foreground="White" FontSize="30" TextAlignment="Center" VerticalAlignment="Top" Margin="0,40,0,0"/>
+        <Grid x:Name="grid" Width="100" Height="200" Background="Gray"/>
+    </Grid>
+```
+
+<h4 style="color:White">[ 1 - 1 ] Warm Start</h4>
+
+<p style="font-size:14px;color:wheat">Transition（ ）</p>
+<p style="font-size:14px;color:wheat">SetProperty（ Property , Value ）</p>
+<p style="font-size:14px;color:wheat">SetParams（ Action&lt;TransitionParams> ）</p>
+<p style="font-size:14px;color:wheat">Start（ ）</p>
+
+```csharp 
+var animaiton = grid.Transition()
+                 .SetProperty(x => x.Width, 200)
+                 .SetProperty(x => x.Height, 100)
+                 .SetParams((p) =>
+                 {
+                     p.Duration = 2;
+                     p.Acceleration = 1;
+                     p.StartAsync = async () =>
+                     {
+                         await Task.Delay(2000);
+                     };
+                     p.Update = () =>
+                     {
+                         box.Text = $"Width [{grid.Width} ] | Height [ {grid.Height} ]";
+                     };
+                     p.Completed = () =>
+                     {
+                         MessageBox.Show("Finished");
+                     };
+                 })
+                 .Start();
+
+// animaiton.Start(); It can also be executed like this
+```
+<h4 style="color:White">[ 1 - 2 ] Cold Start</h4>
+
+<h5 style="color:white">Transition Definition</h5>
+
+```csharp
+        private static TransitionBoard<Grid> _animation = Transition.CreateBoardFromType<Grid>()
+            .SetProperty(x => x.Height, 100)
+            .SetProperty(x => x.Width, 200);
+
+        private static Action<TransitionParams> _params = (p) =>
+        {
+            p.Duration = 2;
+            p.Acceleration = 1;
+            p.StartAsync = async () =>
+            {
+                await Task.Delay(2000);
+            };
+            p.Completed = () =>
+            {
+                MessageBox.Show("Finished");
+            };
+        };
+```
+
+<h5 style="color:white">Apply Transition</h5>
+
+```csharp
+grid.BeginTransition(_animation, _params);
+```
+
+<h4 style="color:White">[ 1 - 3 ] Make custom properties participate in the transition</h4>
+
+<h5 style="color:white">An interface is provided to allow types to participate in transitions</h5>Please describe how this type computes interpolation
+
+```csharp
+    internal class ComplexValue : ILinearInterpolation
     {
-        public static int count = 1;
+        public double DoubleValue { get; set; } = 0;
+        public Brush BrushValue { get; set; } = Brushes.Transparent;
+        public ComplexValue() { Current = this; }
 
-        public Unit() { Value = count; count++; }
+        public object Current { get; set; }
 
-        public int Value { get; set; } = 1;
-
-        [PoolFetch] //Triggered when the object is removed from the pool
-        public void WhileFetch()
+        public List<object?> Interpolate(object? current, object? target, int steps)
         {
-            MessageBox.Show($"Fetch {Value}");
+            List<object?> result = new List<object?>(steps);
+
+            ComplexValue old = current as ComplexValue ?? new ComplexValue();
+            ComplexValue tar = target as ComplexValue ?? new ComplexValue();
+
+            var doublelinear = ILinearInterpolation.DoubleComputing(old.DoubleValue, tar.DoubleValue, steps);
+            var brushlinear = ILinearInterpolation.BrushComputing(old.BrushValue, tar.BrushValue, steps);
+
+            for (int i = 0; i < steps; i++)
+            {
+                var dou = (double?)doublelinear[i];
+                var bru = (Brush?)brushlinear[i];
+                var newValue = new ComplexValue();
+                newValue.DoubleValue = dou ?? 0;
+                newValue.BrushValue = bru ?? Brushes.Transparent;
+                result.Add(newValue);
+            }
+
+            return result;
         }
+```
 
-        [PoolDispose] //Triggered when the object pool is automatically reclaimed
-        public void WhileDispose()
-        {
-            MessageBox.Show($"Dispose {Value}");
-        }
+<h3 style="color:Cyan">Ⅱ Mvvm </h3>Use source generator to speed up ViewModel building . 
 
-        [PoolDisposeCondition] //If the return value is true, the resource can be reclaimed automatically
-        public bool CanDisposed()
-        {
-            return Value % 2 == 0 ? true : false;
-        }
-    }
-  ```
-- Static Method
-  - Get Instance
-  ```csharp
-  var unit = Pool.Fetch(typeof(Unit)) as Unit;
-  if (Pool.TryFetch(typeof(Unit), out var result))
-  {
-      var unit = result as Unit;
-  }
-  ```
-  - Start Auto Dispose
-  ```csharp
-  Pool.RunAutoDispose(typeof(Unit), 5000);
-  ```
-  - End Auto Dispose
-  ```csharp
-  Pool.StopAutoDispose(typeof(Unit));
-  ```
-  - Force resource release
-  ```csharp
-  var unit = Pool.Fetch(typeof(Unit)) as Unit;
-  unit.PoolDispose();
-  ```
+<h4 style="color:White">[ 2 - 1 ] Automatically generate ViewModel for a partial class</h4>
+<p style="font-size:14px;color:wheat">[ VMProperty ] → Automatically generating properties</p>
+<p style="font-size:14px;color:wheat">[ VMWatcher ] → Ability to listen for property values to change</p>
+<p style="font-size:14px;color:wheat">[ VMInitialization ] → Adds extra logic to the no-argument constructor</p>
 
-### Ⅱ Changes in mechanisms
-- Dictionary __> ConcurrentDictionary
-  - Try using thread-safe dictionaries
-  - Has been applied to [ StateMahine ]
-  - Has been applied to [ Pool ]
-- Dictionary __> Grouping By Type
-  - Use struction like " Dictionary&lt;Type,Dictionary&lt;object,StateMachine>> ".You can now dispose of all statemachines of a given type by using StateMachine.Dispose()
-- State __> No check for type.Only propertyName & propertyValue
-</summary>
-</details>
-
-<details>
-<summary>V2.0.0 - [ Beta ] - ★ Roslyn Support - ★ This is a starting point, and as versions evolve, more and more features will be used in a way that will be simplified by using source generators</summary>
-
-### Attribute => Generating source code
-- This is the first version that uses the source generator
-  - 1.Simplifies ViewModel creation
-  - 2.Simple aspect-oriented programming implementation
-  ```csharp
-  using MinimalisticWPF;
-
-  namespace WpfApp3
-  { 
-    [AspectOriented] //Use [ AspectOriented ] for the class
-    internal partial class Class1 //Make sure it is [ partial ]
+```csharp
+    internal partial class Class1
     {
-        [VMProperty]
-        private int _id = 1; //Use [ VMProperty ] for the field
-    }
-  }
-  ```
-  - After regenerating, you can use it like this
-  ```csharp
-            var c1 = new Class1();
-            MessageBox.Show(c1.Id.ToString()); //The source generator has created the Id property for your _id field
-
-            c1.Proxy.SetMethod(nameof(c1.TestMethod),
-                (p, last) => { MessageBox.Show("before method"); return null; },
-                null,
-                null); //Intercepting method calls
-            c1.Proxy.SetPropertyGetter(nameof(c1.Id),
-                (p, last) => { MessageBox.Show("before getter"); return null; },
-                null,
-                null); //Intercept property Getter calls
-
-            c1.Proxy.TestMethod(-1);//The source generator has created a Proxy property for you to access Class1's properties and methods, so the above interception takes effect
-            var a = c1.Proxy.Id;
-  ```
-- Also, the library does not support user controls yet, as dynamic themes, animations, and many other features need a transformative upgrade that will be addressed within the next five releases
-
-</details>
-
-<details>
-<summary>V2.2.1 - [ Beta ] - Property listener support & generation detail optimization</summary>
-
-### Ⅰ Watcher
-- Makes a custom method act as a listener for the specified property
-  - Make sure the method has a unique parameter (WatcherEventArgs e)
-  - Make sure the method name includes the field/property name, e.g. _id => OnIdChanged(WatcherEventArgs e)/On_idChanged(WatcherEventArgs e)
-  ```csharp
         [VMProperty]
         private int _id = -1;
 
         [VMWatcher]
         private void OnIdChanged(WatcherEventArgs e)
         {
-            MessageBox.Show(e.OldValue.ToString());
-            MessageBox.Show(e.NewValue.ToString());
+            MessageBox.Show($"oldId{e.OldValue}\nnewId{e.NewValue}");
         }
-  ```
 
-### Ⅱ Initialization
-- Make the specified method part of a no-argument constructor
-  - The function should not have any parameters
-  - At least one VMProperty must be included for the source generator to produce the ViewModel
-  - ⚠ In non-AOP mode, the source generator does not generate a no-argument constructor, so define it manually instead of using this feature
-  ```csharp
+        [VMInitialization]
+        private void UseDefaultId()
+        {
+           _id = 2024;
+        }
+    }
+```
+
+<h3 style="color:Cyan">Ⅲ Aspect-Oriented Programming</h3>Dynamic Proxy are created by using the source generator . You can access the properties and methods of the original object through the proxy. Setting up intercepting and overriding logic for the proxy object can make your code more flexible
+
+<h4 style="color:White">[ 3 - 1 ] Make class aspect-oriented</h4>Note properties/methods that must be public
+
+```csharp
     [AspectOriented]
     internal partial class Class1
     {
-        [VMProperty]
-        private int _id = -1;
+        public string Property { get; set; }
 
-        [VMInitialization]
-        private void Action()
+        public void Action()
         {
 
         }
     }
-  ```
-
-</details>
-
----
-
-## Document
-
-<details>
-<summary>V2.0.x - [ Writing ] - Testing phase, no documentation, specific information please check the history of version changes [ Version ]</summary>
-
-###
-
-</details>
-
-
-<details>
-<summary>V1.8.x - [ Finished ]</summary>
-
-## Ⅰ API
-### 1. State - Keep track of the property values of an object at a time
-|Method|Param|Return|Meaning|
-|------|-----|------|-------|
-|FromObject|object|TempState|Record all supported properties based on an object instance|
-|FromType||TempState|Only attribute values can be recorded manually|
-|SetName|string|TempState|Give the State a name|
-|SetProperty|Expression , object|TempState|Logging attribute values|
-|ToState||State ☆|Completion record|
-### 2. StateVector - Describe the relation in which a condition corresponds to an animation
-|Method|Param|Return|Meaning|
-|------|-----|------|-------|
-|Create||StateVector||
-|AddCondition|Expression , State , Action&lt;TransitionParams>?|StateVector|Describes a mapping that automatically loads an object to a specified State animation when a specified condition is met|
-|Check|T , StateMachine||Check if any of the conditions are met, and if so, call the specified StateMachine instance to load the corresponding animation|
-### 3. Transition - Animation behavior
-###### Transition
-|Method|Param|Return|Meaning|
-|------|-----|------|-------|
-|CreateBoardFromObject|object|TransitionBoard|Creating a drawing board|
-|CreateBoardFromType||TransitionBoard|Creating a drawing board|
-###### TransitionBoard
-|Method|Param|Return|Meaning|
-|------|-----|------|-------|
-|SetProperty|Expression , object|TransitionBoard|Set the target property value|
-|SetParams|Action&lt;TransitionParams>|TransitionBoard|Set animation detail parameters|
-|ReflectAny|object|TransitionBoard|Reflection specifies all attribute values of the target as the target|
-|ReflectExcept|object , params Expression<Func<T, string>>[]|TransitionBoard|Reflection specifies a partial attribute value of the target as the target|
-### 4. Any Class [Extension]
-|Method|Overloading|Meaning|
-|------|------|-------|
-|Transition|+0|Quick-start animation|
-|IsSatisfy|+4|Starts the animation with a conditional|
-|BeginTransition|+3|Start the animation with State or TransitionBoard|
-|FindStateMachine|+0|Finds whether the current object has a state machine instance|
-### 5.TransitionParams
-|Property|type|defualt|Meaning|
-|--------|----|-------|-------|
-|Start|Action|null|
-|Update|Action|null|
-|LateUpdate|Action|null|
-|Completed|Action|null|
-|StartAsync|Func&lt;Task>|null|
-|UpdateAsync|Func&lt;Task>|null|
-|LateUpdateAsync|Func&lt;Task>|null|
-|CompletedAsync|Func&lt;Task>|null|
-|FrameRate|int|120 HZ|
-|Duration|double|0 s|
-|IsAutoReverse|bool|false|
-|LoopTime|int|0|
-|Acceleration|double|0|
-|IsUnSafe|bool|false|Whether to enable the UnSafe animation|
-|IsQueue|bool|false|Whether to queue for execution|
-|IsLast|bool|false|Whether to clear the animation queue at the end of this animation|
-|IsUnique|bool|true|If an animation already exists that points to a State with the specified name, whether the animation should be added to the queue this time, i.e., whether the animation is unique|
-
-## Ⅱ Example
-#### 1. Quickly load an animation
-```csharp
-GD.Transition()
-    .SetProperty(x => x.Opacity, 0.3)
-    .SetProperty(x => x.Width, 200)
-    .SetProperty(x => x.Height, 200)
-    .SetParams((x) =>
-    {
-        x.Duration = 2;
-    })
-    .Start();
 ```
-#### 2. Start the animation based on the [State]
-```csharp
-State _board = State.FromType<Grid>()
-    .SetName("Animation1")
-    .SetProperty(x => x.Opacity, 0.3)
-    .SetProperty(x => x.Width, 200)
-    .SetProperty(x => x.Height, 200)
-    .ToState();
 
-Action<TransitionParams> _params = (x) =>
+<h4 style="color:White">[ 3 - 2 ] Make an interception/coverage</h4>
+<p style="font-size:14px">You can execute custom logic before or after calling an operation, or you can override the original execution logic</p>
+<p style="font-size:14px;color:wheat">Proxy.Set（ Name , Before , Original , After ）</p>
+
+```csharp
+            var c1 = new Class1();
+
+            c1.Proxy.SetMethod(nameof(c1.Action),
+                (para, last) => { MessageBox.Show("Intercept method"); return null; },
+                null,
+                null);
+            c1.Proxy.SetPropertyGetter(nameof(c1.Property),
+                (para, last) => { MessageBox.Show("Intercept getter"); return null; },
+                null,
+                null);
+            c1.Proxy.SetPropertySetter(nameof(c1.Property),
+                (para, last) => { MessageBox.Show("Intercept setter"); return null; },
+                null,
+                null);
+
+            c1.Proxy.Action();
+            var a = c1.Proxy.Property;
+```
+
+<h4 style="color:White">[ 3 - 3 ] Other details</h4>
+<p style="font-size:14px">1. [ para ] refers to the value passed in for this method call</p>
+<p style="font-size:14px">2. [ last ] represents the return value of the previous step</p>
+<p style="font-size:14px">3. A null value is passed to indicate no interception/overwriting</p>
+<p style="font-size:14px">4. If you don't need to return a value when defining an event, you can simply return null</p>
+
+<h3 style="color:Cyan">Ⅳ Dynamic Theme</h3>Tagging attributes for a property allows you to declare the value of that property for different topics
+
+<h4 style="color:White">[ 4 - 1 ] Marking Theme Properties</h4>
+
+<h5 style="color:white">Marking Class</h5>
+
+```csharp
+[Theme]
+public partial class MyPage
 {
-    x.Duration = 2;
-};
-
-GD.BeginTransition(_board, _params);
-```
-#### 3. Start the animation based on the [TransitionBoard]
-```csharp
-TransitionBoard<Grid> _board = Transition.CreateBoardFromType<Grid>()
-    .SetProperty(x => x.Opacity, 0.3)
-    .SetProperty(x => x.Width, 200)
-    .SetProperty(x => x.Height, 200)
-    .SetParams((x) =>
-    {
-        x.Duration = 2;
-    });
-
-GD.BeginTransition(_board);
-```
-#### 4. UnSafe
-- Predefined
-```csharp
-static TransitionBoard<Grid> Safe = Transition.CreateBoardFromType<Grid>()
-    .SetProperty(x => x.Width, 100)
-    .SetProperty(x => x.Height, 100)
-    .SetParams((x) =>
-    {
-        x.Duration = 1;
-    });
-TransitionBoard<Grid> UnSafe_1 = Transition.CreateBoardFromType<Grid>()
-    .SetProperty(x => x.Opacity, 1)
-    .SetParams((x) =>
-    {
-        x.IsUnSafe = true;
-        x.Duration = 1;
-    });
-TransitionBoard<Grid> UnSafe_2 = Transition.CreateBoardFromType<Grid>()
-    .SetProperty(x => x.Opacity, 1)
-    .SetParams((x) =>
-    {
-        x.IsUnSafe = true;
-        x.Duration = 1;
-    });
-```
-- Splicing
-```csharp
-if (GD1.Width > 1)
-{
-    UnSafe_1.SetProperty(x => x.Opacity, 0.8);
-}
-
-if (GD2.Height > 1)
-{
-    UnSafe_2.SetProperty(x => x.Opacity, 0.3);
-}
-
-GD1.BeginTransition(UnSafe_1);
-GD2.BeginTransition(UnSafe_2);
-
-GD1.BeginTransition(Safe);
-GD2.BeginTransition(Safe);
-```
-- UnSafe must be executed before Safe
-
-#### 5. LifeCycle
-```csharp
-Action<TransitionParams> _params = (x) =>
-{
-    x.Duration = 2;
-
-    x.Start = () =>
-    {
-
-    };
-    x.Update = () =>
-    {
-
-    };
-    x.LateUpdate = () =>
-    {
-
-    };
-    x.Completed = () =>
-    {
-
-    };
-
-    x.StartAsync = () =>
-    {
-
-    };
-    x.UpdateAsync = () =>
-    {
-
-    };
-    x.LateUpdateAsync = () =>
-    {
-
-    };
-    x.CompletedAsync = () =>
-    {
-
-    };
-};
-```
-#### 6. Good practice in MVVM design pattern
-- DataContext
-```xml
-<UserControl.DataContext>
-    <local:MPasswordBoxViewModel x:Name="ViewModel"
-                                 CornerRadius="10"
-                                 FontSizeConvertRate="0.7"
-                                 TextBrush="White"/>
-</UserControl.DataContext>
-```
-- ViewModel
-```csharp
-/// <summary>
-/// DataContext as password box
-/// </summary>
-public class MPasswordBoxViewModel : ViewModelBase<MPasswordBoxViewModel, MPasswordBoxModel>
-{
-    public MPasswordBoxViewModel() { }
-
-    //Default color
-    public static State Default = State.FromType<MPasswordBoxViewModel>()
-        .SetName("default")
-        .SetProperty(x => x.PasswordStrengthColor, Brushes.White)
-        .ToState();
-
-    //There are four levels of password strength, corresponding to four different colors
-    public static State Level1 = State.FromType<MPasswordBoxViewModel>()
-        .SetName("L1")
-        .SetProperty(x => x.PasswordStrengthColor, Brushes.Tomato)
-        .ToState();
-    public static State Level2 = State.FromType<MPasswordBoxViewModel>()
-        .SetName("L2")
-        .SetProperty(x => x.PasswordStrengthColor, Brushes.Yellow)
-        .ToState();
-    public static State Level3 = State.FromType<MPasswordBoxViewModel>()
-        .SetName("L3")
-        .SetProperty(x => x.PasswordStrengthColor, Brushes.Cyan)
-        .ToState();
-    public static State Level4 = State.FromType<MPasswordBoxViewModel>()
-        .SetName("L4")
-        .SetProperty(x => x.PasswordStrengthColor, Brushes.Lime)
-        .ToState();
-
-    //Switches to the specified State when the specified password strength is reached
-    public StateVector<MPasswordBoxViewModel> Condition { get; set; } = StateVector<MPasswordBoxViewModel>.Create()
-        .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 0, Default, (x) => { x.Duration = 0.3; })
-        .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 1, Level1, (x) => { x.Duration = 0.3; })
-        .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 2, Level2, (x) => { x.Duration = 0.3; })
-        .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 3, Level3, (x) => { x.Duration = 0.3; })
-        .AddCondition(x => x.TruePassword.CheckPasswordStrength(8) == 4, Level4, (x) => { x.Duration = 0.3; });
-
-    //Real password
-    public string TruePassword
-    {
-        get => Model.TruePassword;
-        set
-        {
-            Model.TruePassword = value;
-            string result = string.Empty;
-            for (int i = 0; i < value.Length; i++)
-            {
-                result += ReplacingCharacters;
-            }
-            UIPassword = result;
-            OnPropertyChanged(nameof(TruePassword));
-
-            OnConditionsChecked();
-            // Methods specified by the IConditionalTransition interface
-            // StateViewModelBase is the smallest unit that implements the MVVM and connects to the state machine. It implements the INotifyPropertyChanged and IConditionalTransition interfaces
-            // This will animate the password strength when it changes
-        }
-    }
-
-    /// <summary>
-    /// Passwords that are visible to the user
-    /// </summary>
-    public string UIPassword
-    {
-        get => Model.UIPassword;
-        set
-        {
-            Model.UIPassword = value;
-            OnPropertyChanged(nameof(UIPassword));
-        }
-    }
-
-    /// <summary>
-    /// The character used to replace the real password
-    /// </summary>
-    public string ReplacingCharacters
-    {
-        get => Model.ReplacingCharacters;
-        set
-        {
-            Model.ReplacingCharacters = value;
-            string result = string.Empty;
-            for (int i = 0; i < TruePassword.Length; i++)
-            {
-                result += ReplacingCharacters;
-            }
-            UIPassword = result;
-            OnPropertyChanged(nameof(ReplacingCharacters));
-        }
-    }
-
-    /// <summary>
-    /// Border color corresponding to password strength
-    /// </summary>
-    public Brush PasswordStrengthColor
-    {
-        get => Model.PasswordStrengthColor;
-        set
-        {
-            Model.PasswordStrengthColor = value;
-            OnPropertyChanged(nameof(PasswordStrengthColor));
-        }
-    }
-}
-```
-- Code-Behind
-```csharp
-public MPasswordBox()
-{
-    InitializeComponent();
-    this.StateMachineLoading(ViewModel);
+    // The constructor is automatically generated by the source generator
 }
 ```
 
-#### 7.AOP
-- For types that need proxies, we need to create an interface first
+<h5 style="color:white">Defining state values</h5>
+
 ```csharp
-public interface IPropertyProxy : IProxy
-{
-    string Name { get; set; }
-    string GetName();
-}
-public class TObj : IPropertyProxy
-{
-    public TObj() { }
-
-    public string Name { get; set; } = "defaultValue";
-
-    public string GetName()
-    {
-        return "defaultResult";
-    }
-}
-```
-- Create the proxy object [ proxy ]
-  - Intercepting a specified method
-  - Add custom logic before and after method execution
-  - Override the default implementation of the method
-```csharp
-TObj obj = new TObj();
-IPropertyProxy proxy = obj.CreateProxy<IPropertyProxy>();
-proxy.SetMethod(nameof(pro.GetName),
-              object? (args, last) => { MessageBox.Show($"before default method"); return "AOP before\n"; },
-              object? (args, last) => { return $"{last}AOP Coverage \n"; },
-              object? (args, last) => { MessageBox.Show($"results :\n{last}AOP after\n"); return null; });
-```
-- Tips
-  - Passing null indicates no appending or overwriting
-  - [ args ] Represents the params received when the method is called
-  - [ last ] Represents the return value of the previous step
-
-</details>
-
-<details>
-<summary>V1.5.x - [ Finished ]</summary>
-
-## Key Features
-- [State Machine System - Create linear transitions to specified properties of specified instances](#StateMachineSystem)
-  - [StateMachine]()
-  - [TransitionParams]()
-  - [MVVM]()
-  - Property types that can participate in state machine transitions
-    - double
-    - Brush
-    - Transform
-    - CornerRadius
-    - Thickness
-    - Point
-    - ★ ILinearInterpolation (This interface allows any custom type to support state machine transitions)
-## Auxiliary Features
-- [ExtensionMethods](#ExtensionMethods)
-  - [string]
-    - value conversion
-    - Fuzzy matching
-    - Profiling tools (e.g. extracting resource addresses from html)
-    - Password strength
-  - [UserControls](#UserControls)
-    - A uniform dark theme
-    - Font size ADAPTS to control height
-    - All animation effects are based on state machine systems, which are both directly available and practices of the state machine system
-      - Notification - Glass style notification/select box
-      - MProgressBar - Bar/ring free switching progress bar
-      - mtopbar - Top sidebar of the program
-## Non-core Components
-The MinimalisticWPF namespace does not include the following services, which will be referenced separately
-  - [Web Services](#WebServices)
-    - [ Autonavi ]() WebApi
-      - IP Services
-      - Weather services
-
-## Supporting frameworks
-- [.NET6.0-windows]
-- [.NET8.0-windows]
-## Getting
-- [github][1]
-- [nuget][2]
-
-[1]: https://github.com/ChengduNeusoftUniversity-FengJunjie-Y22/MinimalisticWPF
-[2]: https://www.nuget.org/packages/MinimalisticWPF/
-
-# StateMachineSystem
-- State & StateVecotr is built for MVVM and allows for automatic state switching with preset conditions
-- StateMachine theory can make linear transitions for any type of property. Almost all types non-MVVM include an extension method for quickly creating linear transitions for object instances. This is probably the library's most common method
-  - ★ Advantages
-    - Create complex transitions with little code
-    - Update() allows you to decide what you want to do for each frame of the transition, just like in game development engines
-    - The functionality is not limited to animations, it modifies any possible type, any possible property, for example testing the program with simulated data is one of the uses the authors tried
-  - ⚠ ️ Disadvantages
-    - Unstable performance (relative to components like StoryBoard and VisualState)
-    - The types of properties that support transitions are very limited, and although an interface is provided to solve this problem, it is not convenient to leave the calculation of linear interpolation to the implementation class of the interface
-[![pAu2vOP.md.png](https://s21.ax1x.com/2024/09/15/pAu2vOP.md.png)](https://imgse.com/i/pAu2vOP)
-
----
-
-## StateMachine
-- For any type [where T: class, new()] you can create a linear transition using the following code
-- For example perform the following transition on a 100×100 Grid
-```csharp
-        private RotateTransform rotateTransform = new RotateTransform(-280, 50, 50);
-        private TranslateTransform translateTransform = new TranslateTransform(-100, -50);
-        private ScaleTransform scaleTransform = new ScaleTransform(2, 2, 50, 50);
-
-        private void GD_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        [Dark(nameof(Brushes.Tomato))]
+        [Light("#1e1e1e")]
+        public Brush Color
         {
-            GD.Transition()
-                .SetProperty(x => x.RenderTransform, rotateTransform, translateTransform, scaleTransform)
-                .SetProperty(x => x.Opacity, 0.2)
-                .SetProperty(x => x.CornerRadius,new CornerRadius(15))
-                .SetParams((x) =>
-                {
-                    x.Duration = 0.4;
-                    x.Completed = () =>
-                    {
-                        Notification.Message("Transition complete √");
-                    };
-                })
-                .Start();
-        }
-```
-- But the default properties available for state machine transitions are finite types, so how do you make custom types work with state machines?
-  - Step 1. Implement a Class1, which is a custom type that supports state machine transitions
-    - Here Class1 is the composition of Thickness and CornerRadius
-    - Need to implement the interface method Interpolate (), steps is the number of interpolations, you need to customize how to split the two Class1 into steps to evenly interpolate
-    ```csharp
-    public class Class1 : ILinearInterpolation
-    {
-        public object Current { get; set; }
-        public List<object?> Interpolate(object? current, object? target, int steps)
-        {
-            List<object?> result = new List<object?>();
-
-            var v1 = current as Class1 ?? new Class1();
-            var v2 = target as Class1 ?? new Class1();
-            var itemsA = ILinearInterpolation.CornerRadiusComputing(v1.CornerRadius, v2.CornerRadius, steps);
-            var itemsB = ILinearInterpolation.ThicknessComputing(v1.Thickness, v2.Thickness, steps);
-            for (var i = 0; i < itemsA.Count; i++)
-            {
-                var temp = new Class1();
-                temp.CornerRadius = itemsA[i] as CornerRadius? ?? new CornerRadius();
-                temp.Thickness = itemsB[i] as Thickness? ?? new Thickness();
-                result.Add(temp);
-            }
-
-            return result;
+            get => txt.Foreground;
+            set => txt.Foreground = value;
         }
 
-
-        public Class1() { Current = this; }
-        public Class1(CornerRadius cornerRadius, Thickness thickness) { Current = this; CornerRadius = cornerRadius; Thickness = thickness; }
-        public CornerRadius CornerRadius { get; set; } = new CornerRadius();
-        public Thickness Thickness { get; set; } = new Thickness();
-    }
-    ```
-  - Step 2. Implement a Class2, which is the type that contains the Class1 property, is the type that actually needs to use the state machine
-    ```csharp
-    public class Class2
-    {
-        public Class2() { }
-       
-        public Class1 Class1 { get; set; } = new Class1();
-
-        //…… other properties
-    }
-    ```
-  - Step 3. At this point, you are ready to apply state machine transitions to Class2.Class1
-    ```csharp
-       Class1 T1 = new Class1();
-       Class1 T2 = new Class1(new CornerRadius(10), new Thickness(2, 3, 1, 0));
-  
-       Class2 TargetClass2 = new Class2();
-  
-       TargetClass2.Transition()
-           .SetProperty(x => x.Class1, T2)
-           .SetParams((x) =>
-           {
-               x.Duration = 2;
-               x.Start = () =>
-               {
-                    Notification.Message($"old Thickness {TargetClass2.Class1.Thickness}\n" +
-                            $"old CornerRadius {TargetClass2.Class1.CornerRadius}");
-               };
-               x.Completed = () =>
-               {
-                    Notification.Message($"new Thickness {TargetClass2.Class1.Thickness}\n" +
-                            $"new CornerRadius {TargetClass2.Class1.CornerRadius}");
-               };
-           })
-           .Start();
-    ```
-
----
-
-## TransitionParams 
-- Contains a number of parameters for the details of the transition
-  - Transition parameters
-  - Transition creation parameters
-  - Lifecycle related parameters
-
-| property | type | default | meaning |
-|--------|-----|-------|-------|
-|Duration|double|0| Animation duration (in s)|
-|Start|Action|null| is executed once before the animation starts |
-|Update|Action|null| is executed once before each frame of the animation starts |
-|LateUpdate|Action|null| is executed once after each frame of the animation |
-|Completed|Action|null| is executed once after the animation has finished |
-|IsQueue|bool|false| Whether the newly enabled animation will be queued or not, otherwise the animation will be interrupted |
-|IsLast|bool|false| Whether this is the last animation to be executed, if so it will clear the queued animation |
-|IsUnique|bool|true| Should a transition animation that points to the same State continue if one exists |
-|FrameRate|int|165| Animation frame rate |
-|WaitTime|double|0.008| is rarely used, but if you find places where the probability doesn't animate or the probability is twitching, you can increase this value appropriately|
-|Acceleration|double|0|The waiting time of each frame is shown as a straight line with slope [Acceleration] in the floor plan|
-
-- Use cases
-  - Set transition parameters (lambdas) for StateVector
-  - Set a transition parameter (Lambda) for Transition()
-
-```csharp
-Set((x)=>
-{
-    x.Duration = 0.1;
-    x.IsLast = true;
-    x.Update = () =>
-    {
-        Notification.Message("Before the start of a frame");
-    };
-})
-```
-
----
-
-## State & StateVector & IConditionalTransition
-- State describes the value of an object's property at a moment in time
-- StateVector describes which transitions are created under which conditions
-- IConditionalTransition allows you to automatically create a transition when a specified condition is met on an instance object
-  - Examples
-    - When the mouse is inside the control, make its background opacity transition to 0.2
-    - Make the background opacity transition to 0 when the mouse leaves the control
-    - Xaml - View
-    ```xml
-    <UserControl.DataContext>
-        <local:MButtonViewModel x:Name="ViewModel"/>
-    </UserControl.DataContext>
-    ```
-    - C# - View
-    ```csharp
-    public partial class MButton : UserControl
-    {
-        public MButton()
+        [Dark(6)]
+        [Light(16,1,2,0)]
+        public CornerRadius CornerRadius
         {
-            InitializeComponent();
-            this.StateMachineLoading(ViewModel);
+            get => bor.CornerRadius;
+            set => bor.CornerRadius = value;
         }
-    }
-    ```
-    - C# - ViewModel
-    ```csharp
-    public class MButtonViewModel : ViewModelBase<MButtonViewModel, MButtonModel>
-    {
-        public MButtonViewModel() { }
 
-        public static State Start = State.FromObject(new MButtonViewModel())
-            .SetName("defualt")
-            .SetProperty(x => x.HoverBackgroundOpacity, 0)
-            .ToState();
-        public static State MouseIn = State.FromObject(new MButtonViewModel())
-            .SetName("mouseInside")
-            .SetProperty(x => x.HoverBackgroundOpacity, 0.2)
-            .ToState();
-
-        public StateVector<MButtonViewModel> Condition { get; set; } = StateVector<MButtonViewModel>.Create()
-            .AddCondition(x => x.IsMouseInside, MouseIn, (x) => { x.Duration = 0.2; })
-            .AddCondition(x => !x.IsMouseInside, Start, (x) => { x.Duration = 0.2; });
-
-        public override bool IsMouseInside
+        [Dark(0.0)]
+        [Light(1.0)]
+        public double ThemeOpacity
         {
-            get => base.IsMouseInside;
-            set
-            {
-                base.IsMouseInside = value;
-  
-                OnConditionsChecked();
-                // Change IsMouseInside when mouse in/out of control
-                //IsMouseInside is modified to check if the condition is true, if so, switch State
-            }
+            get => Opacity;
+            set => Opacity = value;
         }
-    }
-    ```
 
----
----
-
-# ExtensionMethods
-## string
-- Value conversion
-```csharp
-   string valueA = "-123.7";
-   string valueB = "TrUE";
-   string valueC = "#1e1e1e";
-   
-   var result1 = valueA.ToInt();
-   var result2 = valueA.ToDouble();
-   var result3 = valueA.ToFloat();
-
-   var result4 = valueB.ToBool();
-
-   var result5 = valueC.ToBrush();
-```
-- Fuzzy matching
-```csharp
-   string template = "abcdefg";
-
-   string sourceA = "abc";
-   List<string> sourceB = new List<string>()
-   {
-       "abcdegf",
-       "cbdgafe"
-   };
-
-   var similarity1 = sourceA.LevenshteinDistance(template)
-   //Returns the shortest edit distance
-
-   var similarity2 = sourceA.JaroWinklerDistance(template)
-   //Returns approximation
-
-   var result3 = template.BestMatch(sourceB, 3);
-   //Edit the result with a minimum distance of less than 3
-
-   var result4 = template.BestMatch(sourceB, 0.5);
-   //The result with the approximation degree greater than 0.5 and the largest
-```
-- Folder generation operations
-```csharp
-   string folderNameA = "FF1";
-   string folderNameB = "FF2";
-   string folderNameC = "FF3";
-   //The folder name
-
-   var result1 = folderNameA.CreatFolder();
-   //From the.exe location, create a folder named "FF1"
-
-   var result2 = folderNameC.CreatFolder(folderNameA,folderNameB);
-   //From the.exe location, create a folder named "FF1/FF2/FF3"
-```
-- Xml and Json serialization
-```csharp
-   string folderName = "Data";
-
-   string fileName1 = "firstPersondata";
-   string fileName2 = "secondPersondata";
-
-   var target = new Person();
-
-   var result1 = fileName1.CreatXmlFile(folderName.CreatFolder(), target);
-   var result2 = fileName2.CreatJsonFile(folderName.CreatFolder(), target);
-```
-- Xml and Json deserialization
-```csharp
-   string folderName = "Data";
-
-   string fileName1 = "firstPersondata";
-   string fileName2 = "secondPersondata";
-
-   string AbsPathA = Path.Combine(folderName.CreatFolder(), $"{fileName1}.xml");
-   string AbsPathB = Path.Combine(folderName.CreatFolder(), $"{fileName2}.json");
-   var dataA = File.ReadAllText(AbsPathA);
-   var dataB = File.ReadAllText(AbsPathB);
-
-   var result1 = dataA.XmlParse<Person>();
-   var result2 = dataB.JsonParse<Person>();
-```
-- Regular operation
-```csharp
-   string sourceA = "[1]wkhdkjhk[a][F3]https:awijdioj.mp3fwafw";
-   string sourceB = "awdhttps://aiowdjoajfo.comawd&*(&d)*dhttps://tn.comdawd";
-   
-   var resultA = sourceA.CaptureBetween("https:", ".mp3");
-
-   var resultB = sourceB.CaptureLike("https://", "com");
-```
-- Password strength
-```csharp
-   string password = "12345678";
-   int Level = password.CheckPasswordStrength(MinLength=8);
-```
-
----
----
-
-# UserControls
-- ## ☆ Using
-  - C#
-    ```csharp
-    using MinimalisticWPF;
-    ```
-  - XAML
-    ```xml
-    xmlns:mn="clr-namespace:MinimalisticWPF;assembly=MinimalisticWPF"
-    ```
-- ## ☆ MButton
-  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLPyQ.png)
-  ## Property
-  - Click
-  - WiseHeight
-  - WiseWidth
-  - Text
-  - TextBrush
-  - FontSizeRatio
-  - EdgeBrush
-  - EdgeThickness
-  - HoverBrush
-  - CornerRadius
----
-- ## ☆ MTopBar
-  ![pAmMfv8.md.png](https://s21.ax1x.com/2024/09/09/pAmMfv8.md.png)
-  ![pAmQnVH.md.png](https://s21.ax1x.com/2024/09/09/pAmQnVH.md.png)
-  ## Property
-  - WiseHeight
-  - WiseWidth
-  - Title
-  - SizeRatio
-  - EdgeBrush
-  - EdgeThickness
-  - HoverBrush
-  - CornerRadius
-  - Icon
----
-- ## ☆ MPasswordBox
-  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLEoq.png)
-  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLQOJ.png)
-  ## Property
-  - WiseHeight
-  - WiseWidth
-  - FontSizeRatio
-  - Password
-  - Replace
----
-- ### ☆ MProgressBar
-  ![Effect](https://s21.ax1x.com/2024/09/09/pAeLkes.png)
-  ## Property
-  - Size
-  - Value
-  - Shape
-  - Thickness
-  - BottomBrush
-  - FillBrush
-  - TextBrush
-  - FontSizeRatio
-  - IsReverse
-  - StartAngle
-  - EndAngle
----
-- ### ☆ Notification
-  [![pAKM40S.png](https://s21.ax1x.com/2024/09/18/pAKM40S.png)](https://imgse.com/i/pAKM40S)
-  [![pAKMhm8.png](https://s21.ax1x.com/2024/09/18/pAKMhm8.png)](https://imgse.com/i/pAKMhm8)
-  ## 消息框调用示例
-  ```csharp
-            if (Notification.Select("Are you sure you want to check the weather ?"))
-            {
-                Notification.Message("Weather");
-            }
-  ```
-
----
----
-
-# WebServices
-- ##  Autonavi
-  - using
-    ```csharp
-    using MinimalisticWPF.GaoDeServices;
-    ```
-  - Get ApiKey https://console.amap.com/dev/key/app
-    ```csharp
-        protected override void OnSourceInitialized(EventArgs e)
+        [Dark(1,1,1,1)]
+        [Light(5)]
+        public Thickness ThemeThickness
         {
-            base.OnSourceInitialized(e);
-
-            GaoDeAPISet.Awake(Key: "Your_Api_Key", IsUpdateIP: true);
+            get => bor.BorderThickness;
+            set => bor.BorderThickness = value;
         }
-    ```
-  - IPService
-    - Get IP
-      ```csharp
-      var ip = await IPService.GetIP();
-      MessageBox.Show(ip.GetCombined());
-      ```
-    - Get AdCode
-      ```csharp
-      var adcode = await IPService.GetAdCode("都江堰");
-      MessageBox.Show(adcode);
-      ```
-  - WeatherService
-    - Get the weather based on the current IP address
-      ```csharp
-      var weathers = await WeatherService.GetWeathers();
-      MessageBox.Show(weathers[0].GetCombined());
-      ```
-    - Get the weather by region name
-      ```csharp
-      var weathers = await WeatherService.GetWeathers("都江堰");
-      MessageBox.Show(weathers[0].GetCombined());
-      ```
-    - weather[0] Is for today's weather
- 
-</details>
+```
+
+<h5 style="color:white">Apply Theme</h5>
+
+```csharp
+   this.ApplyTheme(typeof(WhenLight), windowBack: Brushes.White); // Started by the instance itself
+   DynamicTheme.Apply(typeof(WhenLight), windowBack: Brushes.White); // Global usage
+```
+
+<h4 style="color:White">[ 4 - 2 ] BrushTags</h4>You can use tag when marking a theme value to the Brush
+
+```csharp
+        [Light(BrushTags.H1)]
+        [Dark(BrushTags.H1)]
+        public Brush BrushValue { get; set; } = Brushes.Transparent;
+```
+
+BrushTags makes uniform names for key parts under different topics
+
+<h4 style="color:White">[ 4 - 3 ] Change the default theme color</h4>
+
+By default, the library provides two color packages for light and dark themes and an RGB struct that you can use to apply RGBA transformations to Brush, such as making the opacity half of its original value
+
+```csharp
+     LightBrushes.H1 = LightBrushes.H1.ToRGB().Scale(1, 0.5).Brush;
+     DarkBrushes.H1 = DarkBrushes.H1.ToRGB().Scale(1, 0.5).Brush;
+```
+
+<h4 style="color:White">[ 4 - 4 ] Theme Customization</h4>
+
+<h5 style="color:white">To create your own theme, you need to include the following factors</h5>
+
+<p style="color:wheat">1. Attribute & IThemeAttribute</p>
+
+Declare an attribute that implements a given interface. This attribute can be used just like [Light] / [Dark]
+
+<p style="color:wheat">2. IThemeBrushes</p>
+
+Declare a class that implements a given interface to get a color based on a Tag
+
+---

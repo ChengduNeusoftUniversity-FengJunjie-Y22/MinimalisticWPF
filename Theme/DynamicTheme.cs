@@ -32,10 +32,7 @@ namespace MinimalisticWPF
     public static class DynamicTheme
     {
         internal static ConcurrentDictionary<Type, ConcurrentDictionary<Type, State>> TransitionSource { get; set; } = new();
-        internal static ConcurrentDictionary<Type, ConcurrentDictionary<Type, HoverActionManager>> HoverSource { get; set; } = new();
-        internal static ConcurrentDictionary<object, Type> CurrentTheme { get; set; } = new();
         internal static HashSet<object> GlobalInstance { get; set; } = new(64);
-        public static Type InitialTheme { get; set; } = typeof(Dark);
 
         private static bool _isloaded = false;
         public static void Awake()
@@ -146,7 +143,6 @@ namespace MinimalisticWPF
                     hoverunit.TryAdd(attribute, hovermanager);
                 }
                 TransitionSource.TryAdd(cs, unit);
-                HoverSource.TryAdd(cs, hoverunit);
             }
         }
     }
