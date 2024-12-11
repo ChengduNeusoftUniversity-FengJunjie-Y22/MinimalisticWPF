@@ -26,6 +26,7 @@ Feature Directory
   - [Animation](#Animation)
   - [Mvvm](#Mvvm)
   - [Aspect-Oriented Programming](#AOP)
+  - [Object Pool](#ObjectPool)
   - [Dynamic Theme](#Theme)
 - Other
   - [Xml / Json Operation](#Xml&Json)
@@ -251,9 +252,78 @@ gd.StopTransition(true,false);
 
 ---
 
+## ObjectPool
+
+<h4 style="color:White">[ 4 - 1 ] Use attributes to configure a class</h4>
+
+```csharp
+  [Pool(5, 10)] //The initial number of units is 5. If resources are insufficient, the system automatically expands to a maximum of 10 units
+  public class Unit
+  {
+      public static int count = 1;
+
+      public Unit() { Value = count; count++; }
+
+      public int Value { get; set; } = 1;
+
+      [PoolFetch] //Triggered when the object is removed from the pool
+      public void WhileFetch()
+      {
+          MessageBox.Show($"Fetch {Value}");
+      }
+
+      [PoolDispose] //Triggered when the object pool is automatically reclaimed
+      public void WhileDispose()
+      {
+          MessageBox.Show($"Dispose {Value}");
+      }
+
+      [PoolDisposeCondition] //If the return value is true, the resource can be reclaimed automatically
+      public bool CanDisposed()
+      {
+          return Value % 2 == 0 ? true : false;
+      }
+  }
+```
+
+<h4 style="color:White">[ 4 - 2 ] Use object pool to manage instances</h4>
+
+(1) Get Instance
+
+```csharp
+var unit = Pool.Fetch(typeof(Unit)) as Unit;
+if (Pool.TryFetch(typeof(Unit), out var result))
+{
+    var unit = result as Unit;
+}
+```
+
+(2) Start Auto Dispose
+
+```csharp
+Pool.RunAutoDispose(typeof(Unit), 5000);
+```
+
+(3) End Auto Dispose
+
+```csharp
+Pool.StopAutoDispose(typeof(Unit));
+```
+
+(4) Force resource release
+
+```csharp
+var unit = Pool.Fetch(typeof(Unit)) as Unit;
+unit.PoolDispose();
+```
+
+It is common to have one thread per class to intermittently reclaim objects, which can lead to too many threads, and you won't see this message if there are optimizations in future versions
+
+---
+
 ## Theme
 
-<h4 style="color:White">[ 4 - 1 ] Marking Theme Properties</h4>
+<h4 style="color:White">[ 5 - 1 ] Marking Theme Properties</h4>
 
 <h5 style="color:white">Marking Class</h5>
 
@@ -308,7 +378,7 @@ public partial class MyPage
    DynamicTheme.Apply(typeof(WhenLight), windowBack: Brushes.White); // Global usage
 ```
 
-<h4 style="color:White">[ 4 - 2 ] BrushTags</h4>You can use tag when marking a theme value to the Brush
+<h4 style="color:White">[ 5 - 2 ] BrushTags</h4>You can use tag when marking a theme value to the Brush
 
 ```csharp
         [Light(BrushTags.H1)]
@@ -318,7 +388,7 @@ public partial class MyPage
 
 BrushTags makes uniform names for key parts under different topics
 
-<h4 style="color:White">[ 4 - 3 ] Change the default theme color</h4>
+<h4 style="color:White">[ 5 - 3 ] Change the default theme color</h4>
 
 By default, the library provides two color packages for light and dark themes and an RGB struct that you can use to apply RGBA transformations to Brush, such as making the opacity half of its original value
 
@@ -327,7 +397,7 @@ By default, the library provides two color packages for light and dark themes an
      DarkBrushes.H1 = DarkBrushes.H1.ToRGB().Scale(1, 0.5).Brush;
 ```
 
-<h4 style="color:White">[ 4 - 4 ] Theme Customization</h4>
+<h4 style="color:White">[ 5 - 4 ] Theme Customization</h4>
 
 <h5 style="color:white">To create your own theme, you need to include the following factors</h5>
 
