@@ -28,15 +28,15 @@ Feature Directory
   - [Aspect-Oriented Programming](#AOP)
   - [Dynamic Theme](#Theme)
 - Other
-  - [Xml / Json Operation](#Xml/Json)
+  - [Xml / Json Operation](#Xml&Json)
   - [Folder Creation](#folder)
   - [string Convertor](#stringConvertor)
   - [string Matcher](#stringMatcher)
   - [RGB Convertor](#RGB)
 
 Details
-- [Compared to native animation](#Differences)
 - [TransitionParams](#TransitionParams)
+- [Unsafe Transition](#UnsafeTransition)
 - [Roslyn](#Generator)
 ---
 
@@ -50,6 +50,8 @@ Details
         <Grid x:Name="grid" Width="100" Height="200" Background="Gray"/>
     </Grid>
 ```
+
+A description of the animation parameters is in the Details directory [TransitionParams](#TransitionParams)
 
 <h4 style="color:White">[ 1 - 1 ] Warm Start</h4>
 
@@ -148,6 +150,25 @@ grid.BeginTransition(_animation, _params);
 
             return result;
         }
+```
+
+<h4 style="color:White">[ 1 - 4 ] Stop</h4>
+
+<h5 style="color:white">static method</h5>
+
+```csharp
+Transition.Dispose();               // All transitions
+Transition.Stop(grid,grid2);        // Only transitions of the selected object
+Transition.StopSafe(grid,grid2);    // Only Safe transitions
+Transition.StopUnSafe(grid,grid2);  // Only UnSafe transitions
+```
+
+<h5 style="color:white">extension method</h5>
+
+```csharp
+gd.StopTransition(IsStopSafe: true, IsStopUnSafe: false);
+gd.StopTransition(true,false);
+//The bool value indicates whether to terminate the Safe/UnSafe transition being performed by the object
 ```
 
 ---
@@ -320,32 +341,196 @@ Declare a class that implements a given interface to get a color based on a Tag
 
 ---
 
-## Xml/Json
+## Xml&Json
+
+### (1)  deserialization
+
+```csharp
+   string folderName = "Data";
+
+   string fileName1 = "firstPersondata";
+   string fileName2 = "secondPersondata";
+
+   string AbsPathA = Path.Combine(folderName.CreatFolder(), $"{fileName1}.xml");
+   string AbsPathB = Path.Combine(folderName.CreatFolder(), $"{fileName2}.json");
+   var dataA = File.ReadAllText(AbsPathA);
+   var dataB = File.ReadAllText(AbsPathB);
+
+   var result1 = dataA.XmlParse<Person>();
+   var result2 = dataB.JsonParse<Person>();
+```
+
+### (2) serialization
+
+```csharp
+   string folderName = "Data";
+
+   string fileName1 = "firstPersondata";
+   string fileName2 = "secondPersondata";
+
+   var target = new Person();
+
+   var result1 = fileName1.CreatXmlFile(folderName.CreatFolder(), target);
+   var result2 = fileName2.CreatJsonFile(folderName.CreatFolder(), target);
+```
 
 ---
 
 ## folder
 
+```csharp
+   string folderNameA = "FF1";
+   string folderNameB = "FF2";
+   string folderNameC = "FF3";
+   //The folder name
+
+   var result1 = folderNameA.CreatFolder();
+   //From the.exe location, create a folder named "FF1"
+
+   var result2 = folderNameC.CreatFolder(folderNameA,folderNameB);
+   //From the.exe location, create a folder named "FF1/FF2/FF3"
+```
+
 ---
 
 ## stringConvertor
+
+```csharp
+   string valueA = "-123.7";
+   string valueB = "TrUE";
+   string valueC = "#1e1e1e";
+   
+   var result1 = valueA.ToInt();
+   var result2 = valueA.ToDouble();
+   var result3 = valueA.ToFloat();
+
+   var result4 = valueB.ToBool();
+
+   var result5 = valueC.ToBrush();
+   var result6 = valueC.ToColor();
+   var result7 = valueC.ToRGB();
+```
 
 ---
 
 ## stringMatcher
 
+### (1) Regular
+
+```csharp
+   string sourceA = "[1]wkhdkjhk[a][F3]https:awijdioj.mp3fwafw";
+   string sourceB = "awdhttps://aiowdjoajfo.comawd&*(&d)*dhttps://tn.comdawd";
+   
+   var resultA = sourceA.CaptureBetween("https:", ".mp3");
+
+   var resultB = sourceB.CaptureLike("https://", "com");
+```
+
+### (2) Fuzzy Match
+
+```csharp
+   string template = "abcdefg";
+
+   string sourceA = "abc";
+   List<string> sourceB = new List<string>()
+   {
+       "abcdegf",
+       "cbdgafe"
+   };
+
+   var similarity1 = sourceA.LevenshteinDistance(template)
+   //Returns the shortest edit distance
+
+   var similarity2 = sourceA.JaroWinklerDistance(template)
+   //Returns approximation
+
+   var result3 = template.BestMatch(sourceB, 3);
+   //Edit the result with a minimum distance of less than 3
+
+   var result4 = template.BestMatch(sourceB, 0.5);
+   //The result with the approximation degree greater than 0.5 and the largest
+```
+
 ---
 
 ## RGB
 
----
+### (1) Properties
 
-## Differences
+| Property | Type   | Description                                             |
+|----------|--------|---------------------------------------------------------|
+| R        | int    | Gets or sets the red component of the color, ranging from 0 to 255. |
+| G        | int    | Gets or sets the green component of the color, ranging from 0 to 255. |
+| B        | int    | Gets or sets the blue component of the color, ranging from 0 to 255. |
+| A        | int    | Gets or sets the alpha (transparency) component of the color, ranging from 0 to 255. |
+
+### (2) Methods
+
+| Method Name     | Return Type            | Parameters                                      | Description                                                         |
+|-----------------|------------------------|-------------------------------------------------|---------------------------------------------------------------------|
+| Color           | System.Windows.Media.Color | None                                        | Converts the current `RGB` structure to a WPF `Color` object.       |
+| SolidColorBrush | System.Windows.Media.SolidColorBrush | None                                        | Creates a `SolidColorBrush` based on the current color.             |
+| Brush           | System.Windows.Media.Brush | None                                        | Creates a `Brush` based on the current color; internally calls `SolidColorBrush`. |
+| FromColor       | RGB                    | color: System.Windows.Media.Color              | Static method that creates a new `RGB` structure from a given WPF `Color` object. |
+| FromBrush       | RGB                    | brush: System.Windows.Media.Brush             | Static method that attempts to create a new `RGB` structure from a given brush. |
+| Scale           | RGB                    | rateR, rateG, rateB, rateA: double            | Scales each color component according to the given ratios.          |
+| Scale           | RGB                    | rateRGB, rateA: double                        | Scales the RGB components and transparency of the color by the given ratios. |
+| Scale           | RGB                    | rateRGBA: double                             | Uniformly scales all color components by the given ratio.           |
+| Delta           | RGB                    | deltaR, deltaG, deltaB, deltaA: int           | Changes each color component by the specified deltas.               |
+| Delta           | RGB                    | deltaRGB, deltaA: int                         | Changes the RGB components and transparency of the color by the specified deltas. |
+| Delta           | RGB                    | deltaRGBA: int                               | Uniformly changes all color components by the specified delta.      |
+| SubA            | RGB                    | newValue: int                                 | Sets the alpha (transparency) component of the color.               |
+| SubR            | RGB                    | newValue: int                                 | Sets the red component of the color.                                |
+| SubG            | RGB                    | newValue: int                                 | Sets the green component of the color.                              |
+| SubB            | RGB                    | newValue: int                                 | Sets the blue component of the color.                               |
+| ToString        | string                 | None                                        | Returns a string representation of the current color in the format "RGBA [R,G,B,A]". |
 
 ---
 
 ## TransitionParams
 
+| Property Name     | Description                                                                                      | Default Value         |
+|-------------------|--------------------------------------------------------------------------------------------------|-----------------------|
+| Start             | Action to execute before transition starts                                                       | null                  |
+| Update            | Action to execute at the start of each frame                                                     | null                  |
+| LateUpdate        | Action to execute at the end of each frame                                                       | null                  |
+| Completed         | Action to execute after animation completes                                                      | null                  |
+| StartAsync        | Asynchronous action to execute before transition starts                                          | null                  |
+| UpdateAsync       | Asynchronous action to execute at the start of each frame                                        | null                  |
+| LateUpdateAsync   | Asynchronous action to execute at the end of each frame                                          | null                  |
+| CompletedAsync    | Asynchronous action to execute after animation completes                                         | null                  |
+| IsAutoReverse     | Whether to automatically reverse                                                                 | false                 |
+| LoopTime          | Number of loops                                                                                  | 0                     |
+| Duration          | Duration of the transition (unit: s)                                                             | 0                     |
+| FrameRate         | Transition frame rate (default: 60)                                                              | DefaultFrameRate (60) |
+| IsQueue           | Whether to queue execution (default: not queued)                                                 | false                 |
+| IsLast            | Whether to clear other queued transitions after completion (default: do not clear)               | false                 |
+| IsUnique          | Whether to add to the queue if a similar transition is already queued (default: do not add)      | true                  |
+| Acceleration      | Acceleration (default: 0)                                                                        | 0                     |
+| IsUnSafe          | Unsafe operation flag indicating unconditional and immediate execution (default: false)          | false                 |
+| UIPriority        | UI update priority                                                                               | DefaultUIPriority     |
+| IsBeginInvoke     | Whether to use BeginInvoke when updating properties                                              | DefaultIsBeginInvoke  |
+
+---
+
+## UnsafeTransition
+
+If an animation is set to Unsafe, it will normally execute on its own without being interrupted by other animations
+
+In some cases, you can use this feature to create animations like building blocks
+
+Of course, the Transition class provides methods to terminate such transitions
+
 ---
 
 ## Generator
+
+(1) Only for partial classes
+
+(2) Contains at least one of the AOP, Theme, and VMProperty attributes for the source generator to work
+
+(3) The source generator has built the no-argument constructor
+
+(4) You'll need to regenerate after installing the project or if the content changes
+
+(5) If regenerating does not make the source generator work, you need to restart the editor, and if this still does not work, you need to check for the [.NET Compliler Platform SDK] and [Visual Basic Roslyn] components.
