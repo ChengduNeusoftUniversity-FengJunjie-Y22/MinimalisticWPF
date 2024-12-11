@@ -66,7 +66,6 @@ namespace MinimalisticWPF
                 StateMachine.InitializeTypes(cs);
                 if (!StateMachine.SplitedPropertyInfos.TryGetValue(cs, out var group)) break;
                 var unit = new ConcurrentDictionary<Type, State>();
-                var hoverunit = new ConcurrentDictionary<Type, HoverActionManager>();
                 foreach (var attribute in attributes)
                 {
                     var properties = cs.GetProperties()
@@ -76,7 +75,6 @@ namespace MinimalisticWPF
                         Context = p.GetCustomAttribute(attribute, true) as IThemeAttribute,
                     });
                     var state = new State();
-                    var hovermanager = new HoverActionManager();
                     foreach (var info in properties)
                     {
                         if (info.PropertyInfo.CanWrite && info.PropertyInfo.CanRead && info.Context != null)
@@ -99,9 +97,6 @@ namespace MinimalisticWPF
                                 (false, true, false, false, false, false) => () =>
                                 {
                                     var value = info.Context.Value ?? info.Context.Parameters?.FirstOrDefault()?.ToString()?.ToBrush() ?? Brushes.Transparent;
-                                    var focus = info.Context.FocusValue ?? value;
-                                    hovermanager.ToTheme.AddProperty(info.PropertyInfo.Name, value);
-                                    hovermanager.ToHover.AddProperty(info.PropertyInfo.Name, focus);
                                     state.AddProperty(info.PropertyInfo.Name, value);
                                     return 2;
                                 }
@@ -140,7 +135,6 @@ namespace MinimalisticWPF
                         }
                     }
                     unit.TryAdd(attribute, state);
-                    hoverunit.TryAdd(attribute, hovermanager);
                 }
                 TransitionSource.TryAdd(cs, unit);
             }

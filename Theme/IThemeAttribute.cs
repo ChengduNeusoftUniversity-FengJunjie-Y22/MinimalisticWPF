@@ -10,6 +10,5 @@ namespace MinimalisticWPF
     {
         object?[]? Parameters { get; }
         object? Value { get; }
-        object? FocusValue { get; }
     }
 }

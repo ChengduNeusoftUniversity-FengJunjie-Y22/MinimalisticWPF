@@ -258,7 +258,7 @@ public partial class MyPage
 <h5 style="color:white">Apply Theme</h5>
 
 ```csharp
-   this.ApplyTheme(typeof(WhenLight), windowBack: Brushes.White); // Started by the instance itself
+   this.ApplyTheme(typeof(WhenLight)); // Started by the instance itself
    DynamicTheme.Apply(typeof(WhenLight), windowBack: Brushes.White); // Global usage
 ```
 
