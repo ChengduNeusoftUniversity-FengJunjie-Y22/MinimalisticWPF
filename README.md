@@ -21,7 +21,26 @@ Versions below 2.0.0 will be deprecated at the end of this month.
 
 ## Document 
 
-<h3 style="color:Cyan">Ⅰ Animation </h3>Property-Based Transition System
+Feature Directory
+- Core
+  - [Animation](#Animation)
+  - [Mvvm](#Mvvm)
+  - [Aspect-Oriented Programming](#AOP)
+  - [Dynamic Theme](#Theme)
+- Other
+  - [Xml / Json Operation](#Xml/Json)
+  - [Folder Creation](#folder)
+  - [string Convertor](#stringConvertor)
+  - [string Matcher](#stringMatcher)
+  - [RGB Convertor](#RGB)
+
+Details
+- [Compared to native animation](#Differences)
+- [TransitionParams](#TransitionParams)
+- [Roslyn](#Generator)
+---
+
+## Animation
 
 <h4 style="color:white">Take the following two controls as examples to demonstrate some animation operations</h4>
 
@@ -131,7 +150,9 @@ grid.BeginTransition(_animation, _params);
         }
 ```
 
-<h3 style="color:Cyan">Ⅱ Mvvm </h3>Use source generator to speed up ViewModel building . 
+---
+
+## Mvvm
 
 <h4 style="color:White">[ 2 - 1 ] Automatically generate ViewModel for a partial class</h4>
 <p style="font-size:14px;color:wheat">[ VMProperty ] → Automatically generating properties</p>
@@ -158,7 +179,9 @@ grid.BeginTransition(_animation, _params);
     }
 ```
 
-<h3 style="color:Cyan">Ⅲ Aspect-Oriented Programming</h3>Dynamic Proxy are created by using the source generator . You can access the properties and methods of the original object through the proxy. Setting up intercepting and overriding logic for the proxy object can make your code more flexible
+---
+
+## AOP
 
 <h4 style="color:White">[ 3 - 1 ] Make class aspect-oriented</h4>Note properties/methods that must be public
 
@@ -205,7 +228,9 @@ grid.BeginTransition(_animation, _params);
 <p style="font-size:14px">3. A null value is passed to indicate no interception/overwriting</p>
 <p style="font-size:14px">4. If you don't need to return a value when defining an event, you can simply return null</p>
 
-<h3 style="color:Cyan">Ⅳ Dynamic Theme</h3>Tagging attributes for a property allows you to declare the value of that property for different topics
+---
+
+## Theme
 
 <h4 style="color:White">[ 4 - 1 ] Marking Theme Properties</h4>
 
@@ -294,3 +319,33 @@ Declare an attribute that implements a given interface. This attribute can be us
 Declare a class that implements a given interface to get a color based on a Tag
 
 ---
+
+## Xml/Json
+
+---
+
+## folder
+
+---
+
+## stringConvertor
+
+---
+
+## stringMatcher
+
+---
+
+## RGB
+
+---
+
+## Differences
+
+---
+
+## TransitionParams
+
+---
+
+## Generator
