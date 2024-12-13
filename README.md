@@ -444,9 +444,16 @@ By default, the library provides two color packages for light and dark themes an
 
 Declare an attribute that implements a given interface. This attribute can be used just like [Light] / [Dark]
 
+|Property|Description|
+|-------|---------|
+|Parameters|The actual parameters that the custom topic class receives when initialized|
+|Value|For example, you can pass a BrushTag for an attribute. If the Tag is passed, the attribute describes Brush, and you can return the value of Brush based on the Tag. If the Tag is not passed, the attribute does not describe Brush and you can return null|
+
 <p style="color:wheat">2. IThemeBrushes</p>
 
 Declare a class that implements a given interface to get a color based on a Tag
+
+This is often combined with the [ Value ] in the [ IThemeAttribute ] interface, meaning that a custom theme corresponds to a custom color pack
 
 ---
 
