@@ -14,35 +14,30 @@ namespace MinimalisticWPF
 
         public static Brush Default = Brushes.Transparent;
 
-        public static Brush H1 = new RGB(0, 0, 0, 255).Brush;
-        public static Brush H2 = new RGB(0, 0, 0, 200).Brush;
-        public static Brush H3 = new RGB(0, 0, 0, 155).Brush;
-        public static Brush H4 = new RGB(0, 0, 0, 100).Brush;
-        public static Brush H5 = new RGB(0, 0, 0, 55).Brush;
+        public static Brush H1 = "#2c3e50".ToBrush();
+        public static Brush H2 = "#34495e".ToBrush();
+        public static Brush H3 = "#5d6d7e".ToBrush();
+        public static Brush H4 = "#7f8c8d".ToBrush();
+        public static Brush H5 = "#bdc3c7".ToBrush();
 
-        public static Brush P1 = new RGB(100, 100, 100, 255).Brush;
-        public static Brush P2 = new RGB(120, 120, 120, 255).Brush;
-        public static Brush P3 = new RGB(150, 150, 150, 255).Brush;
-        public static Brush P4 = new RGB(180, 180, 180, 255).Brush;
-        public static Brush P5 = new RGB(200, 200, 200, 255).Brush;
+        public static Brush P1 = "#2c3e50".ToBrush();
+        public static Brush P2 = "#34495e".ToBrush();
+        public static Brush P3 = "#7f8c8d".ToBrush();
+        public static Brush P4 = "#95a5a6".ToBrush();
+        public static Brush P5 = "#bdc3c7".ToBrush();
 
-        public static Brush B1 = new RGB(0, 0, 0, 0).Brush;
-        public static Brush B2 = new RGB(230, 230, 230, 255).Brush;
-        public static Brush B3 = new RGB(220, 220, 220, 255).Brush;
-        public static Brush B4 = new RGB(210, 210, 210, 255).Brush;
-        public static Brush B5 = new RGB(200, 200, 200, 255).Brush;
+        private static RGB Background = new RGB(255, 255, 255, 255);
+        public static Brush B1 = Background.Brush;
+        public static Brush B2 = Background.SubA(200).Brush;
+        public static Brush B3 = Background.SubA(155).Brush;
+        public static Brush B4 = Background.SubA(100).Brush;
+        public static Brush B5 = Background.SubA(55).Brush;
 
-        public static Brush E1 = new RGB(150, 150, 150, 255).Brush;
-        public static Brush E2 = new RGB(180, 180, 180, 255).Brush;
-        public static Brush E3 = new RGB(200, 200, 200, 255).Brush;
-        public static Brush E4 = new RGB(220, 220, 220, 255).Brush;
-        public static Brush E5 = new RGB(240, 240, 240, 255).Brush;
-
-        public static Brush F1 = Brushes.Violet;
-        public static Brush F2 = new RGB(0, 0, 0, 80).Brush;
-        public static Brush F3 = new RGB(0, 0, 0, 60).Brush;
-        public static Brush F4 = new RGB(0, 0, 0, 40).Brush;
-        public static Brush F5 = new RGB(0, 0, 0, 20).Brush;
+        public static Brush E1 = Brushes.Black;
+        public static Brush E2 = Brushes.Gray;
+        public static Brush E3 = "1e1e1e".ToBrush();
+        public static Brush E4 = "#6c7a89".ToBrush();
+        public static Brush E5 = "#5d6d7e".ToBrush();
 
         public Brush Select(BrushTags brushenum)
         {
@@ -90,16 +85,6 @@ namespace MinimalisticWPF
                     return E4;
                 case BrushTags.E5:
                     return E5;
-                case BrushTags.F1:
-                    return F1;
-                case BrushTags.F2:
-                    return F2;
-                case BrushTags.F3:
-                    return F3;
-                case BrushTags.F4:
-                    return F4;
-                case BrushTags.F5:
-                    return F5;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(brushenum), brushenum, null);
             }

@@ -17,7 +17,6 @@ namespace MinimalisticWPF
     /// <para>P ( Paragraph )  >> 段落文本色</para>
     /// <para>B ( Background ) >> 背景色</para>
     /// <para>E ( EdgeBrush )  >> 边界涂色</para>
-    /// <para>F ( Focus )      >> 悬停色</para>
     /// </summary>
     public enum BrushTags : int
     {
@@ -26,7 +25,6 @@ namespace MinimalisticWPF
         P1, P2, P3, P4, P5,
         B1, B2, B3, B4, B5,
         E1, E2, E3, E4, E5,
-        F1, F2, F3, F4, F5,
     }
 
     public static class DynamicTheme
