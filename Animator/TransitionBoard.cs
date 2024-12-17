@@ -18,7 +18,7 @@ namespace MinimalisticWPF
             Target = target;
             Machine = StateMachine.Create(target);
         }
-        public bool IsStatic { get; internal set; } = false;
+        internal bool IsStatic { get; set; } = false;
         internal T? Target { get; set; }
         internal StateMachine? Machine { get; set; }
         public State TempState { get; internal set; } = new State() { StateName = Transition.TempName };
@@ -106,12 +106,12 @@ namespace MinimalisticWPF
             }
             return this;
         }
-        public TransitionBoard<T> SetProperty(Expression<Func<T, ILinearInterpolation>> propertyLambda, ILinearInterpolation newValue)
+        public TransitionBoard<T> SetProperty(Expression<Func<T, IInterpolable>> propertyLambda, IInterpolable newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
                 var property = propertyExpr.Member as PropertyInfo;
-                if (property == null || !property.CanRead || !property.CanWrite || !typeof(ILinearInterpolation).IsAssignableFrom(property.PropertyType))
+                if (property == null || !property.CanRead || !property.CanWrite || !typeof(IInterpolable).IsAssignableFrom(property.PropertyType))
                 {
                     return this;
                 }
@@ -126,15 +126,10 @@ namespace MinimalisticWPF
         }
         public TransitionBoard<T> ReflectAny(T reflected)
         {
-            TempState = new State(reflected, Array.Empty<string>(), Array.Empty<string>());
-            TempState.StateName = Transition.TempName;
-            return this;
-        }
-        public TransitionBoard<T> ReflectExcept(T reflected, params Expression<Func<T, string>>[] blackList)
-        {
-            var propertyNames = blackList.Select(p => ((MemberExpression)p.Body).Member.Name).ToArray();
-            TempState = new State(reflected, Array.Empty<string>(), propertyNames);
-            TempState.StateName = Transition.TempName;
+            TempState = new(reflected, Array.Empty<string>(), Array.Empty<string>())
+            {
+                StateName = Transition.TempName
+            };
             return this;
         }
         public TransitionBoard<T> PreLoad()
@@ -153,10 +148,10 @@ namespace MinimalisticWPF
         }
         public void Start()
         {
-            if (IsStatic) throw new InvalidOperationException("This method cannot be used under Type-based creation, instead use an overloaded version of the Start () method");
+            if (IsStatic) throw new InvalidOperationException("This method cannot be used under Type-based creation, instead use an overloaded version of the Start( object ) method");
             if (Machine == null) throw new ArgumentException("StateMachine instance lost");
             if (Target == null) throw new ArgumentException("Target object instance lost");
-            Machine.ReSet();
+            Machine.Interrupt();
             TempState.StateName = Transition.TempName + "NonStatic";
             Machine.States.Add(TempState);
             Machine.Transition(TempState.StateName, TransitionParams, Preload);
@@ -164,7 +159,7 @@ namespace MinimalisticWPF
         public void Start(T target)
         {
             Machine = StateMachine.Create(target);
-            Machine.ReSet();
+            Machine.Interrupt();
             TempState.StateName = Transition.TempName + Machine.States.BoardSuffix;
             Machine.States.Add(TempState);
             Machine.Transition(TempState.StateName, TransitionParams, Preload);

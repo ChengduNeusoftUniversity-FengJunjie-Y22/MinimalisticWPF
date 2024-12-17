@@ -18,13 +18,7 @@ namespace MinimalisticWPF
         {
             get
             {
-                State? result = _nodes.FirstOrDefault(x => x.StateName == stateName);
-
-                if (result == null)
-                {
-                    throw new ArgumentException($"There is no State named [ {stateName} ] in the collection");
-                }
-
+                State? result = _nodes.FirstOrDefault(x => x.StateName == stateName) ?? throw new ArgumentException($"There is no State named [ {stateName} ] in the collection");
                 return result;
             }
         }
@@ -54,20 +48,8 @@ namespace MinimalisticWPF
 
         public void Add(State item)
         {
-            var existingNode = _nodes.FirstOrDefault(x => x.StateName == item.StateName);
-
-            if (existingNode != null)
-            {
-                if (!ReferenceEquals(existingNode, item))
-                {
-                    _nodes.Remove(existingNode);
-                    _nodes.Add(item);
-                }
-            }
-            else
-            {
-                _nodes.Add(item);
-            }
+            _nodes.RemoveAll(x => x.StateName == item.StateName);
+            _nodes.Add(item);
         }
         public void Clear()
         {

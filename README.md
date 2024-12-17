@@ -123,7 +123,7 @@ grid.BeginTransition(_animation, _params);
 <h5 style="color:white">An interface is provided to allow types to participate in transitions</h5>Please describe how this type computes interpolation
 
 ```csharp
-    internal class ComplexValue : ILinearInterpolation
+    internal class ComplexValue : IInterpolable
     {
         public double DoubleValue { get; set; } = 0;
         public Brush BrushValue { get; set; } = Brushes.Transparent;
@@ -138,8 +138,8 @@ grid.BeginTransition(_animation, _params);
             ComplexValue old = current as ComplexValue ?? new ComplexValue();
             ComplexValue tar = target as ComplexValue ?? new ComplexValue();
 
-            var doublelinear = ILinearInterpolation.DoubleComputing(old.DoubleValue, tar.DoubleValue, steps);
-            var brushlinear = ILinearInterpolation.BrushComputing(old.BrushValue, tar.BrushValue, steps);
+            var doublelinear = IInterpolable.DoubleComputing(old.DoubleValue, tar.DoubleValue, steps);
+            var brushlinear = IInterpolable.BrushComputing(old.BrushValue, tar.BrushValue, steps);
 
             for (int i = 0; i < steps; i++)
             {

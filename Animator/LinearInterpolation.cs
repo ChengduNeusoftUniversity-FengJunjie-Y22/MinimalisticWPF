@@ -9,14 +9,11 @@ using System.Windows.Media;
 
 namespace MinimalisticWPF
 {
-    public interface ILinearInterpolation
+    public static class LinearInterpolation
     {
-        object Current { get; set; }
-        List<object?> Interpolate(object? current, object? target, int steps);
-
         public static List<object?> DoubleComputing(object? start, object? end, int steps)
         {
-            List<object?> result = new List<object?>(steps);
+            List<object?> result = new(steps);
 
             var d1 = start as double?;
             var d2 = end as double?;
@@ -40,12 +37,12 @@ namespace MinimalisticWPF
         }
         public static List<object?> BrushComputing(object? start, object? end, int steps)
         {
-            List<object?> result = new List<object?>(steps);
+            List<object?> result = new(steps);
 
             var color1 = (start as SolidColorBrush)?.Color;
             var color2 = (end as SolidColorBrush)?.Color;
-            color1 = color1 ?? new Color();
-            color2 = color2 ?? new Color();
+            color1 ??= new Color();
+            color2 ??= new Color();
 
             if (steps == 0)
             {
@@ -67,7 +64,7 @@ namespace MinimalisticWPF
         }
         public static List<object?> TransformComputing(object? start, object? end, int steps)
         {
-            List<object?> result = new List<object?>(steps);
+            List<object?> result = new(steps);
 
             Matrix matrix1 = ((Transform)(start ?? new TransformGroup())).Value;
             Matrix matrix2 = ((Transform)(end ?? new TransformGroup())).Value;
@@ -98,7 +95,7 @@ namespace MinimalisticWPF
         }
         public static List<object?> PointComputing(object? start, object? end, int steps)
         {
-            List<object?> result = new List<object?>(steps);
+            List<object?> result = new(steps);
 
             var point1 = start as Point? ?? new Point(0, 0);
             var point2 = end as Point? ?? new Point(0, 0);
@@ -121,7 +118,7 @@ namespace MinimalisticWPF
         }
         public static List<object?> ThicknessComputing(object? start, object? end, int steps)
         {
-            List<object?> result = new List<object?>(steps);
+            List<object?> result = new(steps);
 
             var thickness1 = start as Thickness? ?? new Thickness(0);
             var thickness2 = end as Thickness? ?? new Thickness(0);
@@ -146,7 +143,7 @@ namespace MinimalisticWPF
         }
         public static List<object?> CornerRadiusComputing(object? start, object? end, int steps)
         {
-            List<object?> result = new List<object?>(steps);
+            List<object?> result = new(steps);
 
             var radius1 = start as CornerRadius? ?? new CornerRadius(0);
             var radius2 = end as CornerRadius? ?? new CornerRadius(0);

@@ -22,8 +22,10 @@ namespace MinimalisticWPF
         }
         public static TransitionBoard<T> CreateBoardFromObject<T>(T target) where T : class
         {
-            var result = new TransitionBoard<T>(target);
-            result.IsStatic = true;
+            var result = new TransitionBoard<T>(target)
+            {
+                IsStatic = true
+            };
             return result;
         }
         public static TransitionBoard<T> CreateBoardFromType<T>() where T : class
@@ -36,10 +38,10 @@ namespace MinimalisticWPF
             {
                 foreach (var machine in machinedic.Values)
                 {
-                    machine.Interpreter?.Interrupt();
+                    machine.Interpreter?.Stop();
                     foreach (var intor in machine.UnSafeInterpreters)
                     {
-                        intor.Interrupt(true);
+                        intor.Stop(true);
                     }
                 }
             }
@@ -49,10 +51,10 @@ namespace MinimalisticWPF
             foreach (var target in targets)
             {
                 var machine = StateMachine.Create(target);
-                machine.Interpreter?.Interrupt();
+                machine.Interpreter?.Stop();
                 foreach (var itor in machine.UnSafeInterpreters)
                 {
-                    itor.Interrupt(true);
+                    itor.Stop(true);
                 }
             }
         }
@@ -61,7 +63,7 @@ namespace MinimalisticWPF
             foreach (var target in targets)
             {
                 var machine = StateMachine.Create(target);
-                machine.Interpreter?.Interrupt();
+                machine.Interpreter?.Stop();
             }
         }
         public static void StopUnSafe(params object[] targets)
@@ -71,7 +73,7 @@ namespace MinimalisticWPF
                 var machine = StateMachine.Create(target);
                 foreach (var itor in machine.UnSafeInterpreters)
                 {
-                    itor.Interrupt(true);
+                    itor.Stop(true);
                 }
             }
         }

@@ -1,28 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media.Animation;
+﻿using System.Reflection;
 using System.Windows;
-using System.ComponentModel;
 using System.Data;
-using System.Windows.Threading;
-using System.Collections;
-using System.Windows.Controls;
-using System.Security.Cryptography.X509Certificates;
-using System.Windows.Automation;
 using System.Windows.Media;
 using System.Collections.Concurrent;
-using System.Security.RightsManagement;
 
 namespace MinimalisticWPF
 {
-    public class StateMachine
+    public sealed class StateMachine
     {
-        private static int _maxFR = 240;
-
         public static int MaxFrameRate
         {
             get => _maxFR;
@@ -35,6 +20,12 @@ namespace MinimalisticWPF
         public static ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyInfo>> PropertyInfos { get; internal set; } = new();
         public static ConcurrentDictionary<Type, Tuple<ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>, ConcurrentDictionary<string, PropertyInfo>>> SplitedPropertyInfos { get; internal set; } = new();
 
+        /// <summary>
+        /// Return an existing StateMachine or create a new one
+        /// </summary>
+        /// <remarks>
+        /// If you do not want to automatically create a new StateMachine, use [ TryGetMachine() ]
+        /// </remarks>
         public static StateMachine Create(object targetObj, params State[] states)
         {
             var type = targetObj.GetType();
@@ -65,182 +56,26 @@ namespace MinimalisticWPF
             }
         }
 
+        /// <summary>
+        /// Calculate the sequence of animation frames
+        /// </summary>
         public static List<List<Tuple<PropertyInfo, List<object?>>>>? PreloadFrames(object? Target, State state, TransitionParams par)
         {
             if (Target == null)
             {
                 return null;
             }
-            var machine = new StateMachine(Target, state);
-            machine.TransitionParams = par;
+            var machine = new StateMachine(Target, state)
+            {
+                TransitionParams = par
+            };
             var result = ComputingFrames(state, machine);
             return result;
         }
 
-        public static List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state, StateMachine machine)
-        {
-            List<List<Tuple<PropertyInfo, List<object?>>>> result = new List<List<Tuple<PropertyInfo, List<object?>>>>(7);
-
-            var count = (int)machine.FrameCount;
-            var fc = count == 0 ? 1 : count;
-            result.Add(DoubleComputing(machine.Type, state, machine.Target, fc));
-            result.Add(BrushComputing(machine.Type, state, machine.Target, fc));
-            result.Add(TransformComputing(machine.Type, state, machine.Target, fc));
-            result.Add(PointComputing(machine.Type, state, machine.Target, fc));
-            result.Add(CornerRadiusComputing(machine.Type, state, machine.Target, fc));
-            result.Add(ThicknessComputing(machine.Type, state, machine.Target, fc));
-            result.Add(ILinearInterpolationComputing(machine.Type, state, machine.Target, fc));
-
-            return result;
-        }
-
-        public static List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item1.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.DoubleComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-
-        public static List<Tuple<PropertyInfo, List<object?>>> BrushComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item2.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.BrushComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-
-        public static List<Tuple<PropertyInfo, List<object?>>> TransformComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item3.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.TransformComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-
-        public static List<Tuple<PropertyInfo, List<object?>>> PointComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item4.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.PointComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-
-        public static List<Tuple<PropertyInfo, List<object?>>> CornerRadiusComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item5.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.CornerRadiusComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-
-        public static List<Tuple<PropertyInfo, List<object?>>> ThicknessComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item6.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = propertyinfo.GetValue(Target);
-                        var newValue = state.Values[propertyname];
-                        if (currentValue != newValue)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, ILinearInterpolation.ThicknessComputing(currentValue, newValue, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-
-        public static List<Tuple<PropertyInfo, List<object?>>> ILinearInterpolationComputing(Type type, State state, object Target, int FrameCount)
-        {
-            List<Tuple<PropertyInfo, List<object?>>> allFrames = new List<Tuple<PropertyInfo, List<object?>>>(FrameCount);
-            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
-            {
-                foreach (var propertyname in state.Values.Keys)
-                {
-                    if (infodictionary.Item7.TryGetValue(propertyname, out var propertyinfo))
-                    {
-                        var currentValue = (ILinearInterpolation?)propertyinfo.GetValue(Target);
-                        var newValue = (ILinearInterpolation?)state.Values[propertyname];
-                        if (currentValue != newValue && newValue != null)
-                        {
-                            allFrames.Add(Tuple.Create(propertyinfo, newValue.Interpolate(currentValue?.Current, newValue.Current, FrameCount)));
-                        }
-                    }
-                }
-            }
-            return allFrames;
-        }
-
+        /// <summary>
+        /// Initialize the type context, which speeds up transition generation
+        /// </summary>
         public static void InitializeTypes(params Type[] types)
         {
             foreach (var type in types)
@@ -255,7 +90,7 @@ namespace MinimalisticWPF
                     || x.PropertyType == typeof(Point)
                     || x.PropertyType == typeof(CornerRadius)
                     || x.PropertyType == typeof(Thickness)
-                    || typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)
+                    || typeof(IInterpolable).IsAssignableFrom(x.PropertyType)
                     ));
                     var propdictionary = new ConcurrentDictionary<string, PropertyInfo>();
                     foreach (var property in properties)
@@ -269,11 +104,18 @@ namespace MinimalisticWPF
                                                           new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => x.PropertyType == typeof(Point)).ToDictionary(x => x.Name, x => x)),
                                                           new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => x.PropertyType == typeof(CornerRadius)).ToDictionary(x => x.Name, x => x)),
                                                           new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => x.PropertyType == typeof(Thickness)).ToDictionary(x => x.Name, x => x)),
-                                                          new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => typeof(ILinearInterpolation).IsAssignableFrom(x.PropertyType)).ToDictionary(x => x.Name, x => x))));
+                                                          new ConcurrentDictionary<string, PropertyInfo>(properties.Where(x => typeof(IInterpolable).IsAssignableFrom(x.PropertyType)).ToDictionary(x => x.Name, x => x))));
                 }
             }
         }
 
+        /// <summary>
+        /// If the type context is initialized, the method can quickly find PropertyInfo
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="propertyname"></param>
+        /// <param name="result"></param>
+        /// <returns>bool</returns>
         public static bool TryGetPropertyInfo(Type type, string propertyname, out PropertyInfo? result)
         {
             if (PropertyInfos.TryGetValue(type, out var propdic))
@@ -288,6 +130,12 @@ namespace MinimalisticWPF
             return false;
         }
 
+        /// <summary>
+        /// Use this method to find the unique StateMachine that the system has for each instance object
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
         public static bool TryGetMachine(object target, out StateMachine? result)
         {
             if (MachinePool.TryGetValue(target.GetType(), out var machinedic))
@@ -302,58 +150,44 @@ namespace MinimalisticWPF
             return false;
         }
 
-        public static void Dispose(params Type[] types)
-        {
-            foreach (var type in types)
-            {
-                MachinePool.TryRemove(type, out _);
-            }
-        }
-
-        internal StateMachine(object viewModel, params State[] states)
-        {
-            Target = viewModel;
-            Type = viewModel.GetType();
-            InitializeTypes(Type);
-            foreach (var state in states)
-            {
-                States.Add(state);
-            }
-        }
-
         public object Target { get; internal set; }
         public Type Type { get; internal set; }
-        public StateCollection States { get; internal set; } = new();
-        internal TransitionParams TransitionParams { get; set; } = new();
-        internal bool IsReSet { get; set; } = false;
+        public StateCollection States { get; internal set; } = [];
         public double DeltaTime { get => 1000.0 / Math.Clamp(TransitionParams.FrameRate, 1, MaxFrameRate); }
         public double FrameCount { get => Math.Clamp(TransitionParams.Duration * Math.Clamp(TransitionParams.FrameRate, 1, MaxFrameRate), 1, int.MaxValue); }
         public string? CurrentState { get; internal set; }
-        public TransitionInterpreter? Interpreter { get; internal set; }
-        public ConcurrentQueue<Tuple<string, TransitionParams, List<List<Tuple<PropertyInfo, List<object?>>>>?>> Interpreters { get; internal set; } = new();
-        public List<TransitionInterpreter> UnSafeInterpreters { get; internal set; } = new();
+        public IExecutableTransition? Interpreter { get; internal set; }
+        public ConcurrentQueue<Tuple<string, ITransitionMeta>> Interpreters { get; internal set; } = new();
+        public List<IExecutableTransition> UnSafeInterpreters { get; internal set; } = [];
 
-        public void ReSet(bool IsStopUnsafe = false)
+        /// <summary>
+        /// Interrupt transition
+        /// </summary>
+        /// <param name="IsStopUnsafe">Whether the unsafe transition is terminated</param>
+        public void Interrupt(bool IsStopUnsafe = false)
         {
             IsReSet = true;
             CurrentState = null;
-            Interpreter?.Interrupt();
+            Interpreter?.Stop();
             Interpreter = null;
             Interpreters.Clear();
             if (IsStopUnsafe)
             {
                 foreach (var item in UnSafeInterpreters)
                 {
-                    item.Interrupt(true);
+                    item.Stop(true);
                 }
             }
         }
 
+        /// <summary>
+        /// Scheduling transition behavior
+        /// </summary>
         public void Transition(string stateName, Action<TransitionParams>? actionSet, List<List<Tuple<PropertyInfo, List<object?>>>>? preload = null)
         {
             IsReSet = false;
 
-            TransitionParams temp = new TransitionParams();
+            TransitionParams temp = new();
             actionSet?.Invoke(temp);
 
             if (temp.IsUnSafe)
@@ -374,36 +208,22 @@ namespace MinimalisticWPF
                     return;
                 }
 
-                Interpreters.Enqueue(Tuple.Create(stateName, temp, preload));
+                Interpreters.Enqueue(Tuple.Create<string, ITransitionMeta>(stateName, new TransitionMeta(temp, preload ?? [])));
                 if (!temp.IsQueue)
                 {
-                    Interpreter?.Interrupt();
+                    Interpreter?.Stop();
                 }
             }
         }
-        internal async void InterpreterScheduler(string stateName, TransitionParams actionSet, List<List<Tuple<PropertyInfo, List<object?>>>>? preload)
+
+        internal async void InterpreterScheduler(string stateName, TransitionParams? actionSet, List<List<Tuple<PropertyInfo, List<object?>>>>? preload)
         {
-            var targetState = States.FirstOrDefault(x => x.StateName == stateName);
-            if (targetState == null) throw new ArgumentException($"The State Named [ {stateName} ] Cannot Be Found");
-
+            var targetState = States.FirstOrDefault(x => x.StateName == stateName) ?? throw new ArgumentException($"The State Named [ {stateName} ] Cannot Be Found");
+            actionSet ??= new TransitionParams();
             TransitionParams = actionSet;
-
-            TransitionInterpreter animationInterpreter = new(this)
+            TransitionInterpreter animationInterpreter = new(this, actionSet)
             {
-                IsLast = TransitionParams.IsLast,
                 DeltaTime = (int)DeltaTime,
-                Update = TransitionParams.Update,
-                Completed = TransitionParams.Completed,
-                LateUpdate = TransitionParams.LateUpdate,
-                Acceleration = TransitionParams.Acceleration,
-                IsUnSafe = TransitionParams.IsUnSafe,
-                LoopTime = TransitionParams.LoopTime,
-                IsAutoReverse = TransitionParams.IsAutoReverse,
-                UpdateAsync = TransitionParams.UpdateAsync,
-                LateUpdateAsync = TransitionParams.LateUpdateAsync,
-                CompletedAsync = TransitionParams.CompletedAsync,
-                UIPriority = TransitionParams.UIPriority,
-                IsBeginInvoke = TransitionParams.IsBeginInvoke
             };
 
             if (Application.Current == null)
@@ -412,17 +232,14 @@ namespace MinimalisticWPF
             }
             else
             {
-                if (TransitionParams.Start != null)
-                {
-                    TransitionParams.Start.Invoke();
-                }
+                TransitionParams.Start?.Invoke();
                 if (TransitionParams.StartAsync != null)
                 {
                     await TransitionParams.StartAsync.Invoke();
                 }
             }
 
-            animationInterpreter.Frams = preload ?? ComputingFrames(targetState, this);
+            animationInterpreter.FrameSequence = preload ?? ComputingFrames(targetState, this);
 
             if (TransitionParams.IsUnSafe)
             {
@@ -433,7 +250,177 @@ namespace MinimalisticWPF
                 CurrentState = stateName;
                 Interpreter = animationInterpreter;
             }
-            var task = Task.Run(() => { animationInterpreter.Interpret(); });
+            var task = Task.Run(() => { animationInterpreter.Start(); });
+        }
+        internal StateMachine(object viewModel, params State[] states)
+        {
+            Target = viewModel;
+            Type = viewModel.GetType();
+            InitializeTypes(Type);
+            foreach (var state in states)
+            {
+                States.Add(state);
+            }
+        }
+        internal TransitionParams TransitionParams { get; set; } = new();
+        internal bool IsReSet { get; set; } = false;
+
+        private static int _maxFR = 240;
+        private static List<List<Tuple<PropertyInfo, List<object?>>>> ComputingFrames(State state, StateMachine machine)
+        {
+            List<List<Tuple<PropertyInfo, List<object?>>>> result = new(7);
+
+            var count = (int)machine.FrameCount;
+            var fc = count == 0 ? 1 : count;
+            result.Add(DoubleComputing(machine.Type, state, machine.Target, fc));
+            result.Add(BrushComputing(machine.Type, state, machine.Target, fc));
+            result.Add(TransformComputing(machine.Type, state, machine.Target, fc));
+            result.Add(PointComputing(machine.Type, state, machine.Target, fc));
+            result.Add(CornerRadiusComputing(machine.Type, state, machine.Target, fc));
+            result.Add(ThicknessComputing(machine.Type, state, machine.Target, fc));
+            result.Add(ILinearInterpolationComputing(machine.Type, state, machine.Target, fc));
+
+            return result;
+        }
+        private static List<Tuple<PropertyInfo, List<object?>>> DoubleComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item1.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, LinearInterpolation.DoubleComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        private static List<Tuple<PropertyInfo, List<object?>>> BrushComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item2.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, LinearInterpolation.BrushComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        private static List<Tuple<PropertyInfo, List<object?>>> TransformComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item3.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, LinearInterpolation.TransformComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        private static List<Tuple<PropertyInfo, List<object?>>> PointComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item4.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, LinearInterpolation.PointComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        private static List<Tuple<PropertyInfo, List<object?>>> CornerRadiusComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item5.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, LinearInterpolation.CornerRadiusComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        private static List<Tuple<PropertyInfo, List<object?>>> ThicknessComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item6.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = propertyinfo.GetValue(Target);
+                        var newValue = state.Values[propertyname];
+                        if (currentValue != newValue)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, LinearInterpolation.ThicknessComputing(currentValue, newValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
+        }
+        private static List<Tuple<PropertyInfo, List<object?>>> ILinearInterpolationComputing(Type type, State state, object Target, int FrameCount)
+        {
+            List<Tuple<PropertyInfo, List<object?>>> allFrames = new(FrameCount);
+            if (SplitedPropertyInfos.TryGetValue(type, out var infodictionary))
+            {
+                foreach (var propertyname in state.Values.Keys)
+                {
+                    if (infodictionary.Item7.TryGetValue(propertyname, out var propertyinfo))
+                    {
+                        var currentValue = (IInterpolable?)propertyinfo.GetValue(Target);
+                        var newValue = (IInterpolable?)state.Values[propertyname];
+                        if (currentValue != newValue && newValue != null)
+                        {
+                            allFrames.Add(Tuple.Create(propertyinfo, newValue.Interpolate(currentValue?.CurrentValue, newValue.CurrentValue, FrameCount)));
+                        }
+                    }
+                }
+            }
+            return allFrames;
         }
     }
 }

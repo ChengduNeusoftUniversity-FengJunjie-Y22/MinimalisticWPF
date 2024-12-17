@@ -38,7 +38,7 @@ namespace MinimalisticWPF
             }
             else
             {
-                machine.ReSet();
+                machine.Interrupt();
                 machine.States.Add(state);
                 machine.Transition(state.StateName, set);
             }

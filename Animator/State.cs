@@ -213,8 +213,8 @@ namespace MinimalisticWPF
             return this;
         }
         public ObjectTempState<T> SetProperty(
-            Expression<Func<T, ILinearInterpolation>> propertyLambda,
-            ILinearInterpolation newValue)
+            Expression<Func<T, IInterpolable>> propertyLambda,
+            IInterpolable newValue)
         {
             if (Value == null)
             {
@@ -224,7 +224,7 @@ namespace MinimalisticWPF
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
                 var property = propertyExpr.Member as PropertyInfo;
-                if (property == null || !property.CanWrite || property.PropertyType != typeof(ILinearInterpolation))
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(IInterpolable))
                 {
                     return this;
                 }
@@ -407,13 +407,13 @@ namespace MinimalisticWPF
             return this;
         }
         public TypeTempState<T> SetProperty(
-            Expression<Func<T, ILinearInterpolation>> propertyLambda,
-            ILinearInterpolation newValue)
+            Expression<Func<T, IInterpolable>> propertyLambda,
+            IInterpolable newValue)
         {
             if (propertyLambda.Body is MemberExpression propertyExpr)
             {
                 var property = propertyExpr.Member as PropertyInfo;
-                if (property == null || !property.CanWrite || property.PropertyType != typeof(ILinearInterpolation))
+                if (property == null || !property.CanWrite || property.PropertyType != typeof(IInterpolable))
                 {
                     return this;
                 }

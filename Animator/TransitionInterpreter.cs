@@ -9,179 +9,143 @@ using System.Windows.Threading;
 
 namespace MinimalisticWPF
 {
-    public class TransitionInterpreter
+    public class TransitionInterpreter : IExecutableTransition, ITransitionMeta
     {
-        internal TransitionInterpreter(StateMachine machine) { Machine = machine; }
+        internal TransitionInterpreter(StateMachine machine, TransitionParams transitionParams)
+        {
+            Machine = machine;
+            TransitionParams = transitionParams;
+        }
+
+        public TransitionParams TransitionParams { get; internal set; }
+        public List<List<Tuple<PropertyInfo, List<object?>>>> FrameSequence { get; internal set; } = [];
 
         internal StateMachine Machine { get; set; }
-        internal List<List<Tuple<PropertyInfo, List<object?>>>> Frams { get; set; } = new List<List<Tuple<PropertyInfo, List<object?>>>>();
-        public string StateName { get; internal set; } = string.Empty;
         internal int DeltaTime { get; set; } = 0;
-        internal bool IsLast { get; set; } = true;
-        public bool IsRunning { get; internal set; } = false;
-        internal bool IsStop { get; set; } = false;
-        public Action? Update { get; set; }
-        public Action? LateUpdate { get; set; }
-        public Action? Completed { get; set; }
-        public Func<Task>? UpdateAsync { get; set; }
-        public Func<Task>? LateUpdateAsync { get; set; }
-        public Func<Task>? CompletedAsync { get; set; }
-        internal double Acceleration { get; set; } = 0;
-        internal bool IsUnSafe { get; set; } = false;
-        internal int LoopTime { get; set; } = 0;
-        internal bool IsAutoReverse { get; set; } = false;
-        internal DispatcherPriority UIPriority { get; set; } = DispatcherPriority.Render;
-        internal bool IsBeginInvoke { get; set; } = false;
 
-        public async void Interpret()
+        private bool IsRunning { get; set; } = false;
+        private bool IsStop { get; set; } = false;
+        private int LoopDepth { get; set; } = 0;
+        private int FrameDepth { get; set; } = 0;
+
+        public void Start()
         {
             if (IsStop || IsRunning) { WhileEnded(); return; }
             IsRunning = true;
 
-            var Times = GetAccDeltaTime((int)Machine.FrameCount);
+            var accTimes = GetAccDeltaTime((int)Machine.FrameCount);
 
-            for (int x = 0; LoopTime == int.MaxValue ? true : x <= LoopTime; x++)
+            for (int x = LoopDepth; TransitionParams.LoopTime == int.MaxValue || x <= TransitionParams.LoopTime; x++, LoopDepth++)
             {
-                for (int i = 0; i < Machine.FrameCount; i++)
+                for (int i = FrameDepth; i < Machine.FrameCount; i++, FrameDepth++)
                 {
-                    if (IsStop || Application.Current == null || (IsUnSafe ? false : Machine.IsReSet || Machine.Interpreter != this))
+                    if (EndConditionCheck()) return;
+                    FrameStart();
+                    for (int j = 0; j < FrameSequence.Count; j++)
                     {
-                        WhileEnded();
-                        return;
-                    }
-
-                    if (Application.Current != null)
-                    {
-                        if (Update != null)
+                        for (int k = 0; k < FrameSequence[j].Count; k++)
                         {
-                            Application.Current.Dispatcher.Invoke(Update);
-                        }
-                        if (UpdateAsync != null)
-                        {
-                            await UpdateAsync.Invoke();
+                            FrameUpdate(i, j, k);
                         }
                     }
-
-                    for (int j = 0; j < Frams.Count; j++)
-                    {
-                        for (int k = 0; k < Frams[j].Count; k++)
-                        {
-                            if (IsFrameIndexRight(i, j, k) && Application.Current != null)
-                            {
-                                if (IsBeginInvoke)
-                                {
-                                    try
-                                    {
-                                        await Application.Current.Dispatcher.BeginInvoke(UIPriority, () =>
-                                        {
-                                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
-                                        });
-                                    }
-                                    catch { }
-                                }
-                                else
-                                {
-                                    Application.Current.Dispatcher.Invoke(UIPriority, () =>
-                                    {
-                                        Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
-                                    });
-                                }
-                            }
-                        }
-                    }
-
-                    if (Application.Current != null)
-                    {
-                        if (LateUpdate != null)
-                        {
-                            Application.Current.Dispatcher.Invoke(LateUpdate);
-                        }
-                        if (LateUpdateAsync != null)
-                        {
-                            await LateUpdateAsync.Invoke();
-                        }
-                    }
-
-                    Thread.Sleep(Acceleration == 0 ? DeltaTime : i < Times.Count & Times.Count > 0 ? Times[i] : DeltaTime);
+                    FrameEnd();
+                    Thread.Sleep(TransitionParams.Acceleration == 0 ? DeltaTime : i < accTimes.Count & accTimes.Count > 0 ? accTimes[i] : DeltaTime);
                 }
 
-                if (IsAutoReverse)
+                if (TransitionParams.IsAutoReverse)
                 {
-                    for (int i = Machine.FrameCount > 1 ? (int)Machine.FrameCount - 1 : 0; i > -1; i--)
+                    FrameDepth = Machine.FrameCount > 1 ? (int)Machine.FrameCount - 1 : 0;
+                    for (int i = FrameDepth; i > -1; i--, FrameDepth--)
                     {
-                        if (IsStop || Application.Current == null || (IsUnSafe ? false : Machine.IsReSet || Machine.Interpreter != this))
+                        if (EndConditionCheck()) return;
+                        FrameStart();
+                        for (int j = 0; j < FrameSequence.Count; j++)
                         {
-                            WhileEnded();
-                            return;
-                        }
-
-                        if (Application.Current != null)
-                        {
-                            if (Update != null)
+                            for (int k = 0; k < FrameSequence[j].Count; k++)
                             {
-                                Application.Current.Dispatcher.Invoke(Update);
-                            }
-                            if (UpdateAsync != null)
-                            {
-                                await UpdateAsync.Invoke();
+                                FrameUpdate(i, j, k);
                             }
                         }
-
-                        for (int j = 0; j < Frams.Count; j++)
-                        {
-                            for (int k = 0; k < Frams[j].Count; k++)
-                            {
-                                if (IsFrameIndexRight(i, j, k) && Application.Current != null)
-                                {
-                                    if (IsBeginInvoke)
-                                    {
-                                        try
-                                        {
-                                            await Application.Current.Dispatcher.BeginInvoke(UIPriority, () =>
-                                            {
-                                                Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
-                                            });
-                                        }
-                                        catch { }
-                                    }
-                                    else
-                                    {
-                                        Application.Current.Dispatcher.Invoke(UIPriority, () =>
-                                        {
-                                            Frams[j][k].Item1.SetValue(Machine.Target, Frams[j][k].Item2[i]);
-                                        });
-                                    }
-                                }
-                            }
-                        }
-
-                        if (Application.Current != null)
-                        {
-                            if (LateUpdate != null)
-                            {
-                                Application.Current.Dispatcher.Invoke(LateUpdate);
-                            }
-                            if (LateUpdateAsync != null)
-                            {
-                                await LateUpdateAsync.Invoke();
-                            }
-                        }
-
-                        Thread.Sleep(Acceleration == 0 ? DeltaTime : i < Times.Count & Times.Count > 0 ? Times[i] : DeltaTime);
+                        FrameEnd();
+                        Thread.Sleep(TransitionParams.Acceleration == 0 ? DeltaTime : i < accTimes.Count & accTimes.Count > 0 ? accTimes[i] : DeltaTime);
                     }
                 }
             }
 
             WhileEnded();
         }
-        public void Interrupt(bool IsUnsafeOver = false)
+        public void Stop(bool IsUnsafeStoped = false)
         {
-            if (IsUnSafe && !IsUnsafeOver) return;
+            if (TransitionParams.IsUnSafe && !IsUnsafeStoped) return;
             IsStop = IsRunning;
+            LoopDepth = 0;
+            FrameDepth = 0;
         }
-        internal async void WhileEnded()
+
+        private bool EndConditionCheck()
         {
-            if (IsUnSafe)
+            if (IsStop || Application.Current == null || !TransitionParams.IsUnSafe && (Machine.IsReSet || Machine.Interpreter != this))
+            {
+                WhileEnded();
+                return true;
+            }
+            return false;
+        }
+        private async void FrameStart()
+        {
+            if (Application.Current != null)
+            {
+                if (TransitionParams.Update != null)
+                {
+                    Application.Current.Dispatcher.Invoke(TransitionParams.Update);
+                }
+                if (TransitionParams.UpdateAsync != null)
+                {
+                    await TransitionParams.UpdateAsync.Invoke();
+                }
+            }
+        }
+        private async void FrameUpdate(int i, int j, int k)
+        {
+            if (IsFrameIndexRight(i, j, k) && Application.Current != null)
+            {
+                if (TransitionParams.IsBeginInvoke)
+                {
+                    try
+                    {
+                        await Application.Current.Dispatcher.BeginInvoke(TransitionParams.UIPriority, () =>
+                        {
+                            FrameSequence[j][k].Item1.SetValue(Machine.Target, FrameSequence[j][k].Item2[i]);
+                        });
+                    }
+                    catch { }
+                }
+                else
+                {
+                    Application.Current.Dispatcher.Invoke(TransitionParams.UIPriority, () =>
+                    {
+                        FrameSequence[j][k].Item1.SetValue(Machine.Target, FrameSequence[j][k].Item2[i]);
+                    });
+                }
+            }
+        }
+        private async void FrameEnd()
+        {
+            if (Application.Current != null)
+            {
+                if (TransitionParams.LateUpdate != null)
+                {
+                    Application.Current.Dispatcher.Invoke(TransitionParams.LateUpdate);
+                }
+                if (TransitionParams.LateUpdateAsync != null)
+                {
+                    await TransitionParams.LateUpdateAsync.Invoke();
+                }
+            }
+        }
+        private async void WhileEnded()
+        {
+            if (TransitionParams.IsUnSafe)
             {
                 Machine.UnSafeInterpreters.Remove(this);
                 return;
@@ -194,13 +158,13 @@ namespace MinimalisticWPF
 
             if (Application.Current != null)
             {
-                if (Completed != null)
+                if (TransitionParams.Completed != null)
                 {
-                    Application.Current.Dispatcher.Invoke(Completed);
+                    Application.Current.Dispatcher.Invoke(TransitionParams.Completed);
                 }
-                if (CompletedAsync != null)
+                if (TransitionParams.CompletedAsync != null)
                 {
-                    await CompletedAsync.Invoke();
+                    await TransitionParams.CompletedAsync.Invoke();
                 }
             }
             IsRunning = false;
@@ -209,23 +173,23 @@ namespace MinimalisticWPF
             if (Machine.Interpreter == this)
             {
                 Machine.Interpreter = null;
-                if (IsLast)
+                if (TransitionParams.IsLast)
                 {
                     Machine.Interpreters.Clear();
                 }
                 if (Machine.Interpreters.TryDequeue(out var source))
                 {
-                    Machine.InterpreterScheduler(source.Item1, source.Item2, source.Item3);
+                    Machine.InterpreterScheduler(source.Item1, source.Item2.TransitionParams, source.Item2.FrameSequence);
                 }
                 Machine.CurrentState = null;
             }
         }
-        internal List<int> GetAccDeltaTime(int Steps)
+        private List<int> GetAccDeltaTime(int Steps)
         {
-            List<int> result = new List<int>();
-            if (Acceleration == 0) return result;
+            List<int> result = [];
+            if (TransitionParams.Acceleration == 0) return result;
 
-            var acc = Math.Clamp(Acceleration, -1, 1);
+            var acc = Math.Clamp(TransitionParams.Acceleration, -1, 1);
             var start = DeltaTime * (1 + acc);
             var end = DeltaTime * (1 - acc);
             var delta = end - start;
@@ -237,13 +201,13 @@ namespace MinimalisticWPF
 
             return result;
         }
-        internal bool IsFrameIndexRight(int i, int j, int k)
+        private bool IsFrameIndexRight(int i, int j, int k)
         {
-            if (Frams.Count > 0 && j >= 0 && j < Frams.Count)
+            if (FrameSequence.Count > 0 && j >= 0 && j < FrameSequence.Count)
             {
-                if (Frams[j].Count > 0 && k >= 0 && k < Frams[j].Count)
+                if (FrameSequence[j].Count > 0 && k >= 0 && k < FrameSequence[j].Count)
                 {
-                    if (Frams[j][k].Item2.Count > 0 && i >= 0 && i < Frams[j][k].Item2.Count)
+                    if (FrameSequence[j][k].Item2.Count > 0 && i >= 0 && i < FrameSequence[j][k].Item2.Count)
                     {
                         return true;
                     }
